@@ -13,12 +13,9 @@ defmodule Codicil.TracerTest do
 
   describe "trace/2" do
     test "handles :on_module event with simple add_one function" do
-      # Compile a module with a single function
-      [{module, _}] = Code.compile_string("""
-      defmodule AddOneModule do
-        def add_one(x), do: x + 1
-      end
-      """)
+      # Compile a module from a file
+      example_path = Path.join(__DIR__, "tracer_examples/add_one_module.ex")
+      [{module, _}] = Code.compile_file(example_path)
 
       # Give the background task time to complete
       Process.sleep(100)
@@ -28,7 +25,7 @@ defmodule Codicil.TracerTest do
       assert function.name == "add_one"
       assert function.module == "Elixir.AddOneModule"
       assert function.arity == 1
-      assert function.path =~ "nofile"
+      assert function.path == example_path
       assert is_integer(function.start_line)
       assert is_integer(function.end_line)
 
