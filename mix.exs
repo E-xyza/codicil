@@ -25,7 +25,8 @@ defmodule Codicil.MixProject do
       {:plug, "~> 1.17"},
       {:jason, "~> 1.4"},
       {:circular_buffer, "~> 0.4 or ~> 1.0"},
-      {:bandit, "~> 1.6", only: [:dev, :test]}
+      {:bandit, "~> 1.6", only: [:dev, :test]},
+      {:req, "~> 0.5", only: :test}
     ]
   end
 end
