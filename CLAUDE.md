@@ -36,7 +36,7 @@ git commit -m "Add Elixir AST parser for function extraction
 - Natural language queries about codebase structure
 - Integration with AI coding assistants via MCP protocol
 
-**Note:** The `tidewave_phoenix/` and `graphsense/` directories contain temporary reference implementations that will be removed. Use them as examples for MCP server architecture and semantic search patterns, but build new code in the main project (`lib/codicil/`).
+**Note:** The `graphsense/` directory contains a temporary TypeScript reference implementation that will be removed once the Elixir equivalent is complete. Use it as an example for semantic search patterns, but build new code in the main project (`lib/codicil/`).
 
 ## Development Commands
 
@@ -59,7 +59,7 @@ mix format
 
 ## Usage
 
-Codicil is designed to be used as a dependency in any Elixir project (following Tidewave's non-Phoenix pattern).
+Codicil is designed to be used as a dependency in any Elixir project.
 
 Add to your project's `mix.exs`:
 ```elixir
@@ -74,7 +74,7 @@ end
 Add a Mix alias to start the MCP server:
 ```elixir
 aliases: [
-  codicil: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.MCP.Server, port: 4000) end)'"
+  codicil: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4000) end)'"
 ]
 ```
 
@@ -82,14 +82,15 @@ Then run `mix codicil` in your project to start the MCP server.
 
 ## Architecture
 
-### MCP Server (inspired by Tidewave Phoenix)
+### MCP Server (Core Infrastructure - ✅ Complete)
 
-**Note**: This is a library for non-Phoenix applications (following Tidewave's non-Phoenix pattern). Users add it as a dev dependency and start the MCP server via Bandit + Plug.
+**Note**: This is a library for non-Phoenix applications. Users add it as a dev dependency and start the MCP server via Bandit + Plug.
 
 **Core Components:**
 - `lib/codicil/mcp/server.ex` - Plug that handles JSON-RPC 2.0 messages and tool dispatch
 - `lib/codicil/mcp.ex` - Supervisor managing MCP infrastructure
 - `lib/codicil/application.ex` - Application entry point
+- `lib/codicil/plug.ex` - HTTP transport adapter
 
 **Tool System:**
 Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
@@ -104,13 +105,13 @@ Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
 - `function_callees` - Find functions called by source
 - `module_relationships` - Analyze import/alias/use chains
 
-### Code Analysis Pipeline (inspired by GraphSense)
+### Code Analysis Pipeline (GraphSense Reference - 🚧 To Transfer)
 
 **Indexing Flow:**
 1. Parse `.ex`/`.exs` files using `Code.string_to_quoted/2`
 2. Extract function definitions, module docs, and relationships
 3. Generate summaries using LLM (Claude 3.5 Sonnet)
-4. Create vector embeddings (Pinecone or pgvector)
+4. Create vector embeddings (Anthropic or local)
 5. Store in dual databases (graph + vector)
 
 **Database Strategy:**
@@ -125,21 +126,169 @@ Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
 - Handle protocols, behaviours, macros
 - Support umbrella apps and Mix dependencies
 
+## GraphSense Transfer Strategy
+
+The `graphsense/` directory contains a TypeScript/Node.js reference implementation. We need to port its semantic search patterns to Elixir.
+
+### Phase 1: Database Layer (Priority: High)
+
+**Files to create:**
+- `lib/codicil/db.ex` - Database connection and setup
+- `lib/codicil/db/schema.ex` - SQLite schema migrations
+- `lib/codicil/db/graph.ex` - Graph query helpers (file/function nodes, relationships)
+- `lib/codicil/db/vector.ex` - Vector search with sqlite-vec
+
+**Patterns from GraphSense:**
+- Dual-database approach (Neo4j → SQLite graph tables, PostgreSQL+pgvector → SQLite+sqlite-vec)
+- Database per repository (isolation via path-based DB files)
+- Schema: `functions` table with id, name, path, start_line, end_line, summary, embedding, checksum
+- Graph constraints: unique (name, path) for functions, unique path for files
+
+**Key Changes:**
+- Replace Neo4j with SQLite graph tables using CTEs for traversal
+- Replace PostgreSQL+pgvector with SQLite+sqlite-vec
+- Use Elixir's `:ecto_sql` with `:ecto_sqlite3` adapter
+- Store relationships as edges table: `edges(from_id, to_id, type)` where type = 'CALLS' | 'IMPORTS_FROM'
+
+### Phase 2: AST Parser (Priority: High)
+
+**Files to create:**
+- `lib/codicil/parser.ex` - Main Elixir AST parser
+- `lib/codicil/parser/function.ex` - Function extraction and analysis
+- `lib/codicil/parser/module.ex` - Module relationship tracking
+- `lib/codicil/parser/calls.ex` - Function call detection
+
+**Patterns from GraphSense (TypeScript AST):**
+- Parse file → extract imports → extract functions → build call graph
+- Queue-based processing with rate limiting (avoid API throttling)
+- Checksum-based change detection (don't re-process unchanged functions)
+- Extract function metadata: name, path, start_line, end_line, full text
+
+**Elixir-Specific Adaptations:**
+- Use `Code.string_to_quoted/2` with `columns: true` for position tracking
+- Pattern match on `{:def, _, _}`, `{:defp, _, _}`, `{:defmacro, _, _}`
+- Handle multi-clause functions (collect all clauses as single entity)
+- Track module attributes: `{:@, _, [{:moduledoc, _, _}]}`, `{:@, _, [{:doc, _, _}]}`
+- Extract relationships: `{:import, _, _}`, `{:alias, _, _}`, `{:use, _, _}`, `{:require, _, _}`
+- Detect function calls by traversing AST for `{name, _, args}` nodes where name is atom
+
+### Phase 3: LLM Integration (Priority: Medium)
+
+**Files to create:**
+- `lib/codicil/llm.ex` - LLM client abstraction
+- `lib/codicil/llm/anthropic.ex` - Claude API integration
+- `lib/codicil/llm/summarizer.ex` - Function summary generation
+- `lib/codicil/llm/validator.ex` - Batch function validation
+
+**Patterns from GraphSense:**
+- Generate function summaries: `generateText(model, prompt: "Given the following function body, generate a summary: ...")`
+- Batch validation: Process 20 functions at a time with structured output
+- Early stopping: Stop on first non-match (assumes similarity-sorted results degrade)
+- Retry logic: 3 attempts with exponential backoff (1s → 2.5s → 6.25s)
+- Schema validation: Use structured output for batch evaluations
+
+**Elixir Adaptations:**
+- Use `req` HTTP client for Anthropic API calls
+- Implement GenServer for rate-limited LLM queue processing
+- Use `Jason` for JSON encoding/decoding
+- Structured output via JSON schema in prompt + validation
+
+### Phase 4: Vector Embeddings (Priority: Medium)
+
+**Files to create:**
+- `lib/codicil/embeddings.ex` - Embedding client abstraction
+- `lib/codicil/embeddings/anthropic.ex` - Claude embeddings (if available)
+- `lib/codicil/embeddings/local.ex` - Local embedding model fallback
+
+**Patterns from GraphSense:**
+- Pinecone embeddings: `pinecone.inference.embed("multilingual-e5-large", [text], {inputType: "passage|query"})`
+- Vector dimension: 1024 (multilingual-e5-large)
+- Separate input types: "passage" for indexing, "query" for searching
+- Store as VECTOR(1024) in PostgreSQL pgvector → SQLite sqlite-vec
+
+**Elixir Adaptations:**
+- Use Anthropic API for embeddings (if available) or local model
+- Store embeddings as binary blobs or JSON arrays in SQLite
+- Use `sqlite-vec` extension for vector similarity search: `SELECT * FROM functions ORDER BY embedding <=> $1 LIMIT 20`
+
+### Phase 5: MCP Tools (Priority: High)
+
+**Files to create:**
+- `lib/codicil/mcp/tools/similar_functions.ex` - Semantic function search
+- `lib/codicil/mcp/tools/function_callers.ex` - Find callers via graph
+- `lib/codicil/mcp/tools/function_callees.ex` - Find callees via graph
+- `lib/codicil/mcp/tools/module_relationships.ex` - Import/alias tracking
+
+**Patterns from GraphSense MCP Tools:**
+
+**similar_functions:**
+```typescript
+// 1. Generate embedding for query
+embedding = await pinecone.inference.embed("multilingual-e5-large", [description])
+
+// 2. Vector similarity search (no limit)
+results = await db.query(`
+  SELECT id, summary, path, name, start_line, end_line,
+         1 - (embedding <=> $1::vector) as similarity_score
+  FROM functions
+  WHERE embedding IS NOT NULL AND summary IS NOT NULL
+  ORDER BY embedding <=> $1::vector
+`, [embedding])
+
+// 3. Batch LLM validation (20 at a time)
+validatedFunctions = await batchValidateFunctions(description, results, batchSize=20)
+
+// 4. Return formatted results
+```
+
+**function_callers:**
+```cypher
+MATCH (caller:Function)-[:CALLS]->(target:Function)
+WHERE target.name = $functionName AND target.path = $functionPath
+RETURN caller.name, caller.path, caller.summary
+```
+
+**function_callees:**
+```cypher
+MATCH (source:Function)-[:CALLS]->(callee:Function)
+WHERE source.name = $functionName AND source.path = $functionPath
+RETURN callee.name, callee.path, callee.summary
+```
+
+**Elixir Adaptations:**
+- Replace Cypher with SQLite CTEs or joins on edges table
+- Use Ecto queries for type safety and composability
+- Return results as `{:ok, text}` or `{:ok, %{content: [%{type: "text", text: ...}]}}`
+
+### Phase 6: Indexing & Watcher (Priority: Low)
+
+**Files to create:**
+- `lib/codicil/indexer.ex` - Main indexing coordinator
+- `lib/codicil/watcher.ex` - File system watcher for incremental updates
+
+**Patterns from GraphSense:**
+- Glob files: `**/*.{ex,exs}` excluding `deps/`, `_build/`, `.git/`
+- Process queue with rate limiting (1 second delay between LLM calls)
+- Checksum-based change detection
+- File watcher for real-time re-indexing
+
 ## Key Implementation Patterns
 
-### MCP Protocol (from reference: tidewave_phoenix)
+### MCP Protocol
 - Tools use `inputSchema` following JSON Schema spec
 - Register tool callbacks in ETS table for O(1) dispatch
 - Supervisor tree: `Application → MCP Supervisor → [Registry, Logger, Tools]`
 - Safe code execution: spawn_monitor with timeout and demonitor
 - JSON-RPC 2.0 strict compliance for AI assistant compatibility
 
-### Semantic Search (from reference: graphsense)
+### Semantic Search (from GraphSense)
 - **Batch LLM validation**: Process 20 functions at a time to reduce API costs
 - **Early stopping**: Stop on first non-match (assumes similarity-sorted results degrade)
 - **Hybrid ranking**: Vector similarity (fast) → Graph filtering (precise) → LLM reranking (accurate)
 - **Per-repo isolation**: Separate database instances per analyzed codebase
 - **Incremental indexing**: File watcher triggers re-analysis on changes
+- **Rate limiting**: 1 second delay between LLM API calls to avoid throttling
+- **Retry logic**: Exponential backoff (3 attempts: 1s, 2.5s, 6.25s)
 
 ### Elixir Specifics
 - Use `Code.string_to_quoted/2` with `:columns` option for position tracking
@@ -152,9 +301,10 @@ Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
 
 - **Mirror structure**: `test/codicil/mcp/tools/search_test.exs` tests `lib/codicil/mcp/tools/search.ex`
 - **MCP compliance**: Integration tests for JSON-RPC 2.0 protocol conformance
-- **Mock databases**: Use in-memory fixtures instead of real Neo4j/PostgreSQL in tests
+- **Mock databases**: Use in-memory SQLite for tests (`:memory:` database)
 - **AST parsing**: Test with various Elixir syntax patterns (macros, protocols, guards)
 - **Tool isolation**: Each tool test should be independent and fast
+- **Property testing**: Use StreamData for AST edge cases
 
 ## Technical Requirements
 
@@ -163,12 +313,18 @@ Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
 - **Bandit**: `~> 1.6` (user's project provides this as dev dependency)
 - **Git repository** required (for file change tracking)
 - **Database**:
-  - SQLite with sqlite-vec extension for vector search
-  - Graph queries via Common Table Expressions (CTEs) in SQLite
-  - Recommend `exqlite` or `ecto_sqlite3` for Elixir integration
+  - SQLite with `sqlite-vec` extension for vector search
+  - Ecto with `:ecto_sqlite3` adapter
+  - Graph queries via Common Table Expressions (CTEs)
+  - Schema: functions table + edges table for relationships
 - **API keys**:
   - Anthropic API key for Claude 3.5 Sonnet (summarization and embeddings)
-  - Optional: Pinecone API key (if using external embeddings service)
+- **Dependencies to add**:
+  - `:ecto_sql` - Database abstraction
+  - `:ecto_sqlite3` - SQLite adapter
+  - `:exqlite` - Native SQLite driver (required by ecto_sqlite3)
+  - `:req` - HTTP client for API calls
+  - `:jason` - JSON encoding/decoding (already added)
 
 **No Phoenix required** - This is a library dependency that users add to their Elixir projects.
 
@@ -177,6 +333,43 @@ Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
 Application config should support:
 - `:root` - Project root directory (defaults to `File.cwd!()`)
 - `:project_name` - Auto-detect from Mix.Project
-- `:database` - Database connection settings
-- `:llm_provider` - LLM configuration for summarization
-- `:embedding_provider` - Vector embedding service config
+- `:database_path` - SQLite database file path (defaults to `~/.codicil/<project_name>.db`)
+- `:anthropic_api_key` - Claude API key (defaults to ENV["ANTHROPIC_API_KEY"])
+- `:batch_size` - LLM validation batch size (defaults to 20)
+- `:rate_limit_ms` - Delay between LLM calls (defaults to 1000ms)
+
+## Implementation Order
+
+1. **✅ Phase 0: MCP Core** (Complete)
+   - Server, supervisor, utilities, Plug adapter
+   - Test suite passing (28/28 tests)
+
+2. **🚧 Phase 1: Database Layer** (Next)
+   - SQLite setup with Ecto
+   - Schema migrations (functions + edges tables)
+   - Graph query helpers
+   - Vector search with sqlite-vec
+
+3. **Phase 2: AST Parser**
+   - Parse `.ex`/`.exs` files
+   - Extract functions, modules, relationships
+   - Build call graph
+
+4. **Phase 3: LLM Integration**
+   - Anthropic API client
+   - Function summarization
+   - Batch validation with early stopping
+
+5. **Phase 4: Vector Embeddings**
+   - Embedding generation (Anthropic or local)
+   - Vector storage in SQLite
+
+6. **Phase 5: MCP Tools**
+   - `similar_functions` tool
+   - `function_callers` tool
+   - `function_callees` tool
+   - `module_relationships` tool
+
+7. **Phase 6: Indexing & Watcher**
+   - Repository indexing
+   - File watching for incremental updates
