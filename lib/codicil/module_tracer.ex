@@ -34,6 +34,9 @@ defmodule Codicil.ModuleTracer do
   defp complete_impl(bytecode, %{module: module, file: file} = state) do
     alias Codicil.Function
 
+    # Parse source file to extract function line numbers
+    line_map = parse_function_lines(file)
+
     # Extract function information from disassembled bytecode
     {:beam_file, _module, exports, _attributes, _compile_info, functions} =
       :beam_disasm.file(bytecode)
@@ -60,6 +63,7 @@ defmodule Codicil.ModuleTracer do
     # Store functions in database
     for {name, arity} <- all_functions do
       exported = MapSet.member?(exported_set, {name, arity})
+      line = Map.get(line_map, {name, arity}, 0)
 
       attrs = %{
         name: Atom.to_string(name),
@@ -67,8 +71,8 @@ defmodule Codicil.ModuleTracer do
         arity: arity,
         exported: exported,
         path: file,
-        start_line: 0,  # TODO: Extract actual line numbers from source file
-        end_line: 0,    # TODO: Extract actual line numbers from source file
+        start_line: line,
+        end_line: line,  # TODO: Calculate actual end line
         checksum: "TODO"
       }
 
@@ -83,6 +87,44 @@ defmodule Codicil.ModuleTracer do
 
   defp via(module_name) do
     {:via, Registry, {Codicil.ModuleTracerRegistry, module_name}}
+  end
+
+  defp parse_function_lines(file_path) do
+    case File.read(file_path) do
+      {:ok, source} ->
+        case Code.string_to_quoted(source, columns: true) do
+          {:ok, ast} ->
+            extract_function_lines(ast)
+
+          {:error, _} ->
+            %{}
+        end
+
+      {:error, _} ->
+        %{}
+    end
+  end
+
+  defp extract_function_lines(ast) do
+    {_ast, line_map} =
+      Macro.prewalk(ast, %{}, fn
+        {:def, meta, [{name, _meta2, args} | _]} = node, acc when is_atom(name) and is_list(args) ->
+          line = Keyword.get(meta, :line)
+          {node, Map.put(acc, {name, length(args)}, line)}
+
+        {:defp, meta, [{name, _meta2, args} | _]} = node, acc when is_atom(name) and is_list(args) ->
+          line = Keyword.get(meta, :line)
+          {node, Map.put(acc, {name, length(args)}, line)}
+
+        {:defmacro, meta, [{name, _meta2, args} | _]} = node, acc when is_atom(name) and is_list(args) ->
+          line = Keyword.get(meta, :line)
+          {node, Map.put(acc, {name, length(args)}, line)}
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    line_map
   end
 
   # ROUTER
