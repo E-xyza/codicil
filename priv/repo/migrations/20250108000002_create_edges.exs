@@ -5,7 +5,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateEdges do
     create table(:edges) do
       add :from_id, :integer, null: false
       add :to_id, :integer, null: false
-      add :type, :string, null: false
+      add :type, :integer, null: false
     end
 
     create index(:edges, [:from_id])

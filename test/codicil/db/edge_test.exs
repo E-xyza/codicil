@@ -15,14 +15,14 @@ defmodule Codicil.EdgeTest do
       attrs = %{
         from_id: 1,
         to_id: 2,
-        type: "calls"
+        type: :calls
       }
 
       assert {:ok, edge} = Edge.create(attrs)
       assert is_integer(edge.id)
       assert edge.from_id == 1
       assert edge.to_id == 2
-      assert edge.type == "calls"
+      assert edge.type == :calls
     end
 
     test "returns error with invalid attributes" do
@@ -39,14 +39,14 @@ defmodule Codicil.EdgeTest do
       {:ok, created} = Edge.create(%{
         from_id: 10,
         to_id: 20,
-        type: "imports_from"
+        type: :imports_from
       })
 
       edge = Edge.get(created.id)
       assert edge.id == created.id
       assert edge.from_id == 10
       assert edge.to_id == 20
-      assert edge.type == "imports_from"
+      assert edge.type == :imports_from
     end
 
     test "returns nil when edge not found" do
@@ -59,7 +59,7 @@ defmodule Codicil.EdgeTest do
       {:ok, edge} = Edge.create(%{
         from_id: 5,
         to_id: 6,
-        type: "calls"
+        type: :calls
       })
 
       assert {:ok, deleted} = Edge.delete(edge)

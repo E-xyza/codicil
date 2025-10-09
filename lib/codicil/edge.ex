@@ -36,6 +36,5 @@ defmodule Codicil.Edge do
     edge
     |> Changeset.cast(attrs, [:from_id, :to_id, :type])
     |> Changeset.validate_required([:from_id, :to_id, :type])
-    |> Changeset.validate_inclusion(:type, ["calls", "imports_from"])
   end
 end
