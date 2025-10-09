@@ -8,8 +8,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :arity, :integer, null: false
       add :exported, :boolean, null: false, default: true
       add :path, :string, null: false
-      add :start_line, :integer, null: false
-      add :end_line, :integer, null: false
+      add :line, :integer, null: false
       add :parsed, :utc_datetime_usec
       add :summary, :text
       add :embedding, :binary

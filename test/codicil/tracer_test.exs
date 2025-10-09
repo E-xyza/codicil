@@ -27,8 +27,7 @@ defmodule Codicil.TracerTest do
       assert function.arity == 1
       assert function.exported
       assert function.path == example_path
-      assert is_integer(function.start_line)
-      assert is_integer(function.end_line)
+      assert function.line == 2
 
       # Clean up
       :code.purge(module)

@@ -64,14 +64,13 @@ defmodule Codicil.Function do
       :arity,
       :exported,
       :path,
-      :start_line,
-      :end_line,
+      :line,
       :parsed,
       :summary,
       :embedding,
       :checksum
     ])
-    |> Changeset.validate_required([:name, :module, :arity, :exported, :path, :start_line, :end_line, :checksum])
+    |> Changeset.validate_required([:name, :module, :arity, :exported, :path, :line, :checksum])
     |> maybe_set_parsed()
   end
 

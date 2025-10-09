@@ -71,8 +71,7 @@ defmodule Codicil.ModuleTracer do
         arity: arity,
         exported: exported,
         path: file,
-        start_line: line,
-        end_line: line,  # TODO: Calculate actual end line
+        line: line,
         checksum: "TODO"
       }
 
