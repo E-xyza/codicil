@@ -2,41 +2,39 @@ defmodule Codicil.TracerTest do
   use ExUnit.Case, async: true
 
   alias Codicil.Tracer
+  alias Codicil.Function
+  alias Codicil.Db.Repo
+
+  setup do
+    # Start a sandbox transaction for isolated testing
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+    :ok
+  end
 
   describe "trace/2" do
-    test "returns :ok for :on_module event" do
-      bytecode = <<>>
-      env = %Macro.Env{}
+    test "handles :on_module event with simple add_one function" do
+      # Compile a module with a single function
+      [{module, _}] = Code.compile_string("""
+      defmodule AddOneModule do
+        def add_one(x), do: x + 1
+      end
+      """)
 
-      assert :ok = Tracer.trace({:on_module, bytecode, []}, env)
-    end
+      # Give the background task time to complete
+      Process.sleep(100)
 
-    test "returns :ok for remote_function event" do
-      meta = [line: 10]
-      env = %Macro.Env{}
+      # Should create a Function database entry
+      assert function = Function.get_by_mfa({AddOneModule, :add_one, 1})
+      assert function.name == "add_one"
+      assert function.module == "Elixir.AddOneModule"
+      assert function.arity == 1
+      assert function.path =~ "nofile"
+      assert is_integer(function.start_line)
+      assert is_integer(function.end_line)
 
-      assert :ok = Tracer.trace({:remote_function, meta, String, :length, 1}, env)
-    end
-
-    test "returns :ok for import event" do
-      meta = [line: 5]
-      env = %Macro.Env{}
-
-      assert :ok = Tracer.trace({:import, meta, Enum, []}, env)
-    end
-
-    test "returns :ok for alias event" do
-      meta = [line: 3]
-      env = %Macro.Env{}
-
-      assert :ok = Tracer.trace({:alias, meta, MyApp.Module, [], []}, env)
-    end
-
-    test "returns :ok for local_function event" do
-      meta = [line: 15]
-      env = %Macro.Env{}
-
-      assert :ok = Tracer.trace({:local_function, meta, :helper, 2}, env)
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
     end
   end
 end

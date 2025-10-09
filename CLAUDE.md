@@ -187,26 +187,55 @@ Tools defined in `lib/codicil/mcp/tools/` with standard callback pattern:
 - `function_callees` - Find functions called by source
 - `module_relationships` - Analyze import/alias/use chains
 
-### Code Analysis Pipeline (GraphSense Reference - 🚧 To Transfer)
+### Code Analysis Pipeline
 
-**Indexing Flow:**
-1. Parse `.ex`/`.exs` files using `Code.string_to_quoted/2`
-2. Extract function definitions, module docs, and relationships
-3. Generate summaries using LLM (Claude 3.5 Sonnet)
-4. Create vector embeddings (Anthropic or local)
-5. Store in dual databases (graph + vector)
+**Indexing Flow (Using Compiler Tracers):**
+1. Hook into Elixir's compilation process via `Code.put_compiler_option(:tracers, [Codicil.Tracer])`
+2. Receive compilation events in `Codicil.Tracer.trace/2` callback
+3. Capture module/function relationships and metadata during compilation
+4. Extract full function info post-compilation using `Code.fetch_docs/1`
+5. Generate summaries using LLM (Claude 3.5 Sonnet)
+6. Create vector embeddings (Anthropic or local)
+7. Store in SQLite database with graph and vector capabilities
 
 **Database Strategy:**
 - Single SQLite database with dual capabilities:
-  - Graph tables: Module and function nodes, relationship edges (using CTEs for traversal)
+  - Graph tables: Module and Function tables, relationship edges (using CTEs for traversal)
   - Vector tables: Function embeddings via sqlite-vec extension
 - Hybrid queries: Vector similarity + graph traversal + LLM reranking
 
-**Elixir-Specific Features:**
-- Parse AST to extract module attributes (`@moduledoc`, `@doc`, `@callback`)
-- Track `import`, `alias`, `use`, `require` directives
-- Handle protocols, behaviours, macros
-- Support umbrella apps and Mix dependencies
+**Compiler Tracer Approach:**
+Reference: https://hexdocs.pm/elixir/main/Code.html
+
+**Tracer Implementation:**
+- Create module with `trace/2` function: `trace(event, %Macro.Env{})`
+- Must return `:ok` and do minimal synchronous work
+- Dispatch bulk work to separate process to avoid slowing compilation
+
+**Key Tracer Events:**
+1. **Module Lifecycle:**
+   - `:start` - Compiler begins tracing new lexical context
+   - `:stop` - Compiler stops tracing lexical context
+   - `:defmodule` - Module definition starts
+
+2. **Import/Alias/Require:**
+   - `{:import, meta, module, opts}` - Track imports
+   - `{:alias, meta, alias, as, opts}` - Track aliases
+   - `{:require, meta, module, opts}` - Track requires
+
+3. **Function References:**
+   - `{:remote_function, meta, module, name, arity}` - External calls
+   - `{:local_function, meta, name, arity}` - Local calls
+   - `{:imported_function, meta, module, name, arity}` - Imported calls
+
+4. **Module Compilation:**
+   - `{:on_module, bytecode, _}` - Module fully defined, extract all info here
+
+**Post-Compilation Extraction:**
+- Use `Code.fetch_docs/1` for function documentation and signatures
+- Use `Module.__info__(:functions)` and `Module.__info__(:macros)` for function lists
+- Combine tracer events with post-compilation introspection for complete picture
+- No AST parsing needed - all info available from compiler and runtime
 
 ## GraphSense Transfer Strategy
 

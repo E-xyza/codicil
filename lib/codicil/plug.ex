@@ -24,9 +24,7 @@ defmodule Codicil.Plug do
           allow_remote_access: false,
           inspect_opts: [charlists: :as_lists, limit: 50, pretty: true]
         })
-        |> Plug.Parsers.call(
-          Plug.Parsers.init(parsers: [:json], json_decoder: Jason)
-        )
+        |> Plug.Parsers.call(Plug.Parsers.init(parsers: [:json], json_decoder: Jason))
         |> Codicil.MCP.Server.handle_http_message()
 
       _ ->

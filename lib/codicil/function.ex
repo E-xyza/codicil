@@ -24,6 +24,23 @@ defmodule Codicil.Function do
   end
 
   @doc """
+  Retrieves a function by module, function name, and arity (MFA tuple).
+  Returns the function struct or nil if not found.
+  """
+  def get_by_mfa({module, name, arity}) when is_atom(module) and is_atom(name) and is_integer(arity) do
+    import Ecto.Query
+
+    module_str = Atom.to_string(module)
+    name_str = Atom.to_string(name)
+
+    from(f in Function,
+      where: f.module == ^module_str and f.name == ^name_str and f.arity == ^arity,
+      limit: 1
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Updates a function record.
   """
   def update(%Function{} = function, attrs) do
