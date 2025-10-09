@@ -1,0 +1,9 @@
+# MCP Tools Directory
+
+This directory will contain the MCP tool implementations for Codicil.
+
+Planned tools:
+- similar_functions - Semantic search for Elixir functions
+- function_callers - Find functions that call a target
+- function_callees - Find functions called by source
+- module_relationships - Analyze import/alias/use chains
