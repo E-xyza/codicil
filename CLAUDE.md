@@ -133,10 +133,12 @@ The `graphsense/` directory contains a TypeScript/Node.js reference implementati
 ### Phase 1: Database Layer (Priority: High)
 
 **Files to create:**
-- `lib/codicil/db.ex` - Database connection and setup
-- `lib/codicil/db/schema.ex` - SQLite schema migrations
-- `lib/codicil/db/graph.ex` - Graph query helpers (file/function nodes, relationships)
-- `lib/codicil/db/vector.ex` - Vector search with sqlite-vec
+- `lib/codicil_db/repo.ex` - Ecto repository (Codicil.Db.Repo)
+- `lib/codicil_db/function.ex` - Function schema (Codicil.Db.Function)
+- `lib/codicil_db/edge.ex` - Relationship edge schema (Codicil.Db.Edge)
+- `priv/repo/migrations/YYYYMMDDHHMMSS_create_functions.exs` - Functions table
+- `priv/repo/migrations/YYYYMMDDHHMMSS_create_edges.exs` - Edges table
+- `priv/repo/migrations/YYYYMMDDHHMMSS_add_indices.exs` - Indices for performance
 
 **Patterns from GraphSense:**
 - Dual-database approach (Neo4j → SQLite graph tables, PostgreSQL+pgvector → SQLite+sqlite-vec)
@@ -297,6 +299,45 @@ RETURN callee.name, callee.path, callee.summary
 - Handle multi-clause functions (collect all clauses as single entity)
 - Resolve aliases using `Macro.expand/2` for accurate relationship tracking
 
+## Database Guidelines
+
+**IMPORTANT:** Follow these conventions when working with the database layer:
+
+### Directory Structure
+- **All database schemas** must be placed in `lib/codicil_db/`
+- **Namespace**: All schemas use the `Codicil.Db` namespace
+- **Example**: `lib/codicil_db/function.ex` → `defmodule Codicil.Db.Function`
+
+### Code Style
+- **DO NOT** use `import Ecto.Changeset`
+- **DO** use `alias Ecto.Changeset` instead
+- This ensures explicit changeset function calls for better code clarity
+
+### Database Location
+- SQLite database file must be stored in Codicil's `priv/` directory
+- Obtain the path using `:code.priv_dir(:codicil)`
+- Example: `Path.join(:code.priv_dir(:codicil), "codicil.db")`
+
+### Migration Strategy
+- **Each table gets its own migration file**
+- **Indices and foreign keys** MAY be in separate migrations (use judgement)
+- **DO NOT create new migrations** to modify existing tables
+- **DO** modify the original migration file if changes are needed
+- This keeps migration history clean and deployment simple
+
+### Example Structure
+```
+lib/codicil_db/
+├── function.ex          # Codicil.Db.Function schema
+├── edge.ex              # Codicil.Db.Edge schema
+└── repo.ex              # Codicil.Db.Repo
+
+priv/repo/migrations/
+├── 20250101000001_create_functions.exs
+├── 20250101000002_create_edges.exs
+└── 20250101000003_add_function_indices.exs
+```
+
 ## Testing Strategy
 
 - **Mirror structure**: `test/codicil/mcp/tools/search_test.exs` tests `lib/codicil/mcp/tools/search.ex`
@@ -333,8 +374,8 @@ RETURN callee.name, callee.path, callee.summary
 Application config should support:
 - `:root` - Project root directory (defaults to `File.cwd!()`)
 - `:project_name` - Auto-detect from Mix.Project
-- `:database_path` - SQLite database file path (defaults to `~/.codicil/<project_name>.db`)
-- `:anthropic_api_key` - Claude API key (defaults to ENV["ANTHROPIC_API_KEY"])
+- `:database_path` - SQLite database file path (defaults to `:code.priv_dir(:codicil)/codicil.db`)
+- `:anthropic_api_key` - Claude API key (defaults to `System.get_env("ANTHROPIC_API_KEY")`)
 - `:batch_size` - LLM validation batch size (defaults to 20)
 - `:rate_limit_ms` - Delay between LLM calls (defaults to 1000ms)
 
