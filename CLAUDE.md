@@ -25,6 +25,88 @@ git commit -m "Add Elixir AST parser for function extraction
 - Add comprehensive test coverage"
 ```
 
+## IMPORTANT: Test-Driven Development (TDD) Workflow
+
+**CRITICAL:** From this point forward, all development MUST follow strict Test-Driven Development (TDD):
+
+### Microfeature Development Cycle
+
+1. **Write the test FIRST**
+   - Identify a small, focused microfeature to implement
+   - Write a failing test that describes the expected behavior
+   - Run the test to confirm it fails (red)
+
+2. **Make the test pass**
+   - Implement the minimal code necessary to make the test pass
+   - Run the test to confirm it passes (green)
+   - Refactor if needed while keeping tests green
+
+3. **Commit immediately**
+   - Commit both the test and implementation together
+   - Each commit should contain ONE microfeature (test + code)
+   - Never commit code without its corresponding test
+   - Never commit multiple microfeatures in a single commit
+
+### What is a Microfeature?
+
+A microfeature is a small, atomic piece of functionality that:
+- Can be tested independently
+- Takes minutes, not hours, to implement
+- Has a clear, single responsibility
+- Represents one behavior or capability
+
+### Examples of Microfeatures
+
+**Good microfeatures (one commit each):**
+- "Add Function schema with basic fields"
+- "Add function name validation to changeset"
+- "Add database connection configuration"
+- "Add query to find function by name and path"
+- "Add index on functions (name, path) columns"
+
+**Too large (should be split):**
+- ❌ "Add complete database layer" (split into schema, repo, migrations, queries)
+- ❌ "Implement AST parser" (split into parse file, extract functions, detect calls, etc.)
+
+### TDD Workflow Example
+
+```bash
+# 1. Write failing test
+# Create test/codicil_db/function_test.exs
+mix test  # Confirm it fails (RED)
+
+# 2. Implement minimal code to pass
+# Create lib/codicil_db/function.ex with schema
+mix test  # Confirm it passes (GREEN)
+
+# 3. Commit immediately
+git add test/codicil_db/function_test.exs lib/codicil_db/function.ex
+git commit -m "Add Function schema with basic fields
+
+- Define Ecto schema for functions table
+- Include id, name, path, start_line, end_line fields
+- Add test verifying schema struct creation"
+
+# 4. Repeat for next microfeature
+```
+
+### Why This Matters
+
+- **Prevents scope creep**: Forces you to think in small increments
+- **Better git history**: Each commit is self-contained and understandable
+- **Easier debugging**: Small commits make it easy to identify when bugs were introduced
+- **Confidence**: Every commit has passing tests, so main branch is always working
+- **Reviewability**: Small, focused commits are easier to review and understand
+
+### Red-Green-Refactor Discipline
+
+1. **RED**: Write a failing test
+2. **GREEN**: Make it pass with minimal code
+3. **REFACTOR**: Clean up while keeping tests green
+4. **COMMIT**: Save your work
+
+Never skip the RED step - always verify your test fails before implementing!
+
 ## Project Goal
 
 **Codicil** is an Elixir-focused code analysis MCP (Model Context Protocol) server that provides semantic code search and structural analysis for Elixir codebases.
