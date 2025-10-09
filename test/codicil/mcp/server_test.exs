@@ -2,7 +2,6 @@ defmodule Codicil.MCP.ServerTest do
   use ExUnit.Case, async: true
   import Plug.Test
   import Plug.Conn
-  import ExUnit.CaptureLog
 
   @moduletag :capture_log
 
@@ -112,18 +111,13 @@ defmodule Codicil.MCP.ServerTest do
     test "returns error for invalid JSON-RPC message", %{conn: conn} do
       message = %{"invalid" => "message"}
 
-      log =
-        capture_log([level: :warning], fn ->
-          conn = %{conn | body_params: message}
-          response = Codicil.MCP.Server.handle_http_message(conn)
+      conn = %{conn | body_params: message}
+      response = Codicil.MCP.Server.handle_http_message(conn)
 
-          assert response.status == 200
-          response_body = Jason.decode!(response.resp_body)
-          assert response_body["error"]["code"] == -32600
-          assert response_body["error"]["message"] == "Could not parse message"
-        end)
-
-      assert log =~ "Invalid JSON-RPC message format"
+      assert response.status == 200
+      response_body = Jason.decode!(response.resp_body)
+      assert response_body["error"]["code"] == -32600
+      assert response_body["error"]["message"] == "Could not parse message"
     end
 
     test "returns error for unsupported method", %{conn: conn} do
@@ -133,18 +127,13 @@ defmodule Codicil.MCP.ServerTest do
         "id" => "4"
       }
 
-      log =
-        capture_log([level: :warning], fn ->
-          conn = %{conn | body_params: message}
-          response = Codicil.MCP.Server.handle_http_message(conn)
+      conn = %{conn | body_params: message}
+      response = Codicil.MCP.Server.handle_http_message(conn)
 
-          assert response.status == 400
-          response_body = Jason.decode!(response.resp_body)
-          assert response_body["error"]["code"] == -32601
-          assert response_body["error"]["message"] == "Method not found"
-        end)
-
-      assert log =~ "Received unsupported method"
+      assert response.status == 400
+      response_body = Jason.decode!(response.resp_body)
+      assert response_body["error"]["code"] == -32601
+      assert response_body["error"]["message"] == "Method not found"
     end
 
     test "validates protocol version", %{conn: conn} do

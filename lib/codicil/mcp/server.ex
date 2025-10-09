@@ -122,8 +122,16 @@ defmodule Codicil.MCP.Server do
            }
          }}
 
-      {:error, reason} ->
-        {:error, reason}
+      {:error, reason} when is_binary(reason) ->
+        {:error,
+         %{
+           jsonrpc: "2.0",
+           id: request_id,
+           error: %{
+             code: -32602,
+             message: reason
+           }
+         }}
     end
   end
 
@@ -164,6 +172,14 @@ defmodule Codicil.MCP.Server do
     result_or_error(
       request_id,
       {:ok, %{content: [%{type: "text", text: message}], isError: true}}
+    )
+  end
+
+  defp result_or_error(request_id, {:error, %{code: -32601} = error}) do
+    # Tool not found - return as successful response with isError: true per MCP spec
+    result_or_error(
+      request_id,
+      {:ok, %{content: [%{type: "text", text: error.message}], isError: true}}
     )
   end
 
