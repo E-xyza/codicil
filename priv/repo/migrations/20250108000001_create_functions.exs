@@ -6,6 +6,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :name, :string, null: false
       add :module, :string, null: false
       add :arity, :integer, null: false
+      add :exported, :boolean, null: false, default: true
       add :path, :string, null: false
       add :start_line, :integer, null: false
       add :end_line, :integer, null: false

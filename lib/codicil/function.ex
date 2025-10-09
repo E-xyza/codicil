@@ -62,6 +62,7 @@ defmodule Codicil.Function do
       :name,
       :module,
       :arity,
+      :exported,
       :path,
       :start_line,
       :end_line,
@@ -70,7 +71,7 @@ defmodule Codicil.Function do
       :embedding,
       :checksum
     ])
-    |> Changeset.validate_required([:name, :module, :arity, :path, :start_line, :end_line, :checksum])
+    |> Changeset.validate_required([:name, :module, :arity, :exported, :path, :start_line, :end_line, :checksum])
     |> maybe_set_parsed()
   end
 

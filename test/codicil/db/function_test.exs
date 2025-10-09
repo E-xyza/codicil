@@ -16,6 +16,7 @@ defmodule Codicil.FunctionTest do
         name: "my_function",
         module: "Elixir.MyModule",
         arity: 2,
+        exported: true,
         path: "/lib/my_module.ex",
         start_line: 10,
         end_line: 25,
@@ -27,6 +28,7 @@ defmodule Codicil.FunctionTest do
       assert function.name == "my_function"
       assert function.module == "Elixir.MyModule"
       assert function.arity == 2
+      assert function.exported
       assert function.path == "/lib/my_module.ex"
       assert function.start_line == 10
       assert function.end_line == 25
@@ -49,6 +51,7 @@ defmodule Codicil.FunctionTest do
         name: "test_func",
         module: "TestModule",
         arity: 1,
+        exported: true,
         path: "/test.ex",
         start_line: 1,
         end_line: 5,
@@ -72,6 +75,7 @@ defmodule Codicil.FunctionTest do
         name: "original",
         module: "Module",
         arity: 0,
+        exported: false,
         path: "/path.ex",
         start_line: 1,
         end_line: 2,
@@ -90,6 +94,7 @@ defmodule Codicil.FunctionTest do
         name: "to_delete",
         module: "Module",
         arity: 3,
+        exported: true,
         path: "/path.ex",
         start_line: 1,
         end_line: 2,

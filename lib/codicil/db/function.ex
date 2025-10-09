@@ -15,6 +15,7 @@ defmodule Codicil.Db.Function do
     field(:name, :string)
     field(:module, :string)
     field(:arity, :integer)
+    field(:exported, :boolean)
     field(:path, :string)
     field(:start_line, :integer)
     field(:end_line, :integer)

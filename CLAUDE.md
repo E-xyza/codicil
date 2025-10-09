@@ -488,6 +488,10 @@ priv/repo/migrations/
 - **Async tests**: ALWAYS use `async: true` in test modules for parallel execution
   - Example: `use ExUnit.Case, async: true`
   - SQLite with sandbox mode supports concurrent tests
+- **Boolean assertions**: Use idiomatic ExUnit assertions for boolean values
+  - **DO**: `assert value` instead of `assert value == true`
+  - **DO**: `refute value` instead of `assert value == false`
+  - This makes tests more readable and follows Elixir conventions
 
 ## Technical Requirements
 

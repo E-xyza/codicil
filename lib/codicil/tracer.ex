@@ -19,11 +19,8 @@ defmodule Codicil.Tracer do
   Returns `:ok` as required by the tracer protocol.
   """
   def trace({:on_module, bytecode, _opts}, env) do
-    # Extract module name from bytecode
-    {:ok, {module, _}} = :beam_lib.chunks(bytecode, [:attributes])
-
     # Dispatch to background process for analysis
-    Task.start(fn -> analyze_module(module, bytecode, env) end)
+    Task.start(fn -> analyze_module(bytecode, env) end)
 
     :ok
   end
@@ -32,41 +29,46 @@ defmodule Codicil.Tracer do
     :ok
   end
 
-  defp analyze_module(module, _bytecode, env) do
-    # Use runtime reflection to get function list
-    # The module is already loaded at this point
-    functions = module.__info__(:functions)
+  defp analyze_module(bytecode, env) do
+    # Extract function information from disassembled bytecode
+    {:beam_file, module, exports, _attributes, _compile_info, functions} =
+      :beam_disasm.file(bytecode)
 
-    # Extract function metadata using Code.fetch_docs
-    docs =
-      case Code.fetch_docs(module) do
-        {:docs_v1, _anno, _beam_language, _format, _module_doc, _metadata, docs} -> docs
-        {:error, _} -> []
-      end
+    # Build set of exported function names/arities (excluding compiler-generated functions)
+    exported_set =
+      exports
+      |> Enum.reject(fn {name, _arity, _label} ->
+        name in [:__info__, :module_info] or String.starts_with?(Atom.to_string(name), "-")
+      end)
+      |> Enum.map(fn {name, arity, _label} -> {name, arity} end)
+      |> MapSet.new()
 
-    # Store functions in database
-    for {name, arity} <- functions do
-      # Find the doc entry for this function
-      doc_entry = Enum.find(docs, fn
-        {{:function, ^name, ^arity}, _, _, _, _} -> true
-        _ -> false
+    # Extract all functions (excluding compiler-generated functions)
+    all_functions =
+      functions
+      |> Enum.reject(fn {:function, name, _arity, _label, _code} ->
+        name in [:__info__, :module_info] or String.starts_with?(Atom.to_string(name), "-")
+      end)
+      |> Enum.map(fn {:function, name, arity, _label, _code} ->
+        {name, arity}
       end)
 
-      line =
-        case doc_entry do
-          {{:function, _, _}, anno, _, _, _} -> Keyword.get(anno, :line, 1)
-          nil -> 1
-        end
+    # Store functions in database
+    for {name, arity} <- all_functions do
+      exported = MapSet.member?(exported_set, {name, arity})
 
-      Function.create(%{
+      attrs = %{
         name: Atom.to_string(name),
         module: Atom.to_string(module),
         arity: arity,
+        exported: exported,
         path: env.file,
-        start_line: line,
-        end_line: line,  # TODO: Calculate actual end line from AST
-        checksum: "TODO"  # TODO: Calculate checksum
-      })
+        start_line: 0,  # TODO: Extract actual line numbers from source file
+        end_line: 0,    # TODO: Extract actual line numbers from source file
+        checksum: "TODO"
+      }
+
+      Function.create(attrs)
     end
   end
 end

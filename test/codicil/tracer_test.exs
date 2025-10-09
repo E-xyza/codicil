@@ -25,9 +25,31 @@ defmodule Codicil.TracerTest do
       assert function.name == "add_one"
       assert function.module == "Elixir.AddOneModule"
       assert function.arity == 1
+      assert function.exported
       assert function.path == example_path
       assert is_integer(function.start_line)
       assert is_integer(function.end_line)
+
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
+    end
+
+    test "marks private functions as exported: false" do
+      # Compile a module with both public and private functions
+      example_path = Path.join(__DIR__, "tracer_examples/private_function_module.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Public function should be exported
+      assert public_fn = Function.get_by_mfa({PrivateFunctionModule, :public_function, 1})
+      assert public_fn.exported
+
+      # Private function should not be exported
+      assert private_fn = Function.get_by_mfa({PrivateFunctionModule, :private_helper, 1})
+      refute private_fn.exported
 
       # Clean up
       :code.purge(module)
