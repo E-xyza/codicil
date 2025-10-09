@@ -410,6 +410,109 @@ RETURN callee.name, callee.path, callee.summary
 - Handle multi-clause functions (collect all clauses as single entity)
 - Resolve aliases using `Macro.expand/2` for accurate relationship tracking
 
+### Router Pattern for GenServers
+
+**IMPORTANT:** All GenServers and GenServer-like modules (LiveViews, etc.) should follow the Router Pattern for code organization.
+
+The Router Pattern organizes GenServer code into clear sections that make it easy to understand the API and find implementations:
+
+#### Structure
+
+```elixir
+defmodule MyGenServer do
+  use GenServer
+
+  # 1. BOILERPLATE & INITIALIZATION
+  # - child_spec, start_link, init
+  # - These rarely change once written
+
+  def start_link(args) do
+    GenServer.start_link(__MODULE__, args, name: via_tuple(args.id))
+  end
+
+  def init(args) do
+    {:ok, %{id: args.id, data: nil}}
+  end
+
+  # 2. API (Public interface - what external callers use)
+  # - Declare @spec for all public functions
+  # - Keep implementations one-liners that delegate to handle_* via GenServer.call/cast
+
+  @spec get_data(id :: term()) :: term()
+  def get_data(id) do
+    GenServer.call(via_tuple(id), :get_data)
+  end
+
+  @spec set_data(id :: term(), data :: term()) :: :ok
+  def set_data(id, data) do
+    GenServer.cast(via_tuple(id), {:set_data, data})
+  end
+
+  # 3. API IMPLEMENTATION (Private - the actual logic)
+  # - defp functions that contain the real implementation
+  # - For handle_call: defp name_impl(args..., from, state)
+  # - For handle_cast: defp name_impl(args..., state)  # NO 'from' parameter
+  # - For handle_info: defp name_impl(message, state)
+  # - Always return the full tuple {:reply, result, state} or {:noreply, state}
+
+  defp get_data_impl(_from, state) do
+    {:reply, state.data, state}
+  end
+
+  defp set_data_impl(data, state) do
+    {:noreply, %{state | data: data}}
+  end
+
+  # 4. HELPER FUNCTIONS (if needed)
+  # - Pure functions used by implementations
+  # - Via tuples, formatters, etc.
+
+  defp via_tuple(id) do
+    {:via, Registry, {MyRegistry, id}}
+  end
+
+  # 5. ROUTER (Boilerplate at bottom - write once, never think about again)
+  # - Simple pattern matching that routes to implementations
+  # - One-to-one correspondence with API functions above
+  # - For calls: Pass 'from' to implementation
+  # - For casts: Do NOT pass 'from' to implementation
+
+  def handle_call(:get_data, from, state) do
+    get_data_impl(from, state)
+  end
+
+  def handle_cast({:set_data, data}, state) do
+    set_data_impl(data, state)
+  end
+end
+```
+
+#### Key Rules
+
+1. **API functions are one-liners** that call `GenServer.call/cast/info`
+2. **Implementation functions (defp *_impl)** contain the actual logic
+3. **For handle_call**: Implementation takes `(args..., from, state)`
+4. **For handle_cast**: Implementation takes `(args..., state)` - NO 'from' parameter
+5. **For handle_info**: Implementation takes `(message, state)`
+6. **Router at bottom** is pure boilerplate - pattern match and delegate
+7. **Always pass full GenServer return tuples** from implementations: `{:reply, ...}`, `{:noreply, ...}`, `{:stop, ...}`
+
+#### Benefits
+
+- **Locality**: API declaration, spec, and implementation are adjacent
+- **Clarity**: Router is obvious mechanical translation, no logic hidden there
+- **Testability**: Implementation functions are easily testable
+- **Maintainability**: Each section has a clear purpose
+- **Consistency**: Once you learn the pattern, all GenServers look the same
+
+#### Anti-patterns to Avoid
+
+- ❌ Putting logic inside `handle_call/cast/info` clauses
+- ❌ Separating API functions from their implementations
+- ❌ Passing `from` to cast implementations (casts don't have a 'from')
+- ❌ Passing unnecessary state data that's already in state (like `state.module`)
+- ❌ Making router anything other than pure pattern-match-and-delegate
+
 ## Database Guidelines
 
 **IMPORTANT:** Follow these conventions when working with the database layer:

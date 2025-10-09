@@ -7,7 +7,12 @@ defmodule Codicil.Application do
   def start(_type, _args) do
     children =
       if Application.spec(:mix, :vsn) do
-        [Codicil.Db.Repo, Codicil.MCP]
+        [
+          Codicil.Db.Repo,
+          Codicil.MCP,
+          {Registry, keys: :unique, name: Codicil.ModuleTracerRegistry},
+          {DynamicSupervisor, strategy: :one_for_one, name: Codicil.ModuleTracerSupervisor}
+        ]
       else
         Logger.warning("application :codicil is not starting because Mix is not running")
         []
