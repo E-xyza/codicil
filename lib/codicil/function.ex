@@ -66,6 +66,7 @@ defmodule Codicil.Function do
       :path,
       :line,
       :parsed,
+      :docs,
       :summary,
       :embedding,
       :checksum

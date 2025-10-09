@@ -19,6 +19,7 @@ defmodule Codicil.Db.Function do
     field(:path, :string)
     field(:line, :integer)
     field(:parsed, :utc_datetime_usec)
+    field(:docs, :string)
     field(:summary, :string)
     field(:embedding, :binary)
     field(:checksum, :string)

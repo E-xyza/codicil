@@ -10,6 +10,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :path, :string, null: false
       add :line, :integer, null: false
       add :parsed, :utc_datetime_usec
+      add :docs, :text
       add :summary, :text
       add :embedding, :binary
       add :checksum, :string, null: false

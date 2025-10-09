@@ -34,8 +34,8 @@ defmodule Codicil.ModuleTracer do
   defp complete_impl(bytecode, %{module: module, file: file} = state) do
     alias Codicil.Function
 
-    # Parse source file to extract function line numbers
-    line_map = parse_function_lines(file)
+    # Parse source file to extract function line numbers and docs
+    {line_map, doc_map} = parse_source_file(file)
 
     # Extract function information from disassembled bytecode
     {:beam_file, _module, exports, _attributes, _compile_info, functions} =
@@ -64,6 +64,7 @@ defmodule Codicil.ModuleTracer do
     for {name, arity} <- all_functions do
       exported = MapSet.member?(exported_set, {name, arity})
       line = Map.get(line_map, {name, arity}, 0)
+      docs = Map.get(doc_map, {name, arity})
 
       attrs = %{
         name: Atom.to_string(name),
@@ -72,6 +73,7 @@ defmodule Codicil.ModuleTracer do
         exported: exported,
         path: file,
         line: line,
+        docs: docs,
         checksum: "TODO"
       }
 
@@ -88,42 +90,91 @@ defmodule Codicil.ModuleTracer do
     {:via, Registry, {Codicil.ModuleTracerRegistry, module_name}}
   end
 
-  defp parse_function_lines(file_path) do
+  defp parse_source_file(file_path) do
     case File.read(file_path) do
       {:ok, source} ->
         case Code.string_to_quoted(source, columns: true) do
           {:ok, ast} ->
-            extract_function_lines(ast)
+            extract_function_metadata(ast)
 
           {:error, _} ->
-            %{}
+            {%{}, %{}}
         end
 
       {:error, _} ->
-        %{}
+        {%{}, %{}}
     end
   end
 
-  defp extract_function_lines(ast) do
-    {_ast, line_map} =
-      Macro.prewalk(ast, %{}, fn
-        {:def, meta, [{name, _meta2, args} | _]} = node, acc when is_atom(name) and is_list(args) ->
-          line = Keyword.get(meta, :line)
-          {node, Map.put(acc, {name, length(args)}, line)}
+  defp extract_function_metadata(ast) do
+    {_ast, {line_map, doc_map}} =
+      Macro.prewalk(ast, {%{}, %{}}, fn
+        # Match @doc attribute followed by function definition
+        {:@, _, [{:doc, _, [doc_string]}]} = node, {lines, docs} when is_binary(doc_string) ->
+          # Strip trailing newlines from doc string
+          trimmed_doc = String.trim_trailing(doc_string)
+          {node, {lines, Map.put(docs, :pending_doc, trimmed_doc)}}
 
-        {:defp, meta, [{name, _meta2, args} | _]} = node, acc when is_atom(name) and is_list(args) ->
-          line = Keyword.get(meta, :line)
-          {node, Map.put(acc, {name, length(args)}, line)}
+        # Match @doc false
+        {:@, _, [{:doc, _, [false]}]} = node, {lines, docs} ->
+          {node, {lines, Map.put(docs, :pending_doc, :hidden)}}
 
-        {:defmacro, meta, [{name, _meta2, args} | _]} = node, acc when is_atom(name) and is_list(args) ->
+        # Match def with previous @doc
+        {:def, meta, [{name, _meta2, args} | _]} = node, {lines, docs}
+        when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
-          {node, Map.put(acc, {name, length(args)}, line)}
+          key = {name, length(args)}
+          lines = Map.put(lines, key, line)
+
+          docs =
+            case Map.get(docs, :pending_doc) do
+              nil -> docs
+              :hidden -> Map.delete(docs, :pending_doc)
+              doc -> docs |> Map.put(key, doc) |> Map.delete(:pending_doc)
+            end
+
+          {node, {lines, docs}}
+
+        # Match defp with previous @doc
+        {:defp, meta, [{name, _meta2, args} | _]} = node, {lines, docs}
+        when is_atom(name) and is_list(args) ->
+          line = Keyword.get(meta, :line)
+          key = {name, length(args)}
+          lines = Map.put(lines, key, line)
+
+          docs =
+            case Map.get(docs, :pending_doc) do
+              nil -> docs
+              :hidden -> Map.delete(docs, :pending_doc)
+              doc -> docs |> Map.put(key, doc) |> Map.delete(:pending_doc)
+            end
+
+          {node, {lines, docs}}
+
+        # Match defmacro with previous @doc
+        {:defmacro, meta, [{name, _meta2, args} | _]} = node, {lines, docs}
+        when is_atom(name) and is_list(args) ->
+          line = Keyword.get(meta, :line)
+          key = {name, length(args)}
+          lines = Map.put(lines, key, line)
+
+          docs =
+            case Map.get(docs, :pending_doc) do
+              nil -> docs
+              :hidden -> Map.delete(docs, :pending_doc)
+              doc -> docs |> Map.put(key, doc) |> Map.delete(:pending_doc)
+            end
+
+          {node, {lines, docs}}
 
         node, acc ->
           {node, acc}
       end)
 
-    line_map
+    # Remove :pending_doc if it exists
+    doc_map = Map.delete(doc_map, :pending_doc)
+
+    {line_map, doc_map}
   end
 
   # ROUTER

@@ -11,7 +11,8 @@ defmodule Codicil.MixProject do
       aliases: [
         tidewave:
           "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4000) end)'"
-      ]
+      ],
+      test_elixirc_options: [docs: true]
     ]
   end
 

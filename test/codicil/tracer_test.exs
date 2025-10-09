@@ -54,5 +54,30 @@ defmodule Codicil.TracerTest do
       :code.purge(module)
       :code.delete(module)
     end
+
+    test "stores function documentation in docs field" do
+      # Compile a module with @doc attributes
+      example_path = Path.join(__DIR__, "tracer_examples/documented_module.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Function with @doc should have docs
+      assert documented_fn = Function.get_by_mfa({DocumentedModule, :double, 1})
+      assert documented_fn.docs == "Multiplies a number by two."
+
+      # Function with @doc false should have nil docs
+      assert hidden_fn = Function.get_by_mfa({DocumentedModule, :hidden_function, 1})
+      assert hidden_fn.docs == nil
+
+      # Function without @doc should have nil docs
+      assert undocumented_fn = Function.get_by_mfa({DocumentedModule, :undocumented_function, 1})
+      assert undocumented_fn.docs == nil
+
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
+    end
   end
 end
