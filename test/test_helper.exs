@@ -1,3 +1,6 @@
+# Enable compiler tracer for code analysis
+Code.put_compiler_option(:tracers, [Codicil.Tracer])
+
 ExUnit.start()
 
 # Set up sandbox mode (Repo is already started by the application with sandbox pool in test env)
