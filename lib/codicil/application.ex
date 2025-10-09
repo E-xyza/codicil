@@ -7,7 +7,7 @@ defmodule Codicil.Application do
   def start(_type, _args) do
     children =
       if Application.spec(:mix, :vsn) do
-        [Codicil.MCP]
+        [Codicil.Db.Repo, Codicil.MCP]
       else
         Logger.warning("application :codicil is not starting because Mix is not running")
         []

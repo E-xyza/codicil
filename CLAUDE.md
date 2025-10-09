@@ -395,6 +395,34 @@ RETURN callee.name, callee.path, callee.summary
 - **DO** use `alias Ecto.Changeset` instead
 - This ensures explicit changeset function calls for better code clarity
 
+### Context Module Naming
+- **DO NOT** use redundant names in context functions
+- **Example**: Use `Function.create/1` NOT `Function.create_function/1`
+- **Example**: Use `Function.get/1` NOT `Function.get_function/1`
+- The module name already provides context, so function names should be concise
+
+### Accessor Function Conventions
+Follow Elixir standards for data retrieval functions:
+- **`fetch/1`** - Returns `{:ok, data}` on success, `{:error, reason}` on failure (including not found)
+- **`fetch!/1`** - Returns `data` on success, raises on failure (including not found)
+- **`get/1`** - Returns `data` on success, `nil` if not found, crashes on database errors
+- **Example**:
+  - `Function.fetch("id-123")` → `{:ok, %Function{}}` or `{:error, :not_found}`
+  - `Function.fetch!("id-123")` → `%Function{}` or raises
+  - `Function.get("id-123")` → `%Function{}` or `nil`
+
+### Parameter Conventions
+- **ALWAYS use atom keys** for parameter maps/structs
+- This codebase does not consume user-inputted data, so atom keys are safe and idiomatic
+- **Example**: `%{name: "foo", path: "/lib/foo.ex"}` NOT `%{"name" => "foo", "path" => "/lib/foo.ex"}`
+
+### Datetime Fields
+- **ALWAYS** use `:utc_datetime_usec` type for all datetime fields in schemas
+- **DO NOT** use `:naive_datetime` or `:utc_datetime` (millisecond precision)
+- Microsecond precision ensures compatibility with Ecto timestamps and better accuracy
+- Example: `field :parsed, :utc_datetime_usec`
+- In tests, use `DateTime.utc_now()` to generate datetime values
+
 ### Database Location
 - SQLite database file must be stored in Codicil's `priv/` directory
 - Obtain the path using `:code.priv_dir(:codicil)`
@@ -428,6 +456,9 @@ priv/repo/migrations/
 - **AST parsing**: Test with various Elixir syntax patterns (macros, protocols, guards)
 - **Tool isolation**: Each tool test should be independent and fast
 - **Property testing**: Use StreamData for AST edge cases
+- **Async tests**: ALWAYS use `async: true` in test modules for parallel execution
+  - Example: `use ExUnit.Case, async: true`
+  - SQLite with sandbox mode supports concurrent tests
 
 ## Technical Requirements
 
