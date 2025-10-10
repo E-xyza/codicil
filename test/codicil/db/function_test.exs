@@ -13,8 +13,8 @@ defmodule Codicil.Db.FunctionTest do
   describe "create/1" do
     test "creates a function with valid attributes" do
       attrs = %{
-        name: "my_function",
-        module: "Elixir.MyModule",
+        name: :my_function,
+        module: MyModule,
         arity: 2,
         exported: true,
         path: "/lib/my_module.ex",
@@ -46,8 +46,8 @@ defmodule Codicil.Db.FunctionTest do
   describe "get/1" do
     test "retrieves a function by id" do
       {:ok, created} = Function.create(%{
-        name: "test_func",
-        module: "TestModule",
+        name: :test_func,
+        module: TestModule,
         arity: 1,
         exported: true,
         path: "/test.ex",
@@ -69,8 +69,8 @@ defmodule Codicil.Db.FunctionTest do
   describe "update/2" do
     test "updates function attributes" do
       {:ok, function} = Function.create(%{
-        name: "original",
-        module: "Module",
+        name: :original,
+        module: Module,
         arity: 0,
         exported: false,
         path: "/path.ex",
@@ -87,8 +87,8 @@ defmodule Codicil.Db.FunctionTest do
   describe "delete/1" do
     test "deletes a function" do
       {:ok, function} = Function.create(%{
-        name: "to_delete",
-        module: "Module",
+        name: :to_delete,
+        module: Module,
         arity: 3,
         exported: true,
         path: "/path.ex",
