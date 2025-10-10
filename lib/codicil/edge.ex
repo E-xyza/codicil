@@ -5,7 +5,8 @@ defmodule Codicil.Edge do
   Edges represent relationships between functions such as calls and imports.
   """
 
-  alias Codicil.Db.{Edge, Repo}
+  alias Codicil.Db.Edge
+  alias Codicil.Db.Repo
   alias Ecto.Changeset
 
   @doc """

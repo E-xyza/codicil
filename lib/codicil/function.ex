@@ -3,7 +3,8 @@ defmodule Codicil.Function do
   Context module for managing function records in the database.
   """
 
-  alias Codicil.Db.{Function, Repo}
+  alias Codicil.Db.Function
+  alias Codicil.Db.Repo
   alias Ecto.Changeset
 
   @doc """

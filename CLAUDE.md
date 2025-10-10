@@ -139,6 +139,44 @@ mix test test/codicil_test.exs:42
 mix format
 ```
 
+## IMPORTANT: Library Configuration and Migrations
+
+**This is a library, NOT an application - special rules apply:**
+
+### Config Files (DO NOT CREATE)
+- **NEVER** create `config/config.exs` or any config files in this project
+- Libraries should not have runtime configuration files checked into source control
+- Users configure Codicil in their own application's config
+- If runtime configuration is needed, use application environment: `Application.get_env(:codicil, :key)`
+
+### Running Migrations
+- **ALWAYS** use the `-r` flag to specify the repo when running migrations
+- Standard commands work with the repo flag:
+
+```bash
+# Drop database
+mix ecto.drop -r Codicil.Db.Repo
+
+# Create database
+mix ecto.create -r Codicil.Db.Repo
+
+# Run migrations
+mix ecto.migrate -r Codicil.Db.Repo
+
+# Rollback migrations
+mix ecto.rollback -r Codicil.Db.Repo
+
+# Reset database (drop, create, migrate)
+# Note: mix ecto.reset does not exist, chain commands instead:
+mix ecto.drop -r Codicil.Db.Repo && mix ecto.create -r Codicil.Db.Repo && mix ecto.migrate -r Codicil.Db.Repo
+```
+
+### Testing with Database
+- Tests handle Repo startup in `test/test_helper.exs`
+- Use `Ecto.Adapters.SQL.Sandbox` for test isolation
+- Each test gets its own transaction that rolls back automatically
+- Migrations run automatically in test setup
+
 ## Usage
 
 Codicil is designed to be used as a dependency in any Elixir project.
@@ -526,6 +564,9 @@ end
 - **DO NOT** use `import Ecto.Changeset`
 - **DO** use `alias Ecto.Changeset` instead
 - This ensures explicit changeset function calls for better code clarity
+- **DO NOT** use multi-alias syntax: `alias A.{B, C}` (this is for IEx only)
+- **DO** use separate alias statements: `alias A.B` and `alias A.C`
+- This maintains consistency with standard Elixir code style
 
 ### Context Module Naming
 - **DO NOT** use redundant names in context functions
