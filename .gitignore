@@ -22,4 +22,4 @@ codicil-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
-/priv/codicil.db.*
+/priv/codicil.db*
