@@ -636,6 +636,11 @@ priv/repo/migrations/
   - **DO**: `assert value` instead of `assert value == true`
   - **DO**: `refute value` instead of `assert value == false`
   - This makes tests more readable and follows Elixir conventions
+- **Don't test framework behavior**: Do NOT write tests that just verify Ecto schemas work
+  - **DON'T**: Test that schema fields exist or that basic CRUD operations work
+  - **DO**: Test business logic, validations, custom behavior, and edge cases
+  - **Example of bad test**: `test "schema has id field" do assert Map.has_key?(%Schema{}, :id) end`
+  - **Example of good test**: `test "validates email format" do assert {:error, _} = create(%{email: "invalid"}) end`
 
 ## Technical Requirements
 
