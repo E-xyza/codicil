@@ -56,12 +56,12 @@ defmodule Codicil.ModuleTracer do
       |> Enum.reject(fn {:function, name, _arity, _label, _code} ->
         name in [:__info__, :module_info] or String.starts_with?(Atom.to_string(name), "-")
       end)
-      |> Enum.map(fn {:function, name, arity, _label, _code} ->
-        {name, arity}
+      |> Enum.map(fn {:function, name, arity, _label, code} ->
+        {name, arity, code}
       end)
 
     # Store functions in database
-    for {name, arity} <- all_functions do
+    for {name, arity, code} <- all_functions do
       exported = MapSet.member?(exported_set, {name, arity})
       line = Map.get(line_map, {name, arity}, 0)
       docs = Map.get(doc_map, {name, arity})
@@ -77,7 +77,23 @@ defmodule Codicil.ModuleTracer do
         checksum: "TODO"
       }
 
-      Functions.create(attrs)
+      {:ok, function} = Functions.create(attrs)
+
+      # Extract and store function calls from bytecode
+      called_functions = extract_local_calls(code, module)
+
+      for {callee_mod, callee_name, callee_arity} <- called_functions do
+        if callee_mod == module do
+          # Local call within the same module
+          case Functions.get_by_mfa({module, callee_name, callee_arity}) do
+            nil -> :ok
+            callee -> Functions.add_call(function, callee)
+          end
+        else
+          # External call to another module - not yet implemented
+          raise "unimplemented: external module calls not yet supported (#{inspect(callee_mod)}.#{callee_name}/#{callee_arity})"
+        end
+      end
     end
 
     # Stop the GenServer after processing
@@ -88,6 +104,27 @@ defmodule Codicil.ModuleTracer do
 
   defp via(module_name) do
     {:via, Registry, {Codicil.ModuleTracerRegistry, module_name}}
+  end
+
+  defp extract_local_calls(code, _module) do
+    code
+    |> Enum.flat_map(fn instruction ->
+      case instruction do
+        # Match call instructions with module/function/arity tuples
+        {:call, _call_arity, {mod, name, arity}} when is_atom(mod) and is_atom(name) and is_integer(arity) ->
+          [{mod, name, arity}]
+
+        {:call_only, _call_arity, {mod, name, arity}} when is_atom(mod) and is_atom(name) and is_integer(arity) ->
+          [{mod, name, arity}]
+
+        {:call_last, _stack, {mod, name, arity}, _} when is_atom(mod) and is_atom(name) and is_integer(arity) ->
+          [{mod, name, arity}]
+
+        _ ->
+          []
+      end
+    end)
+    |> Enum.uniq()
   end
 
   defp parse_source_file(file_path) do

@@ -50,6 +50,16 @@ defmodule Codicil.TracerTest do
       assert private_fn = Functions.get_by_mfa({PrivateFunctionModule, :private_helper, 1})
       refute private_fn.exported
 
+      # public_function should call private_helper
+      calls = Functions.list_calls(public_fn)
+      assert length(calls) == 1
+      assert hd(calls).id == private_fn.id
+
+      # private_helper should be called by public_function
+      callers = Functions.list_called_by(private_fn)
+      assert length(callers) == 1
+      assert hd(callers).id == public_fn.id
+
       # Clean up
       :code.purge(module)
       :code.delete(module)
