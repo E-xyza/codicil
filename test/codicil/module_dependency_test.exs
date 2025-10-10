@@ -2,7 +2,7 @@ defmodule Codicil.ModuleDependencyTest do
   use ExUnit.Case, async: true
 
   alias Codicil.ModuleDependency
-  alias Codicil.Mod
+  alias Codicil.Modules
   alias Codicil.Db.Repo
 
   setup do
@@ -13,8 +13,8 @@ defmodule Codicil.ModuleDependencyTest do
   describe "create/1" do
     test "creates a compiler dependency between two modules" do
       # Setup: Create two modules first
-      {:ok, mod_a} = Mod.create(%{id: ModA, path: "/lib/mod_a.ex", checksum: "aaa"})
-      {:ok, mod_b} = Mod.create(%{id: ModB, path: "/lib/mod_b.ex", checksum: "bbb"})
+      {:ok, mod_a} = Modules.create(%{id: ModA, path: "/lib/mod_a.ex", checksum: "aaa"})
+      {:ok, mod_b} = Modules.create(%{id: ModB, path: "/lib/mod_b.ex", checksum: "bbb"})
 
       attrs = %{
         dependent_id: mod_a.id,
@@ -41,8 +41,8 @@ defmodule Codicil.ModuleDependencyTest do
       import Ecto.Query
 
       # Create two modules
-      {:ok, mod_a} = Mod.create(%{id: ModA, path: "/lib/mod_a.ex", checksum: "aaa"})
-      {:ok, mod_b} = Mod.create(%{id: ModB, path: "/lib/mod_b.ex", checksum: "bbb"})
+      {:ok, mod_a} = Modules.create(%{id: ModA, path: "/lib/mod_a.ex", checksum: "aaa"})
+      {:ok, mod_b} = Modules.create(%{id: ModB, path: "/lib/mod_b.ex", checksum: "bbb"})
 
       # Create a dependency: ModA depends on ModB
       {:ok, dep} = Repo.insert(%Codicil.Db.ModuleDependency{
@@ -63,8 +63,8 @@ defmodule Codicil.ModuleDependencyTest do
       import Ecto.Query
 
       # Create modules
-      {:ok, mod_x} = Mod.create(%{id: ModX, path: "/lib/mod_x.ex", checksum: "xxx"})
-      {:ok, mod_y} = Mod.create(%{id: ModY, path: "/lib/mod_y.ex", checksum: "yyy"})
+      {:ok, mod_x} = Modules.create(%{id: ModX, path: "/lib/mod_x.ex", checksum: "xxx"})
+      {:ok, mod_y} = Modules.create(%{id: ModY, path: "/lib/mod_y.ex", checksum: "yyy"})
 
       # Create runtime dependency
       {:ok, _dep} = Repo.insert(%Codicil.Db.ModuleDependency{
@@ -89,9 +89,9 @@ defmodule Codicil.ModuleDependencyTest do
       import Ecto.Query
 
       # Create modules
-      {:ok, lib_mod} = Mod.create(%{id: LibModule, path: "/lib/lib.ex", checksum: "lib"})
-      {:ok, app1} = Mod.create(%{id: App1, path: "/lib/app1.ex", checksum: "app1"})
-      {:ok, app2} = Mod.create(%{id: App2, path: "/lib/app2.ex", checksum: "app2"})
+      {:ok, lib_mod} = Modules.create(%{id: LibModule, path: "/lib/lib.ex", checksum: "lib"})
+      {:ok, app1} = Modules.create(%{id: App1, path: "/lib/app1.ex", checksum: "app1"})
+      {:ok, app2} = Modules.create(%{id: App2, path: "/lib/app2.ex", checksum: "app2"})
 
       # Both apps depend on lib
       {:ok, _d1} = Repo.insert(%Codicil.Db.ModuleDependency{

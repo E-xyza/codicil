@@ -1,7 +1,7 @@
 defmodule Codicil.Db.FunctionTest do
   use ExUnit.Case, async: true
 
-  alias Codicil.Function
+  alias Codicil.Functions
   alias Codicil.Db.Repo
 
   setup do
@@ -22,7 +22,7 @@ defmodule Codicil.Db.FunctionTest do
         checksum: "abc123def456"
       }
 
-      assert {:ok, function} = Function.create(attrs)
+      assert {:ok, function} = Functions.create(attrs)
       assert is_integer(function.id)
       assert function.name == "my_function"
       assert function.module == "Elixir.MyModule"
@@ -37,7 +37,7 @@ defmodule Codicil.Db.FunctionTest do
     test "returns error with invalid attributes" do
       attrs = %{name: nil}
 
-      assert {:error, changeset} = Function.create(attrs)
+      assert {:error, changeset} = Functions.create(attrs)
       assert %Ecto.Changeset{} = changeset
       refute changeset.valid?
     end
@@ -45,7 +45,7 @@ defmodule Codicil.Db.FunctionTest do
 
   describe "get/1" do
     test "retrieves a function by id" do
-      {:ok, created} = Function.create(%{
+      {:ok, created} = Functions.create(%{
         name: :test_func,
         module: TestModule,
         arity: 1,
@@ -55,20 +55,20 @@ defmodule Codicil.Db.FunctionTest do
         checksum: "test123"
       })
 
-      function = Function.get(created.id)
+      function = Functions.get(created.id)
       assert function.id == created.id
       assert function.name == "test_func"
       assert function.arity == 1
     end
 
     test "returns nil when function not found" do
-      assert Function.get(999_999) == nil
+      assert Functions.get(999_999) == nil
     end
   end
 
   describe "update/2" do
     test "updates function attributes" do
-      {:ok, function} = Function.create(%{
+      {:ok, function} = Functions.create(%{
         name: :original,
         module: Module,
         arity: 0,
@@ -78,7 +78,7 @@ defmodule Codicil.Db.FunctionTest do
         checksum: "check1"
       })
 
-      assert {:ok, updated} = Function.update(function, %{summary: "New summary"})
+      assert {:ok, updated} = Functions.update(function, %{summary: "New summary"})
       assert updated.id == function.id
       assert updated.summary == "New summary"
     end
@@ -86,7 +86,7 @@ defmodule Codicil.Db.FunctionTest do
 
   describe "delete/1" do
     test "deletes a function" do
-      {:ok, function} = Function.create(%{
+      {:ok, function} = Functions.create(%{
         name: :to_delete,
         module: Module,
         arity: 3,
@@ -96,18 +96,16 @@ defmodule Codicil.Db.FunctionTest do
         checksum: "check1"
       })
 
-      assert {:ok, deleted} = Function.delete(function)
+      assert {:ok, deleted} = Functions.delete(function)
       assert deleted.id == function.id
-      assert Function.get(function.id) == nil
+      assert Functions.get(function.id) == nil
     end
   end
 
   describe "relations" do
-    test "can preload mod from function" do
-      alias Codicil.Mod
-
+    test "can preload module_info from function" do
       # Create a module
-      {:ok, mod} = Mod.create(%{
+      {:ok, module} = Codicil.Modules.create(%{
         id: MyModule,
         path: "/lib/my_module.ex",
         checksum: "abc123"
@@ -116,7 +114,7 @@ defmodule Codicil.Db.FunctionTest do
       # Create a function belonging to that module
       {:ok, function_record} = Repo.insert(%Codicil.Db.Function{
         name: "my_function",
-        module: mod.id,
+        module: module.id,
         arity: 1,
         exported: true,
         path: "/lib/my_module.ex",
@@ -124,19 +122,18 @@ defmodule Codicil.Db.FunctionTest do
         checksum: "def456"
       })
 
-      # Preload the mod association
-      function_with_mod = Repo.preload(function_record, :mod)
+      # Preload the module_info association
+      function_with_module = Repo.preload(function_record, :module_info)
 
-      assert function_with_mod.mod.id == "Elixir.MyModule"
-      assert function_with_mod.mod.path == "/lib/my_module.ex"
+      assert function_with_module.module_info.id == "Elixir.MyModule"
+      assert function_with_module.module_info.path == "/lib/my_module.ex"
     end
 
-    test "can query functions through mod association" do
-      alias Codicil.Mod
+    test "can query functions through module_info association" do
       import Ecto.Query
 
       # Create a module
-      {:ok, mod} = Mod.create(%{
+      {:ok, module} = Codicil.Modules.create(%{
         id: TestModule,
         path: "/lib/test.ex",
         checksum: "xyz"
@@ -145,7 +142,7 @@ defmodule Codicil.Db.FunctionTest do
       # Create a function
       {:ok, _function} = Repo.insert(%Codicil.Db.Function{
         name: "test_func",
-        module: mod.id,
+        module: module.id,
         arity: 0,
         exported: true,
         path: "/lib/test.ex",
@@ -153,10 +150,10 @@ defmodule Codicil.Db.FunctionTest do
         checksum: "abc"
       })
 
-      # Query function and join with mod
+      # Query function and join with module_info
       result = from(f in Codicil.Db.Function,
-        join: m in assoc(f, :mod),
-        where: m.id == ^mod.id,
+        join: m in assoc(f, :module_info),
+        where: m.id == ^module.id,
         select: f
       )
       |> Repo.one()

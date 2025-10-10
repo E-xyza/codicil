@@ -14,8 +14,8 @@ defmodule Codicil.Db.ModuleDependency do
   defenum(DependencyType, compiler: 0, runtime: 1)
 
   schema "module_dependencies" do
-    belongs_to :dependent, Codicil.Db.Mod, type: :string, foreign_key: :dependent_id
-    belongs_to :dependency, Codicil.Db.Mod, type: :string, foreign_key: :dependency_id
+    belongs_to :dependent, Codicil.Db.Module, type: :string, foreign_key: :dependent_id
+    belongs_to :dependency, Codicil.Db.Module, type: :string, foreign_key: :dependency_id
     field :type, DependencyType
   end
 

@@ -32,7 +32,7 @@ defmodule Codicil.ModuleTracer do
   # API IMPLEMENTATION
 
   defp complete_impl(bytecode, %{module: module, file: file} = state) do
-    alias Codicil.Function
+    alias Codicil.Functions
 
     # Parse source file to extract function line numbers and docs
     {line_map, doc_map} = parse_source_file(file)
@@ -77,7 +77,7 @@ defmodule Codicil.ModuleTracer do
         checksum: "TODO"
       }
 
-      Function.create(attrs)
+      Functions.create(attrs)
     end
 
     # Stop the GenServer after processing

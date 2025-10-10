@@ -1,4 +1,4 @@
-defmodule Codicil.Db.Mod do
+defmodule Codicil.Db.Module do
   @moduledoc """
   Schema for storing module metadata.
 
@@ -10,7 +10,7 @@ defmodule Codicil.Db.Mod do
 
   # The id field contains the module name (e.g., "MyApp.MyModule")
   @primary_key {:id, :string, autogenerate: false}
-  schema "mods" do
+  schema "modules" do
     field(:path, :string)
     field(:checksum, :string)
     field(:parsed, :utc_datetime_usec)
@@ -22,14 +22,14 @@ defmodule Codicil.Db.Mod do
     has_many(:functions, Codicil.Db.Function, foreign_key: :module)
   end
 
-  def changeset(mod, attrs) do
+  def changeset(module, attrs) do
     # Convert atom module id to string if needed
     attrs = case attrs do
       %{id: id} when is_atom(id) -> %{attrs | id: "#{id}"}
       _ -> attrs
     end
 
-    mod
+    module
     |> Changeset.cast(attrs, [:id, :path, :checksum, :parsed, :doc, :summary, :vector, :line])
     |> Changeset.validate_required([:id, :path, :checksum])
     |> maybe_set_parsed()

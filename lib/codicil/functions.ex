@@ -1,4 +1,4 @@
-defmodule Codicil.Function do
+defmodule Codicil.Functions do
   @moduledoc """
   Context module for managing function records in the database.
   """

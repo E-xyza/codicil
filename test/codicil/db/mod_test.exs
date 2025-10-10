@@ -1,7 +1,7 @@
-defmodule Codicil.Db.ModTest do
+defmodule Codicil.Db.ModuleTest do
   use ExUnit.Case, async: true
 
-  alias Codicil.Mod
+  alias Codicil.Modules
   alias Codicil.Db.Repo
 
   setup do
@@ -18,18 +18,18 @@ defmodule Codicil.Db.ModTest do
         checksum: "abc123"
       }
 
-      assert {:ok, mod} = Mod.create(attrs)
-      assert is_binary(mod.id)
-      assert mod.id == "Elixir.MyApp.MyModule"
-      assert mod.path == "/lib/my_module.ex"
-      assert mod.checksum == "abc123"
-      assert %DateTime{} = mod.parsed
+      assert {:ok, module} = Modules.create(attrs)
+      assert is_binary(module.id)
+      assert module.id == "Elixir.MyApp.MyModule"
+      assert module.path == "/lib/my_module.ex"
+      assert module.checksum == "abc123"
+      assert %DateTime{} = module.parsed
     end
 
     test "returns error with invalid attributes" do
       attrs = %{path: nil}
 
-      assert {:error, changeset} = Mod.create(attrs)
+      assert {:error, changeset} = Modules.create(attrs)
       assert %Ecto.Changeset{} = changeset
       refute changeset.valid?
     end
@@ -37,55 +37,55 @@ defmodule Codicil.Db.ModTest do
 
   describe "get/1" do
     test "retrieves a module by id" do
-      {:ok, created} = Mod.create(%{
+      {:ok, created} = Modules.create(%{
         id: Test.Module,
         path: "/test/file.ex",
         checksum: "test123"
       })
 
-      mod = Mod.get(Test.Module)
-      assert mod.id == created.id
-      assert mod.path == "/test/file.ex"
-      assert mod.checksum == "test123"
+      module = Modules.get(Test.Module)
+      assert module.id == created.id
+      assert module.path == "/test/file.ex"
+      assert module.checksum == "test123"
     end
 
     test "returns nil when module not found" do
-      assert Mod.get(NonExistent.Module) == nil
+      assert Modules.get(NonExistent.Module) == nil
     end
   end
 
   describe "update/2" do
     test "updates module attributes" do
-      {:ok, mod} = Mod.create(%{
+      {:ok, module} = Modules.create(%{
         id: Update.Test,
         path: "/original.ex",
         checksum: "old"
       })
 
-      assert {:ok, updated} = Mod.update(mod, %{checksum: "new"})
-      assert updated.id == mod.id
+      assert {:ok, updated} = Modules.update(module, %{checksum: "new"})
+      assert updated.id == module.id
       assert updated.checksum == "new"
     end
   end
 
   describe "delete/1" do
     test "deletes a module" do
-      {:ok, mod} = Mod.create(%{
+      {:ok, module} = Modules.create(%{
         id: Delete.Test,
         path: "/delete.ex",
         checksum: "delete123"
       })
 
-      assert {:ok, deleted} = Mod.delete(mod)
-      assert deleted.id == mod.id
-      assert Mod.get(Delete.Test) == nil
+      assert {:ok, deleted} = Modules.delete(module)
+      assert deleted.id == module.id
+      assert Modules.get(Delete.Test) == nil
     end
   end
 
   describe "relations" do
-    test "can preload functions from mod" do
+    test "can preload functions from module" do
       # Create a module
-      {:ok, mod_record} = Repo.insert(%Codicil.Db.Mod{
+      {:ok, module_record} = Repo.insert(%Codicil.Db.Module{
         id: "Elixir.MultiFunc",
         path: "/lib/multi.ex",
         checksum: "multi123"
@@ -94,7 +94,7 @@ defmodule Codicil.Db.ModTest do
       # Create multiple functions
       {:ok, _f1} = Repo.insert(%Codicil.Db.Function{
         name: "func_one",
-        module: mod_record.id,
+        module: module_record.id,
         arity: 0,
         exported: true,
         path: "/lib/multi.ex",
@@ -104,7 +104,7 @@ defmodule Codicil.Db.ModTest do
 
       {:ok, _f2} = Repo.insert(%Codicil.Db.Function{
         name: "func_two",
-        module: mod_record.id,
+        module: module_record.id,
         arity: 1,
         exported: false,
         path: "/lib/multi.ex",
@@ -113,24 +113,24 @@ defmodule Codicil.Db.ModTest do
       })
 
       # Preload functions association
-      mod_with_functions = Repo.preload(mod_record, :functions)
+      module_with_functions = Repo.preload(module_record, :functions)
 
-      assert length(mod_with_functions.functions) == 2
-      function_names = Enum.map(mod_with_functions.functions, & &1.name) |> Enum.sort()
+      assert length(module_with_functions.functions) == 2
+      function_names = Enum.map(module_with_functions.functions, & &1.name) |> Enum.sort()
       assert function_names == ["func_one", "func_two"]
     end
 
-    test "functions are empty when mod has no functions" do
+    test "functions are empty when module has no functions" do
       # Create a module with no functions
-      {:ok, mod_record} = Repo.insert(%Codicil.Db.Mod{
+      {:ok, module_record} = Repo.insert(%Codicil.Db.Module{
         id: "Elixir.Empty",
         path: "/lib/empty.ex",
         checksum: "empty"
       })
 
-      mod_with_functions = Repo.preload(mod_record, :functions)
+      module_with_functions = Repo.preload(module_record, :functions)
 
-      assert mod_with_functions.functions == []
+      assert module_with_functions.functions == []
     end
   end
 end

@@ -3,8 +3,8 @@ defmodule Codicil.Db.Repo.Migrations.CreateModuleDependencies do
 
   def change do
     create table(:module_dependencies) do
-      add :dependent_id, references(:mods, type: :string, on_delete: :delete_all), null: false
-      add :dependency_id, references(:mods, type: :string, on_delete: :delete_all), null: false
+      add :dependent_id, references(:modules, type: :string, on_delete: :delete_all), null: false
+      add :dependency_id, references(:modules, type: :string, on_delete: :delete_all), null: false
       add :type, :integer, null: false
     end
 

@@ -1,8 +1,8 @@
-defmodule Codicil.Db.Repo.Migrations.CreateMods do
+defmodule Codicil.Db.Repo.Migrations.CreateModules do
   use Ecto.Migration
 
   def change do
-    create table(:mods, primary_key: false) do
+    create table(:modules, primary_key: false) do
       add :id, :string, primary_key: true
       add :path, :string, null: false
       add :checksum, :string, null: false
@@ -13,6 +13,6 @@ defmodule Codicil.Db.Repo.Migrations.CreateMods do
       add :line, :integer
     end
 
-    create unique_index(:mods, [:path])
+    create index(:modules, [:path])
   end
 end

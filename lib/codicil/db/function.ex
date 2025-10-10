@@ -23,6 +23,6 @@ defmodule Codicil.Db.Function do
     field(:embedding, :binary)
     field(:checksum, :string)
 
-    belongs_to(:mod, Codicil.Db.Mod, type: :string, foreign_key: :module)
+    belongs_to(:module_info, Codicil.Db.Module, type: :string, foreign_key: :module)
   end
 end

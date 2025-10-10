@@ -16,6 +16,6 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :checksum, :string, null: false
     end
 
-    create unique_index(:functions, [:module, :name, :arity, :path])
+    create unique_index(:functions, [:module, :name, :arity])
   end
 end

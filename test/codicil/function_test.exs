@@ -1,8 +1,8 @@
-defmodule Codicil.FunctionTest do
+defmodule Codicil.FunctionsTest do
   use ExUnit.Case, async: true
 
-  alias Codicil.Function
-  alias Codicil.Mod
+  alias Codicil.Functions
+  alias Codicil.Modules
   alias Codicil.Db.Repo
 
   setup do
@@ -13,10 +13,10 @@ defmodule Codicil.FunctionTest do
   describe "add_call/2" do
     test "creates a function call relationship" do
       # Setup: Create module and functions
-      {:ok, _mod} = Mod.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
 
       {:ok, caller} =
-        Function.create(%{
+        Functions.create(%{
           name: :foo,
           module: MyModule,
           arity: 0,
@@ -27,7 +27,7 @@ defmodule Codicil.FunctionTest do
         })
 
       {:ok, callee} =
-        Function.create(%{
+        Functions.create(%{
           name: :bar,
           module: MyModule,
           arity: 1,
@@ -38,20 +38,20 @@ defmodule Codicil.FunctionTest do
         })
 
       # Create call relationship
-      assert :ok = Function.add_call(caller, callee)
+      assert :ok = Functions.add_call(caller, callee)
 
       # Verify relationship exists by listing calls
-      calls = Function.list_calls(caller)
+      calls = Functions.list_calls(caller)
       assert length(calls) == 1
       assert hd(calls).id == callee.id
     end
 
     test "prevents duplicate call relationships" do
       # Setup: Create module and functions
-      {:ok, _mod} = Mod.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
 
       {:ok, caller} =
-        Function.create(%{
+        Functions.create(%{
           name: :foo,
           module: MyModule,
           arity: 0,
@@ -62,7 +62,7 @@ defmodule Codicil.FunctionTest do
         })
 
       {:ok, callee} =
-        Function.create(%{
+        Functions.create(%{
           name: :bar,
           module: MyModule,
           arity: 1,
@@ -73,11 +73,11 @@ defmodule Codicil.FunctionTest do
         })
 
       # Create call relationship twice
-      assert :ok = Function.add_call(caller, callee)
-      assert :ok = Function.add_call(caller, callee)
+      assert :ok = Functions.add_call(caller, callee)
+      assert :ok = Functions.add_call(caller, callee)
 
       # Verify only one relationship exists
-      calls = Function.list_calls(caller)
+      calls = Functions.list_calls(caller)
       assert length(calls) == 1
     end
   end
@@ -85,10 +85,10 @@ defmodule Codicil.FunctionTest do
   describe "list_calls/1" do
     test "returns all functions called by a function" do
       # Setup: Create module and functions
-      {:ok, _mod} = Mod.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
 
       {:ok, caller} =
-        Function.create(%{
+        Functions.create(%{
           name: :foo,
           module: MyModule,
           arity: 0,
@@ -99,7 +99,7 @@ defmodule Codicil.FunctionTest do
         })
 
       {:ok, callee1} =
-        Function.create(%{
+        Functions.create(%{
           name: :bar,
           module: MyModule,
           arity: 1,
@@ -110,7 +110,7 @@ defmodule Codicil.FunctionTest do
         })
 
       {:ok, callee2} =
-        Function.create(%{
+        Functions.create(%{
           name: :baz,
           module: MyModule,
           arity: 2,
@@ -121,11 +121,11 @@ defmodule Codicil.FunctionTest do
         })
 
       # Create call relationships
-      Function.add_call(caller, callee1)
-      Function.add_call(caller, callee2)
+      Functions.add_call(caller, callee1)
+      Functions.add_call(caller, callee2)
 
       # List all calls
-      calls = Function.list_calls(caller)
+      calls = Functions.list_calls(caller)
       assert length(calls) == 2
       call_ids = Enum.map(calls, & &1.id) |> Enum.sort()
       assert call_ids == [callee1.id, callee2.id] |> Enum.sort()
@@ -133,10 +133,10 @@ defmodule Codicil.FunctionTest do
 
     test "returns empty list when function makes no calls" do
       # Setup: Create module and function
-      {:ok, _mod} = Mod.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
 
       {:ok, function} =
-        Function.create(%{
+        Functions.create(%{
           name: :foo,
           module: MyModule,
           arity: 0,
@@ -147,7 +147,7 @@ defmodule Codicil.FunctionTest do
         })
 
       # List calls from function with no calls
-      calls = Function.list_calls(function)
+      calls = Functions.list_calls(function)
       assert calls == []
     end
   end

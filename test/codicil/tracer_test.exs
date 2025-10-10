@@ -2,7 +2,7 @@ defmodule Codicil.TracerTest do
   use ExUnit.Case, async: true
 
   alias Codicil.Tracer
-  alias Codicil.Function
+  alias Codicil.Functions
   alias Codicil.Db.Repo
 
   setup do
@@ -21,7 +21,7 @@ defmodule Codicil.TracerTest do
       Process.sleep(100)
 
       # Should create a Function database entry
-      assert function = Function.get_by_mfa({AddOneModule, :add_one, 1})
+      assert function = Functions.get_by_mfa({AddOneModule, :add_one, 1})
       assert function.name == "add_one"
       assert function.module == "Elixir.AddOneModule"
       assert function.arity == 1
@@ -43,11 +43,11 @@ defmodule Codicil.TracerTest do
       Process.sleep(100)
 
       # Public function should be exported
-      assert public_fn = Function.get_by_mfa({PrivateFunctionModule, :public_function, 1})
+      assert public_fn = Functions.get_by_mfa({PrivateFunctionModule, :public_function, 1})
       assert public_fn.exported
 
       # Private function should not be exported
-      assert private_fn = Function.get_by_mfa({PrivateFunctionModule, :private_helper, 1})
+      assert private_fn = Functions.get_by_mfa({PrivateFunctionModule, :private_helper, 1})
       refute private_fn.exported
 
       # Clean up
@@ -64,15 +64,15 @@ defmodule Codicil.TracerTest do
       Process.sleep(100)
 
       # Function with @doc should have docs
-      assert documented_fn = Function.get_by_mfa({DocumentedModule, :double, 1})
+      assert documented_fn = Functions.get_by_mfa({DocumentedModule, :double, 1})
       assert documented_fn.docs == "Multiplies a number by two."
 
       # Function with @doc false should have nil docs
-      assert hidden_fn = Function.get_by_mfa({DocumentedModule, :hidden_function, 1})
+      assert hidden_fn = Functions.get_by_mfa({DocumentedModule, :hidden_function, 1})
       assert hidden_fn.docs == nil
 
       # Function without @doc should have nil docs
-      assert undocumented_fn = Function.get_by_mfa({DocumentedModule, :undocumented_function, 1})
+      assert undocumented_fn = Functions.get_by_mfa({DocumentedModule, :undocumented_function, 1})
       assert undocumented_fn.docs == nil
 
       # Clean up
