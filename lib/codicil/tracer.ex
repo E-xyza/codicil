@@ -37,12 +37,15 @@ defmodule Codicil.Tracer do
       restart: :temporary
     }
 
-    {:ok, _pid} = DynamicSupervisor.start_child(
-      Codicil.ModuleTracerSupervisor,
-      child_spec
-    )
-
-    :ok
+    # Ignore if already started (can happen during recompilation or parallel tests)
+    case DynamicSupervisor.start_child(Codicil.ModuleTracerSupervisor, child_spec) do
+      {:ok, _pid} ->
+        :ok
+      {:error, {:already_started, _pid}} ->
+        require Logger
+        Logger.warning("Module already being traced: #{inspect(module)} in #{env.file}")
+        :ok
+    end
   end
 
   def trace(_event, _env) do

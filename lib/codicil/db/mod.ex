@@ -18,6 +18,8 @@ defmodule Codicil.Db.Mod do
     field(:summary, :string)
     field(:vector, :binary)
     field(:line, :integer)
+
+    has_many(:functions, Codicil.Db.Function, foreign_key: :module)
   end
 
   def changeset(mod, attrs) do

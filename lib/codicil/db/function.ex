@@ -13,7 +13,6 @@ defmodule Codicil.Db.Function do
 
   schema "functions" do
     field(:name, :string)
-    field(:module, :string)
     field(:arity, :integer)
     field(:exported, :boolean)
     field(:path, :string)
@@ -23,5 +22,7 @@ defmodule Codicil.Db.Function do
     field(:summary, :string)
     field(:embedding, :binary)
     field(:checksum, :string)
+
+    belongs_to(:mod, Codicil.Db.Mod, type: :string, foreign_key: :module)
   end
 end

@@ -1,4 +1,4 @@
-defmodule Codicil.ModTest do
+defmodule Codicil.Db.ModTest do
   use ExUnit.Case, async: true
 
   alias Codicil.Mod

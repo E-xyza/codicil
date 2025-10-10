@@ -1,4 +1,4 @@
-defmodule Codicil.FunctionTest do
+defmodule Codicil.Db.FunctionTest do
   use ExUnit.Case, async: true
 
   alias Codicil.Function
