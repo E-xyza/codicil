@@ -5,14 +5,13 @@ defmodule Codicil.Functions do
 
   alias Codicil.Db.Function
   alias Codicil.Db.Repo
-  alias Ecto.Changeset
 
   @doc """
   Creates a new function record.
   """
   def create(attrs) do
     %Function{}
-    |> changeset(attrs)
+    |> Function.changeset(attrs)
     |> Repo.insert()
   end
 
@@ -46,7 +45,7 @@ defmodule Codicil.Functions do
   """
   def update(%Function{} = function, attrs) do
     function
-    |> changeset(attrs)
+    |> Function.changeset(attrs)
     |> Repo.update()
   end
 
@@ -110,50 +109,5 @@ defmodule Codicil.Functions do
       where: fc.callee_id == ^callee_id
     )
     |> Repo.all()
-  end
-
-  defp changeset(%Function{} = function, attrs) do
-    attrs = normalize_attrs(attrs)
-
-    function
-    |> Changeset.cast(attrs, [
-      :name,
-      :module,
-      :arity,
-      :exported,
-      :path,
-      :line,
-      :parsed,
-      :docs,
-      :summary,
-      :embedding,
-      :checksum
-    ])
-    |> Changeset.validate_required([:name, :module, :arity, :exported, :path, :line, :checksum])
-    |> maybe_set_parsed()
-  end
-
-  defp normalize_attrs(attrs) do
-    attrs
-    |> normalize_atom_field(:name)
-    |> normalize_atom_field(:module)
-  end
-
-  defp normalize_atom_field(attrs, key) do
-    case Map.get(attrs, key) do
-      value when is_atom(value) and not is_nil(value) ->
-        Map.put(attrs, key, Atom.to_string(value))
-
-      _ ->
-        attrs
-    end
-  end
-
-  defp maybe_set_parsed(changeset) do
-    if Changeset.get_field(changeset, :parsed) do
-      changeset
-    else
-      Changeset.put_change(changeset, :parsed, DateTime.utc_now())
-    end
   end
 end

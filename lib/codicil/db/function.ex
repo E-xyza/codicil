@@ -11,6 +11,8 @@ defmodule Codicil.Db.Function do
 
   use Ecto.Schema
 
+  alias Ecto.Changeset
+
   schema "functions" do
     field(:name, :string)
     field(:arity, :integer)
@@ -34,5 +36,55 @@ defmodule Codicil.Db.Function do
       join_through: "function_calls",
       join_keys: [callee_id: :id, caller_id: :id]
     )
+  end
+
+  @doc """
+  Changeset for creating and updating function records.
+  Normalizes atom values for :name and :module fields to strings.
+  Sets :parsed timestamp to current time if not provided.
+  """
+  def changeset(function, attrs) do
+    attrs = normalize_attrs(attrs)
+
+    function
+    |> Changeset.cast(attrs, [
+      :name,
+      :module,
+      :arity,
+      :exported,
+      :path,
+      :line,
+      :parsed,
+      :docs,
+      :summary,
+      :embedding,
+      :checksum
+    ])
+    |> Changeset.validate_required([:name, :module, :arity, :exported, :path, :line, :checksum])
+    |> maybe_set_parsed()
+  end
+
+  defp normalize_attrs(attrs) do
+    attrs
+    |> normalize_atom_field(:name)
+    |> normalize_atom_field(:module)
+  end
+
+  defp normalize_atom_field(attrs, key) do
+    case Map.get(attrs, key) do
+      value when is_atom(value) and not is_nil(value) ->
+        Map.put(attrs, key, Atom.to_string(value))
+
+      _ ->
+        attrs
+    end
+  end
+
+  defp maybe_set_parsed(changeset) do
+    if Changeset.get_field(changeset, :parsed) do
+      changeset
+    else
+      Changeset.put_change(changeset, :parsed, DateTime.utc_now())
+    end
   end
 end
