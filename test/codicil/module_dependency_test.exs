@@ -1,7 +1,6 @@
 defmodule Codicil.ModuleDependencyTest do
   use ExUnit.Case, async: true
 
-  alias Codicil.ModuleDependency
   alias Codicil.Modules
   alias Codicil.Db.Repo
 
@@ -10,7 +9,7 @@ defmodule Codicil.ModuleDependencyTest do
     :ok
   end
 
-  describe "create/1" do
+  describe "create_dependency/1" do
     test "creates a compiler dependency between two modules" do
       # Setup: Create two modules first
       {:ok, mod_a} = Modules.create(%{id: ModA, path: "/lib/mod_a.ex", checksum: "aaa"})
@@ -22,7 +21,7 @@ defmodule Codicil.ModuleDependencyTest do
         type: :compiler
       }
 
-      assert {:ok, dependency} = ModuleDependency.create(attrs)
+      assert {:ok, dependency} = Modules.create_dependency(attrs)
       assert dependency.dependent_id == "Elixir.ModA"
       assert dependency.dependency_id == "Elixir.ModB"
       assert dependency.type == :compiler
@@ -31,7 +30,7 @@ defmodule Codicil.ModuleDependencyTest do
     test "returns error with invalid attributes" do
       attrs = %{dependent_id: nil}
 
-      assert {:error, changeset} = ModuleDependency.create(attrs)
+      assert {:error, changeset} = Modules.create_dependency(attrs)
       refute changeset.valid?
     end
   end

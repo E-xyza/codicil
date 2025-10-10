@@ -1,9 +1,10 @@
 defmodule Codicil.Modules do
   @moduledoc """
-  Context module for managing module records in the database.
+  Context module for managing module records and dependencies in the database.
   """
 
   alias Codicil.Db.Module
+  alias Codicil.Db.ModuleDependency
   alias Codicil.Db.Repo
 
   @doc """
@@ -41,5 +42,29 @@ defmodule Codicil.Modules do
   """
   def delete(%Module{} = module) do
     Repo.delete(module)
+  end
+
+  @doc """
+  Creates a new module dependency record.
+  """
+  def create_dependency(attrs) do
+    %ModuleDependency{}
+    |> ModuleDependency.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Retrieves a module dependency by ID.
+  Returns the dependency struct or nil if not found.
+  """
+  def get_dependency(id) do
+    Repo.get(ModuleDependency, id)
+  end
+
+  @doc """
+  Deletes a module dependency record.
+  """
+  def delete_dependency(%ModuleDependency{} = module_dependency) do
+    Repo.delete(module_dependency)
   end
 end

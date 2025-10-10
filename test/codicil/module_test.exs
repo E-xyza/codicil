@@ -1,4 +1,4 @@
-defmodule Codicil.Db.ModuleTest do
+defmodule Codicil.ModulesTest do
   use ExUnit.Case, async: true
 
   alias Codicil.Modules
@@ -85,16 +85,16 @@ defmodule Codicil.Db.ModuleTest do
   describe "relations" do
     test "can preload functions from module" do
       # Create a module
-      {:ok, module_record} = Repo.insert(%Codicil.Db.Module{
-        id: "Elixir.MultiFunc",
+      {:ok, module} = Modules.create(%{
+        id: MultiFunc,
         path: "/lib/multi.ex",
         checksum: "multi123"
       })
 
       # Create multiple functions
-      {:ok, _f1} = Repo.insert(%Codicil.Db.Function{
-        name: "func_one",
-        module: module_record.id,
+      {:ok, _f1} = Codicil.Functions.create(%{
+        name: :func_one,
+        module: MultiFunc,
         arity: 0,
         exported: true,
         path: "/lib/multi.ex",
@@ -102,9 +102,9 @@ defmodule Codicil.Db.ModuleTest do
         checksum: "f1"
       })
 
-      {:ok, _f2} = Repo.insert(%Codicil.Db.Function{
-        name: "func_two",
-        module: module_record.id,
+      {:ok, _f2} = Codicil.Functions.create(%{
+        name: :func_two,
+        module: MultiFunc,
         arity: 1,
         exported: false,
         path: "/lib/multi.ex",
@@ -113,7 +113,7 @@ defmodule Codicil.Db.ModuleTest do
       })
 
       # Preload functions association
-      module_with_functions = Repo.preload(module_record, :functions)
+      module_with_functions = Repo.preload(module, :functions)
 
       assert length(module_with_functions.functions) == 2
       function_names = Enum.map(module_with_functions.functions, & &1.name) |> Enum.sort()
@@ -122,13 +122,13 @@ defmodule Codicil.Db.ModuleTest do
 
     test "functions are empty when module has no functions" do
       # Create a module with no functions
-      {:ok, module_record} = Repo.insert(%Codicil.Db.Module{
-        id: "Elixir.Empty",
+      {:ok, module} = Modules.create(%{
+        id: Empty,
         path: "/lib/empty.ex",
         checksum: "empty"
       })
 
-      module_with_functions = Repo.preload(module_record, :functions)
+      module_with_functions = Repo.preload(module, :functions)
 
       assert module_with_functions.functions == []
     end
