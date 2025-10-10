@@ -567,6 +567,9 @@ end
 - **DO NOT** use multi-alias syntax: `alias A.{B, C}` (this is for IEx only)
 - **DO** use separate alias statements: `alias A.B` and `alias A.C`
 - This maintains consistency with standard Elixir code style
+- **DO NOT** use `as:` in alias statements: `alias Foo.Bar, as: Baz`
+- **DO** use the full module name directly in code instead
+- Renaming modules obscures where things come from and makes code harder to search/navigate
 
 ### Context Module Naming
 - **DO NOT** use redundant names in context functions

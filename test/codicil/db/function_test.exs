@@ -101,4 +101,67 @@ defmodule Codicil.Db.FunctionTest do
       assert Function.get(function.id) == nil
     end
   end
+
+  describe "relations" do
+    test "can preload mod from function" do
+      alias Codicil.Mod
+
+      # Create a module
+      {:ok, mod} = Mod.create(%{
+        id: MyModule,
+        path: "/lib/my_module.ex",
+        checksum: "abc123"
+      })
+
+      # Create a function belonging to that module
+      {:ok, function_record} = Repo.insert(%Codicil.Db.Function{
+        name: "my_function",
+        module: mod.id,
+        arity: 1,
+        exported: true,
+        path: "/lib/my_module.ex",
+        line: 10,
+        checksum: "def456"
+      })
+
+      # Preload the mod association
+      function_with_mod = Repo.preload(function_record, :mod)
+
+      assert function_with_mod.mod.id == "Elixir.MyModule"
+      assert function_with_mod.mod.path == "/lib/my_module.ex"
+    end
+
+    test "can query functions through mod association" do
+      alias Codicil.Mod
+      import Ecto.Query
+
+      # Create a module
+      {:ok, mod} = Mod.create(%{
+        id: TestModule,
+        path: "/lib/test.ex",
+        checksum: "xyz"
+      })
+
+      # Create a function
+      {:ok, _function} = Repo.insert(%Codicil.Db.Function{
+        name: "test_func",
+        module: mod.id,
+        arity: 0,
+        exported: true,
+        path: "/lib/test.ex",
+        line: 5,
+        checksum: "abc"
+      })
+
+      # Query function and join with mod
+      result = from(f in Codicil.Db.Function,
+        join: m in assoc(f, :mod),
+        where: m.id == ^mod.id,
+        select: f
+      )
+      |> Repo.one()
+
+      assert result.name == "test_func"
+    end
+  end
 end

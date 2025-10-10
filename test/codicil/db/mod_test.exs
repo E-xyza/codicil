@@ -81,4 +81,56 @@ defmodule Codicil.Db.ModTest do
       assert Mod.get(Delete.Test) == nil
     end
   end
+
+  describe "relations" do
+    test "can preload functions from mod" do
+      # Create a module
+      {:ok, mod_record} = Repo.insert(%Codicil.Db.Mod{
+        id: "Elixir.MultiFunc",
+        path: "/lib/multi.ex",
+        checksum: "multi123"
+      })
+
+      # Create multiple functions
+      {:ok, _f1} = Repo.insert(%Codicil.Db.Function{
+        name: "func_one",
+        module: mod_record.id,
+        arity: 0,
+        exported: true,
+        path: "/lib/multi.ex",
+        line: 10,
+        checksum: "f1"
+      })
+
+      {:ok, _f2} = Repo.insert(%Codicil.Db.Function{
+        name: "func_two",
+        module: mod_record.id,
+        arity: 1,
+        exported: false,
+        path: "/lib/multi.ex",
+        line: 20,
+        checksum: "f2"
+      })
+
+      # Preload functions association
+      mod_with_functions = Repo.preload(mod_record, :functions)
+
+      assert length(mod_with_functions.functions) == 2
+      function_names = Enum.map(mod_with_functions.functions, & &1.name) |> Enum.sort()
+      assert function_names == ["func_one", "func_two"]
+    end
+
+    test "functions are empty when mod has no functions" do
+      # Create a module with no functions
+      {:ok, mod_record} = Repo.insert(%Codicil.Db.Mod{
+        id: "Elixir.Empty",
+        path: "/lib/empty.ex",
+        checksum: "empty"
+      })
+
+      mod_with_functions = Repo.preload(mod_record, :functions)
+
+      assert mod_with_functions.functions == []
+    end
+  end
 end
