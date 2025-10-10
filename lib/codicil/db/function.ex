@@ -24,5 +24,15 @@ defmodule Codicil.Db.Function do
     field(:checksum, :string)
 
     belongs_to(:module_info, Codicil.Db.Module, type: :string, foreign_key: :module)
+
+    many_to_many(:calls, __MODULE__,
+      join_through: "function_calls",
+      join_keys: [caller_id: :id, callee_id: :id]
+    )
+
+    many_to_many(:called_by, __MODULE__,
+      join_through: "function_calls",
+      join_keys: [callee_id: :id, caller_id: :id]
+    )
   end
 end

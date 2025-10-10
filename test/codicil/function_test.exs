@@ -304,4 +304,74 @@ defmodule Codicil.FunctionsTest do
       assert calls == []
     end
   end
+
+  describe "list_called_by/1" do
+    test "returns all functions that call a function" do
+      # Setup: Create module and functions
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+
+      {:ok, callee} =
+        Functions.create(%{
+          name: :bar,
+          module: MyModule,
+          arity: 1,
+          exported: false,
+          path: "/lib/my_module.ex",
+          line: 20,
+          checksum: "callee123"
+        })
+
+      {:ok, caller1} =
+        Functions.create(%{
+          name: :foo,
+          module: MyModule,
+          arity: 0,
+          exported: true,
+          path: "/lib/my_module.ex",
+          line: 10,
+          checksum: "caller1"
+        })
+
+      {:ok, caller2} =
+        Functions.create(%{
+          name: :baz,
+          module: MyModule,
+          arity: 2,
+          exported: false,
+          path: "/lib/my_module.ex",
+          line: 30,
+          checksum: "caller2"
+        })
+
+      # Create call relationships
+      Functions.add_call(caller1, callee)
+      Functions.add_call(caller2, callee)
+
+      # List all callers
+      callers = Functions.list_called_by(callee)
+      assert length(callers) == 2
+      caller_ids = Enum.map(callers, & &1.id) |> Enum.sort()
+      assert caller_ids == [caller1.id, caller2.id] |> Enum.sort()
+    end
+
+    test "returns empty list when function is not called by anyone" do
+      # Setup: Create module and function
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+
+      {:ok, function} =
+        Functions.create(%{
+          name: :foo,
+          module: MyModule,
+          arity: 0,
+          exported: true,
+          path: "/lib/my_module.ex",
+          line: 10,
+          checksum: "func123"
+        })
+
+      # List callers of function that's not called
+      callers = Functions.list_called_by(function)
+      assert callers == []
+    end
+  end
 end

@@ -97,6 +97,21 @@ defmodule Codicil.Functions do
     |> Repo.all()
   end
 
+  @doc """
+  Lists all functions that call the given function.
+  Returns a list of Function structs.
+  """
+  def list_called_by(%Function{id: callee_id}) do
+    import Ecto.Query
+
+    from(f in Function,
+      join: fc in "function_calls",
+      on: fc.caller_id == f.id,
+      where: fc.callee_id == ^callee_id
+    )
+    |> Repo.all()
+  end
+
   defp changeset(%Function{} = function, attrs) do
     attrs = normalize_attrs(attrs)
 
