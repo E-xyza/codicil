@@ -31,6 +31,9 @@ defmodule Codicil.ModuleTracer do
 
   # API IMPLEMENTATION
 
+  defguardp is_call(bytecode_instr)
+            when is_tuple(bytecode_instr) and elem(bytecode_instr, 0) in ~w[call call_only call_last]a
+
   defp complete_impl(bytecode, %{module: module, file: file} = state) do
     alias Codicil.Functions
 
@@ -42,26 +45,11 @@ defmodule Codicil.ModuleTracer do
       :beam_disasm.file(bytecode)
 
     # Build set of exported function names/arities (excluding compiler-generated functions)
-    exported_set =
-      exports
-      |> Enum.reject(fn {name, _arity, _label} ->
-        name in [:__info__, :module_info] or String.starts_with?(Atom.to_string(name), "-")
-      end)
-      |> Enum.map(fn {name, arity, _label} -> {name, arity} end)
-      |> MapSet.new()
+    exported_set = for {name, arity, _label} <- exports, into: MapSet.new(), do: {name, arity}
 
-    # Extract all functions (excluding compiler-generated functions)
-    all_functions =
-      functions
-      |> Enum.reject(fn {:function, name, _arity, _label, _code} ->
-        name in [:__info__, :module_info] or String.starts_with?(Atom.to_string(name), "-")
-      end)
-      |> Enum.map(fn {:function, name, arity, _label, code} ->
-        {name, arity, code}
-      end)
-
-    # Store functions in database
-    for {name, arity, code} <- all_functions do
+    for {:function, name, arity, _label, code} <- functions,
+        name not in ~w[__info__ module_info]a do
+      # Store functions in database
       exported = MapSet.member?(exported_set, {name, arity})
       line = Map.get(line_map, {name, arity}, 0)
       docs = Map.get(doc_map, {name, arity})
@@ -77,23 +65,24 @@ defmodule Codicil.ModuleTracer do
         checksum: "TODO"
       }
 
-      {:ok, function} = Functions.create(attrs)
+      {:ok, function} = Functions.upsert(attrs)
 
       # Extract and store function calls from bytecode
-      called_functions = extract_local_calls(code, module)
+      called_funs = for instr <- code, is_call(instr), uniq: true, do: elem(instr, 2)
 
-      for {callee_mod, callee_name, callee_arity} <- called_functions do
-        if callee_mod == module do
-          # Local call within the same module
-          case Functions.get_by_mfa({module, callee_name, callee_arity}) do
-            nil -> :ok
-            callee -> Functions.add_call(function, callee)
+      Enum.each(called_funs, fn mfa ->
+        callee =
+          case Functions.get_by_mfa(mfa) do
+            nil ->
+              {:ok, placeholder} = Functions.create_placeholder(mfa)
+              placeholder
+
+            existing ->
+              existing
           end
-        else
-          # External call to another module - not yet implemented
-          raise "unimplemented: external module calls not yet supported (#{inspect(callee_mod)}.#{callee_name}/#{callee_arity})"
-        end
-      end
+
+        Functions.add_call(function, callee)
+      end)
     end
 
     # Stop the GenServer after processing
@@ -104,27 +93,6 @@ defmodule Codicil.ModuleTracer do
 
   defp via(module_name) do
     {:via, Registry, {Codicil.ModuleTracerRegistry, module_name}}
-  end
-
-  defp extract_local_calls(code, _module) do
-    code
-    |> Enum.flat_map(fn instruction ->
-      case instruction do
-        # Match call instructions with module/function/arity tuples
-        {:call, _call_arity, {mod, name, arity}} when is_atom(mod) and is_atom(name) and is_integer(arity) ->
-          [{mod, name, arity}]
-
-        {:call_only, _call_arity, {mod, name, arity}} when is_atom(mod) and is_atom(name) and is_integer(arity) ->
-          [{mod, name, arity}]
-
-        {:call_last, _stack, {mod, name, arity}, _} when is_atom(mod) and is_atom(name) and is_integer(arity) ->
-          [{mod, name, arity}]
-
-        _ ->
-          []
-      end
-    end)
-    |> Enum.uniq()
   end
 
   defp parse_source_file(file_path) do

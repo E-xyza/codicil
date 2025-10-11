@@ -60,8 +60,18 @@ defmodule Codicil.Db.Function do
       :embedding,
       :checksum
     ])
-    |> Changeset.validate_required([:name, :module, :arity, :exported, :path, :line, :checksum])
+    |> Changeset.validate_required([:name, :module, :arity])
     |> maybe_set_parsed()
+  end
+
+  @doc """
+  Changeset for creating new function records.
+  Requires all fields needed for a fully-defined function.
+  """
+  def create_changeset(function, attrs) do
+    function
+    |> changeset(attrs)
+    |> Changeset.validate_required([:exported, :path, :line, :checksum])
   end
 
   defp normalize_attrs(attrs) do

@@ -11,8 +11,37 @@ defmodule Codicil.Functions do
   """
   def create(attrs) do
     %Function{}
-    |> Function.changeset(attrs)
+    |> Function.create_changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Creates or updates a function record.
+  Uses upsert based on unique constraint (module, name, arity).
+  """
+  def upsert(attrs) do
+    %Function{}
+    |> Function.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: {:replace_all_except, [:id]},
+      conflict_target: [:module, :name, :arity]
+    )
+  end
+
+  @doc """
+  Creates a placeholder function record for a function that hasn't been compiled yet.
+  Leaves parsed: nil to indicate it's a placeholder.
+  Uses placeholder values for required fields.
+  Returns {:ok, function} tuple matching the pattern expected by callers.
+  """
+  def create_placeholder({module, name, arity}) do
+    attrs = %{
+      module: module,
+      name: name,
+      arity: arity
+    }
+
+    upsert(attrs)
   end
 
   @doc """
@@ -27,7 +56,8 @@ defmodule Codicil.Functions do
   Retrieves a function by module, function name, and arity (MFA tuple).
   Returns the function struct or nil if not found.
   """
-  def get_by_mfa({module, name, arity}) when is_atom(module) and is_atom(name) and is_integer(arity) do
+  def get_by_mfa({module, name, arity})
+      when is_atom(module) and is_atom(name) and is_integer(arity) do
     import Ecto.Query
 
     module_str = Atom.to_string(module)

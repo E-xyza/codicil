@@ -45,15 +45,16 @@ defmodule Codicil.FunctionsTest do
 
   describe "get/1" do
     test "retrieves a function by id" do
-      {:ok, created} = Functions.create(%{
-        name: :test_func,
-        module: TestModule,
-        arity: 1,
-        exported: true,
-        path: "/test.ex",
-        line: 1,
-        checksum: "test123"
-      })
+      {:ok, created} =
+        Functions.create(%{
+          name: :test_func,
+          module: TestModule,
+          arity: 1,
+          exported: true,
+          path: "/test.ex",
+          line: 1,
+          checksum: "test123"
+        })
 
       function = Functions.get(created.id)
       assert function.id == created.id
@@ -68,15 +69,16 @@ defmodule Codicil.FunctionsTest do
 
   describe "update/2" do
     test "updates function attributes" do
-      {:ok, function} = Functions.create(%{
-        name: :original,
-        module: Module,
-        arity: 0,
-        exported: false,
-        path: "/path.ex",
-        line: 1,
-        checksum: "check1"
-      })
+      {:ok, function} =
+        Functions.create(%{
+          name: :original,
+          module: Module,
+          arity: 0,
+          exported: false,
+          path: "/path.ex",
+          line: 1,
+          checksum: "check1"
+        })
 
       assert {:ok, updated} = Functions.update(function, %{summary: "New summary"})
       assert updated.id == function.id
@@ -86,15 +88,16 @@ defmodule Codicil.FunctionsTest do
 
   describe "delete/1" do
     test "deletes a function" do
-      {:ok, function} = Functions.create(%{
-        name: :to_delete,
-        module: Module,
-        arity: 3,
-        exported: true,
-        path: "/path.ex",
-        line: 1,
-        checksum: "check1"
-      })
+      {:ok, function} =
+        Functions.create(%{
+          name: :to_delete,
+          module: Module,
+          arity: 3,
+          exported: true,
+          path: "/path.ex",
+          line: 1,
+          checksum: "check1"
+        })
 
       assert {:ok, deleted} = Functions.delete(function)
       assert deleted.id == function.id
@@ -105,22 +108,24 @@ defmodule Codicil.FunctionsTest do
   describe "relations" do
     test "can preload module_info from function" do
       # Create a module
-      {:ok, module} = Modules.create(%{
-        id: MyModule,
-        path: "/lib/my_module.ex",
-        checksum: "abc123"
-      })
+      {:ok, module} =
+        Modules.create(%{
+          id: MyModule,
+          path: "/lib/my_module.ex",
+          checksum: "abc123"
+        })
 
       # Create a function belonging to that module
-      {:ok, function} = Functions.create(%{
-        name: :my_function,
-        module: MyModule,
-        arity: 1,
-        exported: true,
-        path: "/lib/my_module.ex",
-        line: 10,
-        checksum: "def456"
-      })
+      {:ok, function} =
+        Functions.create(%{
+          name: :my_function,
+          module: MyModule,
+          arity: 1,
+          exported: true,
+          path: "/lib/my_module.ex",
+          line: 10,
+          checksum: "def456"
+        })
 
       # Preload the module_info association
       function_with_module = Repo.preload(function, :module_info)
@@ -133,30 +138,33 @@ defmodule Codicil.FunctionsTest do
       import Ecto.Query
 
       # Create a module
-      {:ok, module} = Modules.create(%{
-        id: TestModule,
-        path: "/lib/test.ex",
-        checksum: "xyz"
-      })
+      {:ok, module} =
+        Modules.create(%{
+          id: TestModule,
+          path: "/lib/test.ex",
+          checksum: "xyz"
+        })
 
       # Create a function
-      {:ok, function} = Functions.create(%{
-        name: :test_func,
-        module: TestModule,
-        arity: 0,
-        exported: true,
-        path: "/lib/test.ex",
-        line: 5,
-        checksum: "abc"
-      })
+      {:ok, function} =
+        Functions.create(%{
+          name: :test_func,
+          module: TestModule,
+          arity: 0,
+          exported: true,
+          path: "/lib/test.ex",
+          line: 5,
+          checksum: "abc"
+        })
 
       # Query function and join with module_info
-      result = from(f in Codicil.Db.Function,
-        join: m in assoc(f, :module_info),
-        where: m.id == ^module.id,
-        select: f
-      )
-      |> Repo.one()
+      result =
+        from(f in Codicil.Db.Function,
+          join: m in assoc(f, :module_info),
+          where: m.id == ^module.id,
+          select: f
+        )
+        |> Repo.one()
 
       assert result.name == "test_func"
       assert result.id == function.id
@@ -372,6 +380,100 @@ defmodule Codicil.FunctionsTest do
       # List callers of function that's not called
       callers = Functions.list_called_by(function)
       assert callers == []
+    end
+  end
+
+  describe "upsert/1" do
+    test "creates a new function when it doesn't exist" do
+      attrs = %{
+        name: :my_function,
+        module: MyModule,
+        arity: 2,
+        exported: true,
+        path: "/lib/my_module.ex",
+        line: 10,
+        checksum: "abc123"
+      }
+
+      assert {:ok, function} = Functions.upsert(attrs)
+      assert is_integer(function.id)
+      assert function.name == "my_function"
+      assert function.module == "Elixir.MyModule"
+      assert function.arity == 2
+      assert function.checksum == "abc123"
+    end
+
+    test "updates existing function when it already exists" do
+      # Create initial function
+      initial_attrs = %{
+        name: :my_function,
+        module: MyModule,
+        arity: 1,
+        exported: false,
+        path: "/lib/old_path.ex",
+        line: 5,
+        checksum: "old_checksum"
+      }
+
+      {:ok, initial} = Functions.create(initial_attrs)
+      initial_id = initial.id
+
+      # Upsert with new data
+      updated_attrs = %{
+        name: :my_function,
+        module: MyModule,
+        arity: 1,
+        exported: true,
+        path: "/lib/new_path.ex",
+        line: 10,
+        checksum: "new_checksum"
+      }
+
+      assert {:ok, updated} = Functions.upsert(updated_attrs)
+      assert updated.id == initial_id
+      assert updated.exported == true
+      assert updated.path == "/lib/new_path.ex"
+      assert updated.line == 10
+      assert updated.checksum == "new_checksum"
+    end
+
+    test "preserves id when upserting" do
+      # Create initial function
+      {:ok, initial} = Functions.create(%{
+        name: :test,
+        module: TestModule,
+        arity: 0,
+        exported: true,
+        path: "/test.ex",
+        line: 1,
+        checksum: "v1"
+      })
+
+      # Upsert multiple times
+      {:ok, upsert1} = Functions.upsert(%{
+        name: :test,
+        module: TestModule,
+        arity: 0,
+        exported: true,
+        path: "/test.ex",
+        line: 2,
+        checksum: "v2"
+      })
+
+      {:ok, upsert2} = Functions.upsert(%{
+        name: :test,
+        module: TestModule,
+        arity: 0,
+        exported: true,
+        path: "/test.ex",
+        line: 3,
+        checksum: "v3"
+      })
+
+      # All should have the same ID
+      assert initial.id == upsert1.id
+      assert initial.id == upsert2.id
+      assert upsert2.checksum == "v3"
     end
   end
 end
