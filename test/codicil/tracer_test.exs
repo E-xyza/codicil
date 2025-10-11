@@ -123,17 +123,17 @@ defmodule Codicil.TracerTest do
       :code.delete(module)
     end
 
-    test "tracks module dependencies (import, require, use)" do
+    test "tracks compile-time module dependencies (import, require, use)" do
       # Compile a module that has various dependencies
-      example_path = Path.join(__DIR__, "tracer_examples/module_with_dependencies.ex")
+      example_path = Path.join(__DIR__, "tracer_examples/module_compile_dependencies.ex")
       [{module, _}] = Code.compile_file(example_path)
 
       # Give the background task time to complete
       Process.sleep(100)
 
       # Verify the module was created
-      assert module_record = Codicil.Modules.get(ModuleWithDependencies)
-      assert module_record.id == "Elixir.ModuleWithDependencies"
+      assert module_record = Codicil.Modules.get(ModuleCompileDependencies)
+      assert module_record.id == "Elixir.ModuleCompileDependencies"
 
       # Get compile-time dependencies
       dependencies = Codicil.Modules.list_compile_dependencies(module_record)
@@ -141,6 +141,31 @@ defmodule Codicil.TracerTest do
       # Should have compile-time dependencies on String (import), Logger (require), and GenServer (use)
       assert ["Elixir.GenServer", "Elixir.Logger", "Elixir.String"] =
                Enum.map(dependencies, & &1.id) |> Enum.sort()
+
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
+    end
+
+    test "tracks runtime module dependencies (remote calls)" do
+      # Compile a module that has runtime dependencies only
+      example_path = Path.join(__DIR__, "tracer_examples/module_runtime_dependencies.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Verify the module was created
+      assert module_record = Codicil.Modules.get(ModuleRuntimeDependencies)
+      assert module_record.id == "Elixir.ModuleRuntimeDependencies"
+
+      # Get compile-time dependencies - should be empty
+      compile_deps = Codicil.Modules.list_compile_dependencies(module_record)
+      assert compile_deps == []
+
+      # Get runtime dependencies - should be empty for now (not implemented yet)
+      runtime_deps = Codicil.Modules.list_runtime_dependencies(module_record)
+      assert runtime_deps == []
 
       # Clean up
       :code.purge(module)

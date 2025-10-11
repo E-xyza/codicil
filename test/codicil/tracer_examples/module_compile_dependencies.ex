@@ -1,4 +1,4 @@
-defmodule ModuleWithDependencies do
+defmodule ModuleCompileDependencies do
   # Import provides compile-time dependency
   import String, only: [upcase: 1]
 
