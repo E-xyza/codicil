@@ -37,11 +37,12 @@ defmodule Codicil.ModulesTest do
 
   describe "get/1" do
     test "retrieves a module by id" do
-      {:ok, created} = Modules.create(%{
-        id: Test.Module,
-        path: "/test/file.ex",
-        checksum: "test123"
-      })
+      {:ok, created} =
+        Modules.create(%{
+          id: Test.Module,
+          path: "/test/file.ex",
+          checksum: "test123"
+        })
 
       module = Modules.get(Test.Module)
       assert module.id == created.id
@@ -56,11 +57,12 @@ defmodule Codicil.ModulesTest do
 
   describe "update/2" do
     test "updates module attributes" do
-      {:ok, module} = Modules.create(%{
-        id: Update.Test,
-        path: "/original.ex",
-        checksum: "old"
-      })
+      {:ok, module} =
+        Modules.create(%{
+          id: Update.Test,
+          path: "/original.ex",
+          checksum: "old"
+        })
 
       assert {:ok, updated} = Modules.update(module, %{checksum: "new"})
       assert updated.id == module.id
@@ -70,11 +72,12 @@ defmodule Codicil.ModulesTest do
 
   describe "delete/1" do
     test "deletes a module" do
-      {:ok, module} = Modules.create(%{
-        id: Delete.Test,
-        path: "/delete.ex",
-        checksum: "delete123"
-      })
+      {:ok, module} =
+        Modules.create(%{
+          id: Delete.Test,
+          path: "/delete.ex",
+          checksum: "delete123"
+        })
 
       assert {:ok, deleted} = Modules.delete(module)
       assert deleted.id == module.id
@@ -85,32 +88,35 @@ defmodule Codicil.ModulesTest do
   describe "relations" do
     test "can preload functions from module" do
       # Create a module
-      {:ok, module} = Modules.create(%{
-        id: MultiFunc,
-        path: "/lib/multi.ex",
-        checksum: "multi123"
-      })
+      {:ok, module} =
+        Modules.create(%{
+          id: MultiFunc,
+          path: "/lib/multi.ex",
+          checksum: "multi123"
+        })
 
       # Create multiple functions
-      {:ok, _f1} = Codicil.Functions.create(%{
-        name: :func_one,
-        module: MultiFunc,
-        arity: 0,
-        exported: true,
-        path: "/lib/multi.ex",
-        line: 10,
-        checksum: "f1"
-      })
+      {:ok, _f1} =
+        Codicil.Functions.create(%{
+          name: :func_one,
+          module: MultiFunc,
+          arity: 0,
+          exported: true,
+          path: "/lib/multi.ex",
+          line: 10,
+          checksum: "f1"
+        })
 
-      {:ok, _f2} = Codicil.Functions.create(%{
-        name: :func_two,
-        module: MultiFunc,
-        arity: 1,
-        exported: false,
-        path: "/lib/multi.ex",
-        line: 20,
-        checksum: "f2"
-      })
+      {:ok, _f2} =
+        Codicil.Functions.create(%{
+          name: :func_two,
+          module: MultiFunc,
+          arity: 1,
+          exported: false,
+          path: "/lib/multi.ex",
+          line: 20,
+          checksum: "f2"
+        })
 
       # Preload functions association
       module_with_functions = Repo.preload(module, :functions)
@@ -122,11 +128,12 @@ defmodule Codicil.ModulesTest do
 
     test "functions are empty when module has no functions" do
       # Create a module with no functions
-      {:ok, module} = Modules.create(%{
-        id: Empty,
-        path: "/lib/empty.ex",
-        checksum: "empty"
-      })
+      {:ok, module} =
+        Modules.create(%{
+          id: Empty,
+          path: "/lib/empty.ex",
+          checksum: "empty"
+        })
 
       module_with_functions = Repo.preload(module, :functions)
 

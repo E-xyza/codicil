@@ -41,6 +41,7 @@ defmodule Codicil.Tracer do
     case DynamicSupervisor.start_child(Codicil.ModuleTracerSupervisor, child_spec) do
       {:ok, _pid} ->
         :ok
+
       {:error, {:already_started, _pid}} ->
         require Logger
         Logger.warning("Module already being traced: #{inspect(module)} in #{env.file}")

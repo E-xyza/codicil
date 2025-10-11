@@ -24,10 +24,11 @@ defmodule Codicil.Db.Module do
 
   def changeset(module, attrs) do
     # Convert atom module id to string if needed
-    attrs = case attrs do
-      %{id: id} when is_atom(id) -> %{attrs | id: "#{id}"}
-      _ -> attrs
-    end
+    attrs =
+      case attrs do
+        %{id: id} when is_atom(id) -> %{attrs | id: "#{id}"}
+        _ -> attrs
+      end
 
     module
     |> Changeset.cast(attrs, [:id, :path, :checksum, :parsed, :doc, :summary, :vector, :line])

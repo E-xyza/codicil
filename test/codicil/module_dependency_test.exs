@@ -44,11 +44,12 @@ defmodule Codicil.ModuleDependencyTest do
       {:ok, mod_b} = Modules.create(%{id: ModB, path: "/lib/mod_b.ex", checksum: "bbb"})
 
       # Create a dependency: ModA depends on ModB
-      {:ok, dep} = Repo.insert(%Codicil.Db.ModuleDependency{
-        dependent_id: mod_a.id,
-        dependency_id: mod_b.id,
-        type: :compiler
-      })
+      {:ok, dep} =
+        Repo.insert(%Codicil.Db.ModuleDependency{
+          dependent_id: mod_a.id,
+          dependency_id: mod_b.id,
+          type: :compiler
+        })
 
       # Preload both associations
       dep_with_mods = Repo.preload(dep, [:dependent, :dependency])
@@ -66,19 +67,21 @@ defmodule Codicil.ModuleDependencyTest do
       {:ok, mod_y} = Modules.create(%{id: ModY, path: "/lib/mod_y.ex", checksum: "yyy"})
 
       # Create runtime dependency
-      {:ok, _dep} = Repo.insert(%Codicil.Db.ModuleDependency{
-        dependent_id: mod_x.id,
-        dependency_id: mod_y.id,
-        type: :runtime
-      })
+      {:ok, _dep} =
+        Repo.insert(%Codicil.Db.ModuleDependency{
+          dependent_id: mod_x.id,
+          dependency_id: mod_y.id,
+          type: :runtime
+        })
 
       # Query to find what ModX depends on
-      dependencies = from(md in Codicil.Db.ModuleDependency,
-        join: dep in assoc(md, :dependency),
-        where: md.dependent_id == ^mod_x.id,
-        select: dep
-      )
-      |> Repo.all()
+      dependencies =
+        from(md in Codicil.Db.ModuleDependency,
+          join: dep in assoc(md, :dependency),
+          where: md.dependent_id == ^mod_x.id,
+          select: dep
+        )
+        |> Repo.all()
 
       assert length(dependencies) == 1
       assert hd(dependencies).id == "Elixir.ModY"
@@ -93,27 +96,30 @@ defmodule Codicil.ModuleDependencyTest do
       {:ok, app2} = Modules.create(%{id: App2, path: "/lib/app2.ex", checksum: "app2"})
 
       # Both apps depend on lib
-      {:ok, _d1} = Repo.insert(%Codicil.Db.ModuleDependency{
-        dependent_id: app1.id,
-        dependency_id: lib_mod.id,
-        type: :compiler
-      })
+      {:ok, _d1} =
+        Repo.insert(%Codicil.Db.ModuleDependency{
+          dependent_id: app1.id,
+          dependency_id: lib_mod.id,
+          type: :compiler
+        })
 
-      {:ok, _d2} = Repo.insert(%Codicil.Db.ModuleDependency{
-        dependent_id: app2.id,
-        dependency_id: lib_mod.id,
-        type: :compiler
-      })
+      {:ok, _d2} =
+        Repo.insert(%Codicil.Db.ModuleDependency{
+          dependent_id: app2.id,
+          dependency_id: lib_mod.id,
+          type: :compiler
+        })
 
       # Query to find what depends on LibModule
-      dependents = from(md in Codicil.Db.ModuleDependency,
-        join: dep in assoc(md, :dependent),
-        where: md.dependency_id == ^lib_mod.id,
-        select: dep
-      )
-      |> Repo.all()
-      |> Enum.map(& &1.id)
-      |> Enum.sort()
+      dependents =
+        from(md in Codicil.Db.ModuleDependency,
+          join: dep in assoc(md, :dependent),
+          where: md.dependency_id == ^lib_mod.id,
+          select: dep
+        )
+        |> Repo.all()
+        |> Enum.map(& &1.id)
+        |> Enum.sort()
 
       assert dependents == ["Elixir.App1", "Elixir.App2"]
     end
