@@ -1,7 +1,6 @@
 defmodule Codicil.TracerTest do
   use ExUnit.Case, async: true
 
-  alias Codicil.Tracer
   alias Codicil.Functions
   alias Codicil.Db.Repo
 
@@ -118,6 +117,30 @@ defmodule Codicil.TracerTest do
       ] = call_string
       |> Functions.list_calls()
       |> Enum.sort_by(&{&1.module, &1.name})
+
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
+    end
+
+    test "tracks module dependencies (import, require, use)" do
+      # Compile a module that has various dependencies
+      example_path = Path.join(__DIR__, "tracer_examples/module_with_dependencies.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Verify the module was created
+      assert module_record = Codicil.Modules.get(ModuleWithDependencies)
+      assert module_record.id == "Elixir.ModuleWithDependencies"
+
+      # Get compile-time dependencies
+      dependencies = Codicil.Modules.list_compile_dependencies(module_record)
+
+      # Should have compile-time dependencies on String (import), Logger (require), and GenServer (use)
+      assert ["Elixir.GenServer", "Elixir.Logger", "Elixir.String"] =
+               Enum.map(dependencies, & &1.id) |> Enum.sort()
 
       # Clean up
       :code.purge(module)

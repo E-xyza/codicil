@@ -570,6 +570,9 @@ end
 - **DO NOT** use `as:` in alias statements: `alias Foo.Bar, as: Baz`
 - **DO** use the full module name directly in code instead
 - Renaming modules obscures where things come from and makes code harder to search/navigate
+- **ALWAYS** place all `alias` and `require` statements at the head of the module, immediately after `use` statements
+- This follows Elixir convention and makes dependencies immediately visible
+- **DO NOT** place `alias` statements inside function bodies or private function definitions
 
 ### Context Module Naming
 - **DO NOT** use redundant names in context functions

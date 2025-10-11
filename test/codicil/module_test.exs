@@ -70,6 +70,45 @@ defmodule Codicil.ModulesTest do
     end
   end
 
+  describe "upsert/1" do
+    test "creates a module when it doesn't exist" do
+      attrs = %{
+        id: Upsert.Test,
+        path: "/lib/upsert.ex",
+        checksum: "original"
+      }
+
+      assert {:ok, module} = Modules.upsert(attrs)
+      assert module.id == "Elixir.Upsert.Test"
+      assert module.checksum == "original"
+    end
+
+    test "updates a module when it already exists" do
+      # Create initial module
+      {:ok, _original} =
+        Modules.create(%{
+          id: Upsert.Existing,
+          path: "/lib/original.ex",
+          checksum: "v1"
+        })
+
+      # Upsert with new values
+      attrs = %{
+        id: Upsert.Existing,
+        path: "/lib/updated.ex",
+        checksum: "v2"
+      }
+
+      assert {:ok, updated} = Modules.upsert(attrs)
+      assert updated.id == "Elixir.Upsert.Existing"
+      assert updated.path == "/lib/updated.ex"
+      assert updated.checksum == "v2"
+
+      # Verify only one record exists
+      assert Modules.get(Upsert.Existing).checksum == "v2"
+    end
+  end
+
   describe "delete/1" do
     test "deletes a module" do
       {:ok, module} =

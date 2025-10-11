@@ -1,5 +1,4 @@
 defmodule RemoteCallsModule do
-  # TODO: Add test for anonymous functions later
   def call_external(list) do
     # Call Enum.count/1 from standard library
     Enum.count(list)

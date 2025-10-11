@@ -17,6 +17,15 @@ defmodule Codicil.Modules do
   end
 
   @doc """
+  Creates or updates a module record (upsert by module id).
+  """
+  def upsert(attrs) do
+    %Module{}
+    |> Module.changeset(attrs)
+    |> Repo.insert(on_conflict: :replace_all, conflict_target: :id)
+  end
+
+  @doc """
   Retrieves a module by ID.
   Returns the module struct or nil if not found.
   """
@@ -54,6 +63,20 @@ defmodule Codicil.Modules do
   end
 
   @doc """
+  Deletes all dependencies for a given module (as the dependent).
+  """
+  def delete_all_dependencies(module_id) when is_atom(module_id) do
+    delete_all_dependencies(Atom.to_string(module_id))
+  end
+
+  def delete_all_dependencies(module_id) when is_binary(module_id) do
+    import Ecto.Query
+
+    from(md in ModuleDependency, where: md.dependent_id == ^module_id)
+    |> Repo.delete_all()
+  end
+
+  @doc """
   Retrieves a module dependency by ID.
   Returns the dependency struct or nil if not found.
   """
@@ -66,5 +89,35 @@ defmodule Codicil.Modules do
   """
   def delete_dependency(%ModuleDependency{} = module_dependency) do
     Repo.delete(module_dependency)
+  end
+
+  @doc """
+  Lists all compile-time dependencies for the given module.
+  """
+  def list_compile_dependencies(%Module{id: id}) do
+    import Ecto.Query
+
+    from(m in Module,
+      join: md in ModuleDependency,
+      on: md.dependency_id == m.id,
+      where: md.dependent_id == ^id and md.type == :compiler,
+      select: m
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists all runtime dependencies for the given module.
+  """
+  def list_runtime_dependencies(%Module{id: id}) do
+    import Ecto.Query
+
+    from(m in Module,
+      join: md in ModuleDependency,
+      on: md.dependency_id == m.id,
+      where: md.dependent_id == ^id and md.type == :runtime,
+      select: m
+    )
+    |> Repo.all()
   end
 end

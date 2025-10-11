@@ -7,6 +7,9 @@ defmodule Codicil.ModuleTracer do
   """
   use GenServer
 
+  alias Codicil.Functions
+  alias Codicil.Modules
+
   # BOILERPLATE & INITIALIZATION
 
   def start_link(module_name, file_path) do
@@ -19,25 +22,50 @@ defmodule Codicil.ModuleTracer do
 
   @impl true
   def init({module_name, file_path}) do
-    {:ok, %{module: module_name, file: file_path}}
+    {:ok, %{module: module_name, file: file_path, dependencies: []}}
   end
 
   # API
 
   @spec complete(module_name :: module(), bytecode :: binary()) :: :ok
+  @spec add_dependency(dependent :: module(), dependency :: module(), type :: :compiler | :runtime) ::
+          :ok
+
   def complete(module_name, bytecode) do
     GenServer.cast(via(module_name), {:complete, bytecode})
   end
-
-  # API IMPLEMENTATION
 
   @call_opcodes ~w[call call_only call_last call_ext call_ext_only call_ext_last]a
 
   defguardp is_call(bytecode_instr)
             when is_tuple(bytecode_instr) and elem(bytecode_instr, 0) in @call_opcodes
 
-  defp complete_impl(bytecode, %{module: module, file: file} = state) do
-    alias Codicil.Functions
+  defp complete_impl(bytecode, %{module: module, file: file, dependencies: dependencies} = state) do
+    # Create or update module record
+    {:ok, _module_record} =
+      Modules.upsert(%{
+        id: module,
+        path: file,
+        checksum: "TODO"
+      })
+
+    # Clear old dependencies before inserting new ones
+    Modules.delete_all_dependencies(module)
+
+    # Store module dependencies (deduplicate first)
+    dependencies
+    |> Enum.uniq()
+    |> Enum.each(fn {dependency, type} ->
+      # Ensure dependency module record exists (placeholder)
+      {:ok, _} = Modules.upsert(%{id: dependency, path: "unknown", checksum: "TODO"})
+
+      # Create dependency relationship
+      Modules.create_dependency(%{
+        dependent_id: module,
+        dependency_id: dependency,
+        type: type
+      })
+    end)
 
     # Parse source file to extract function line numbers and docs
     {line_map, doc_map} = parse_source_file(file)
@@ -97,6 +125,16 @@ defmodule Codicil.ModuleTracer do
 
     # Stop the GenServer after processing
     {:stop, :normal, state}
+  end
+
+  def add_dependency(dependent, dependency, type) do
+    GenServer.cast(via(dependent), {:add_dependency, dependency, type})
+  end
+
+  defp add_dependency_impl(dependency, type, state) do
+    # Add dependency to state's dependency list
+    updated_dependencies = [{dependency, type} | state.dependencies]
+    {:noreply, %{state | dependencies: updated_dependencies}}
   end
 
   # HELPER FUNCTIONS
@@ -197,5 +235,9 @@ defmodule Codicil.ModuleTracer do
   @impl true
   def handle_cast({:complete, bytecode}, state) do
     complete_impl(bytecode, state)
+  end
+
+  def handle_cast({:add_dependency, dependency, type}, state) do
+    add_dependency_impl(dependency, type, state)
   end
 end
