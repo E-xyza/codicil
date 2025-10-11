@@ -31,8 +31,10 @@ defmodule Codicil.ModuleTracer do
 
   # API IMPLEMENTATION
 
+  @call_opcodes ~w[call call_only call_last call_ext call_ext_only call_ext_last]a
+
   defguardp is_call(bytecode_instr)
-            when is_tuple(bytecode_instr) and elem(bytecode_instr, 0) in ~w[call call_only call_last]a
+            when is_tuple(bytecode_instr) and elem(bytecode_instr, 0) in @call_opcodes
 
   defp complete_impl(bytecode, %{module: module, file: file} = state) do
     alias Codicil.Functions
@@ -68,7 +70,15 @@ defmodule Codicil.ModuleTracer do
       {:ok, function} = Functions.upsert(attrs)
 
       # Extract and store function calls from bytecode
-      called_funs = for instr <- code, is_call(instr), uniq: true, do: elem(instr, 2)
+      called_funs =
+        for instr <- code, is_call(instr), uniq: true do
+          case elem(instr, 2) do
+            # External calls: {:call_ext*, arity, {:extfunc, Module, :function, arity}}
+            {:extfunc, mod, fun, arity} -> {mod, fun, arity}
+            # Local calls: {:call*, arity, {Module, :function, arity}}
+            mfa -> mfa
+          end
+        end
 
       Enum.each(called_funs, fn mfa ->
         callee =

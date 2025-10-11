@@ -89,5 +89,39 @@ defmodule Codicil.TracerTest do
       :code.purge(module)
       :code.delete(module)
     end
+
+    test "creates placeholders for remote function calls" do
+      # Compile a module that calls external functions
+      example_path = Path.join(__DIR__, "tracer_examples/remote_calls_module.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Verify the functions were created
+      assert call_external = Functions.get_by_mfa({RemoteCallsModule, :call_external, 1})
+      assert call_external.exported
+
+      assert call_string = Functions.get_by_mfa({RemoteCallsModule, :call_string_functions, 1})
+      assert call_string.exported
+
+      # Check that remote calls created placeholders
+      assert [
+        %{module: "Elixir.Enum", name: "count", arity: 1, parsed: nil}
+      ] = call_external
+      |> Functions.list_calls()
+      |> Enum.sort_by(&{&1.module, &1.name})
+
+      assert [
+        %{module: "Elixir.String", name: "trim", arity: 1, parsed: nil},
+        %{module: "Elixir.String", name: "upcase", arity: 1, parsed: nil}
+      ] = call_string
+      |> Functions.list_calls()
+      |> Enum.sort_by(&{&1.module, &1.name})
+
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
+    end
   end
 end

@@ -61,7 +61,6 @@ defmodule Codicil.Db.Function do
       :checksum
     ])
     |> Changeset.validate_required([:name, :module, :arity])
-    |> maybe_set_parsed()
   end
 
   @doc """
@@ -72,6 +71,7 @@ defmodule Codicil.Db.Function do
     function
     |> changeset(attrs)
     |> Changeset.validate_required([:exported, :path, :line, :checksum])
+    |> Changeset.put_change(:parsed, DateTime.utc_now())
   end
 
   defp normalize_attrs(attrs) do
@@ -87,14 +87,6 @@ defmodule Codicil.Db.Function do
 
       _ ->
         attrs
-    end
-  end
-
-  defp maybe_set_parsed(changeset) do
-    if Changeset.get_field(changeset, :parsed) do
-      changeset
-    else
-      Changeset.put_change(changeset, :parsed, DateTime.utc_now())
     end
   end
 end
