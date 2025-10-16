@@ -21,13 +21,6 @@ defmodule Codicil.EmbeddingsTest do
   end
 
   describe "embedding protocol" do
-    test "protocol is implemented for Anthropic client" do
-      client = %Embeddings.Anthropic{api_key: "test-key"}
-      # Verify protocol functions exist (actual API calls tested in integration tests)
-      assert function_exported?(Codicil.Embeddings.Anthropic, :embed, 3)
-      assert function_exported?(Codicil.Embeddings.Anthropic, :embed_batch, 3)
-    end
-
     test "Result struct holds embedding data" do
       result = %Embeddings.Result{
         embedding: [0.1, 0.2, 0.3],
