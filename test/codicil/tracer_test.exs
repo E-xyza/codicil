@@ -159,13 +159,10 @@ defmodule Codicil.TracerTest do
       assert module_record = Codicil.Modules.get(ModuleRuntimeDependencies)
       assert module_record.id == "Elixir.ModuleRuntimeDependencies"
 
-      # Get compile-time dependencies - should be empty
-      compile_deps = Codicil.Modules.list_compile_dependencies(module_record)
-      assert compile_deps == []
-
-      # Get runtime dependencies - should be empty for now (not implemented yet)
+      # Get runtime dependencies - should include Enum, String, List
       runtime_deps = Codicil.Modules.list_runtime_dependencies(module_record)
-      assert runtime_deps == []
+      assert ["Elixir.Enum", "Elixir.List", "Elixir.String"] =
+               Enum.map(runtime_deps, & &1.id) |> Enum.sort()
 
       # Clean up
       :code.purge(module)

@@ -78,7 +78,9 @@ defmodule Codicil.ModuleTracer do
     exported_set = for {name, arity, _label} <- exports, into: MapSet.new(), do: {name, arity}
 
     for {:function, name, arity, _label, code} <- functions,
-        name not in ~w[__info__ module_info]a do
+        name not in ~w[__info__ module_info]a,
+        reduce: MapSet.new() do
+      modules_so_far ->
       # Store functions in database
       exported = MapSet.member?(exported_set, {name, arity})
       line = Map.get(line_map, {name, arity}, 0)
@@ -108,7 +110,7 @@ defmodule Codicil.ModuleTracer do
           end
         end
 
-      Enum.each(called_funs, fn mfa ->
+      for mfa <- called_funs, into: modules_so_far do
         callee =
           case Functions.get_by_mfa(mfa) do
             nil ->
@@ -120,8 +122,22 @@ defmodule Codicil.ModuleTracer do
           end
 
         Functions.add_call(function, callee)
-      end)
+
+        elem(mfa, 0)
+      end
     end
+    |> Enum.reject(&(&1 == module))
+    |> Enum.each(fn dependency ->
+      # Ensure dependency module record exists (placeholder)
+      {:ok, _} = Modules.upsert(%{id: dependency, path: "unknown", checksum: "TODO"})
+
+      # Create dependency relationship
+      Modules.create_dependency(%{
+        dependent_id: module,
+        dependency_id: dependency,
+        type: :runtime
+      })
+    end)
 
     # Stop the GenServer after processing
     {:stop, :normal, state}
