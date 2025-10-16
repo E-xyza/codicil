@@ -140,4 +140,57 @@ defmodule Codicil.Functions do
     )
     |> Repo.all()
   end
+
+  @doc """
+  Finds functions similar to a query vector using cosine distance.
+
+  ## Parameters
+  - `query_vector` - List of floats representing the query embedding
+  - `opts` - Options:
+    - `:limit` - Maximum number of results (default: 20)
+
+  ## Returns
+  - List of Function structs ordered by similarity (most similar first)
+
+  ## Example
+      iex> Functions.find_similar([0.1, 0.2, 0.3], limit: 10)
+      [%Function{}, ...]
+  """
+  def find_similar(query_vector, opts \\ []) when is_list(query_vector) do
+    limit = Keyword.get(opts, :limit, 20)
+
+    # Convert query vector to JSON format for sqlite-vec
+    # sqlite-vec accepts JSON arrays: '[1.0, 2.0, 3.0]'
+    query_json = Jason.encode!(query_vector)
+
+    # Use raw SQL for vector similarity search
+    # sqlite-vec uses vec_distance_cosine for cosine distance
+    query = """
+    SELECT *
+    FROM functions
+    WHERE embedding IS NOT NULL
+    ORDER BY vec_distance_cosine(embedding, vec_f32(?))
+    LIMIT ?
+    """
+
+    case Repo.query(query, [query_json, limit]) do
+      {:ok, %{rows: rows, columns: columns}} ->
+        # Convert rows to Function structs
+        Enum.map(rows, fn row ->
+          columns
+          |> Enum.zip(row)
+          |> Map.new()
+          |> atomize_keys()
+          |> then(&struct(Function, &1))
+        end)
+
+      {:error, _} ->
+        []
+    end
+  end
+
+  # Helper to convert string keys to atoms for struct creation
+  defp atomize_keys(map) do
+    Map.new(map, fn {k, v} -> {String.to_atom(k), v} end)
+  end
 end
