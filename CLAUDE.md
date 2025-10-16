@@ -474,7 +474,8 @@ defmodule MyGenServer do
 
   # 2. API (Public interface - what external callers use)
   # - Declare @spec for all public functions
-  # - Keep implementations one-liners that delegate to handle_* via GenServer.call/cast
+  # - Keep implementations one-liners that delegate to handle_* via GenServer.call
+  # - Prefer call over cast unless there's a performance requirement or deadlock risk
 
   @spec get_data(id :: term()) :: term()
   def get_data(id) do
@@ -483,7 +484,7 @@ defmodule MyGenServer do
 
   @spec set_data(id :: term(), data :: term()) :: :ok
   def set_data(id, data) do
-    GenServer.cast(via_tuple(id), {:set_data, data})
+    GenServer.call(via_tuple(id), {:set_data, data})
   end
 
   # 3. API IMPLEMENTATION (Private - the actual logic)
@@ -512,15 +513,14 @@ defmodule MyGenServer do
   # 5. ROUTER (Boilerplate at bottom - write once, never think about again)
   # - Simple pattern matching that routes to implementations
   # - One-to-one correspondence with API functions above
-  # - For calls: Pass 'from' to implementation
-  # - For casts: Do NOT pass 'from' to implementation
+  # - All operations use handle_call (prefer call over cast)
 
   def handle_call(:get_data, from, state) do
     get_data_impl(from, state)
   end
 
-  def handle_cast({:set_data, data}, state) do
-    set_data_impl(data, state)
+  def handle_call({:set_data, data}, from, state) do
+    set_data_impl(data, from, state)
   end
 end
 ```
@@ -534,6 +534,7 @@ end
 5. **For handle_info**: Implementation takes `(message, state)`
 6. **Router at bottom** is pure boilerplate - pattern match and delegate
 7. **Always pass full GenServer return tuples** from implementations: `{:reply, ...}`, `{:noreply, ...}`, `{:stop, ...}`
+8. **Prefer GenServer.call over GenServer.cast** - Use `call` with `:ok` return unless there's a specific performance requirement or deadlock risk. Cast-and-forget makes debugging harder and loses error information.
 
 #### Benefits
 
