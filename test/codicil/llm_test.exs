@@ -74,4 +74,51 @@ defmodule Codicil.LLMTest do
       assert client.model == "grok-beta"
     end
   end
+
+  describe "Cohere provider" do
+    test "client struct has required fields" do
+      client = %LLM.Cohere{
+        api_key: "test-key",
+        llm_model: "command-a-03-2025",
+        embedding_model: "embed-english-v3.0"
+      }
+
+      assert %LLM.Cohere{} = client
+      assert client.api_key == "test-key"
+      assert client.llm_model == "command-a-03-2025"
+      assert client.embedding_model == "embed-english-v3.0"
+    end
+
+    test "uses default models when not specified" do
+      client = %LLM.Cohere{api_key: "test-key"}
+      assert client.llm_model == "command-a-03-2025"
+      assert client.embedding_model == "embed-english-v3.0"
+    end
+  end
+
+  describe "Google provider" do
+    test "client struct has required fields" do
+      client = %LLM.Google{
+        api_key: "test-key",
+        project_id: "test-project",
+        llm_model: "gemini-2.0-flash",
+        embedding_model: "text-embedding-004",
+        region: "us-central1"
+      }
+
+      assert %LLM.Google{} = client
+      assert client.api_key == "test-key"
+      assert client.project_id == "test-project"
+      assert client.llm_model == "gemini-2.0-flash"
+      assert client.embedding_model == "text-embedding-004"
+      assert client.region == "us-central1"
+    end
+
+    test "uses default models and region when not specified" do
+      client = %LLM.Google{api_key: "test-key", project_id: "test-project"}
+      assert client.llm_model == "gemini-2.0-flash"
+      assert client.embedding_model == "text-embedding-004"
+      assert client.region == "us-central1"
+    end
+  end
 end

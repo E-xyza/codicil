@@ -160,8 +160,17 @@ defmodule Codicil.RateLimiter do
       api_key = System.get_env("OPENAI_API_KEY") ->
         %Codicil.LLM.OpenAI{api_key: api_key}
 
+      api_key = System.get_env("COHERE_API_KEY") ->
+        %Codicil.LLM.Cohere{api_key: api_key}
+
       true ->
-        nil
+        case {System.get_env("GOOGLE_API_KEY"), System.get_env("GOOGLE_PROJECT_ID")} do
+          {api_key, project_id} when is_binary(api_key) and is_binary(project_id) ->
+            %Codicil.LLM.Google{api_key: api_key, project_id: project_id}
+
+          _ ->
+            nil
+        end
     end
   end
 
@@ -173,8 +182,17 @@ defmodule Codicil.RateLimiter do
       api_key = System.get_env("OPENAI_API_KEY") ->
         %Codicil.LLM.OpenAI{api_key: api_key}
 
+      api_key = System.get_env("COHERE_API_KEY") ->
+        %Codicil.LLM.Cohere{api_key: api_key}
+
       true ->
-        nil
+        case {System.get_env("GOOGLE_API_KEY"), System.get_env("GOOGLE_PROJECT_ID")} do
+          {api_key, project_id} when is_binary(api_key) and is_binary(project_id) ->
+            %Codicil.LLM.Google{api_key: api_key, project_id: project_id}
+
+          _ ->
+            nil
+        end
     end
   end
 
