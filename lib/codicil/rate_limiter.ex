@@ -155,7 +155,7 @@ defmodule Codicil.RateLimiter do
   defp get_llm_client do
     cond do
       api_key = System.get_env("ANTHROPIC_API_KEY") ->
-        %Codicil.LLM.Claude{api_key: api_key}
+        %Codicil.LLM.Anthropic{api_key: api_key}
 
       api_key = System.get_env("OPENAI_API_KEY") ->
         %Codicil.LLM.OpenAI{api_key: api_key, model: "gpt-4"}
@@ -167,7 +167,7 @@ defmodule Codicil.RateLimiter do
 
   defp get_embeddings_client do
     if api_key = System.get_env("ANTHROPIC_API_KEY") do
-      %Embeddings.Anthropic{api_key: api_key}
+      %Codicil.LLM.Anthropic{api_key: api_key}
     else
       nil
     end

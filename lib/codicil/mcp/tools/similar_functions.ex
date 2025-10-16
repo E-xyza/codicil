@@ -188,7 +188,7 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
 
   defp get_default_embeddings_client do
     if api_key = System.get_env("ANTHROPIC_API_KEY") do
-      %Embeddings.Anthropic{api_key: api_key}
+      %Codicil.LLM.Anthropic{api_key: api_key}
     else
       nil
     end
@@ -197,7 +197,7 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
   defp get_default_llm_client do
     cond do
       api_key = System.get_env("ANTHROPIC_API_KEY") ->
-        %LLM.Claude{api_key: api_key}
+        %LLM.Anthropic{api_key: api_key}
 
       api_key = System.get_env("OPENAI_API_KEY") ->
         %LLM.OpenAI{api_key: api_key, model: "gpt-4"}

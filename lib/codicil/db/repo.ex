@@ -15,6 +15,7 @@ defmodule Codicil.Db.Repo do
       |> Keyword.put(:cache_size, -64000)
       |> Keyword.put(:temp_store, :memory)
       |> Keyword.put(:synchronous, :normal)
+      |> Keyword.put(:load_extensions, [SqliteVec.path()])
       |> maybe_use_sandbox_pool()
 
     {:ok, config}

@@ -2,21 +2,25 @@ defmodule Codicil.EmbeddingsTest do
   use ExUnit.Case, async: true
 
   alias Codicil.Embeddings
+  alias Codicil.LLM.Anthropic
 
   describe "Anthropic embeddings" do
     test "client struct has required fields" do
-      client = %Embeddings.Anthropic{
+      client = %Anthropic{
         api_key: "test-key",
-        model: "voyage-3"
+        llm_model: "claude-3-5-sonnet-20241022",
+        embedding_model: "voyage-3"
       }
 
       assert client.api_key == "test-key"
-      assert client.model == "voyage-3"
+      assert client.embedding_model == "voyage-3"
+      assert client.llm_model == "claude-3-5-sonnet-20241022"
     end
 
-    test "uses default model when not specified" do
-      client = %Embeddings.Anthropic{api_key: "test-key"}
-      assert client.model == "voyage-3"
+    test "uses default models when not specified" do
+      client = %Anthropic{api_key: "test-key"}
+      assert client.embedding_model == "voyage-3"
+      assert client.llm_model == "claude-3-5-sonnet-20241022"
     end
   end
 

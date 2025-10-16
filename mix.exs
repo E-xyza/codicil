@@ -35,6 +35,7 @@ defmodule Codicil.MixProject do
       {:exqlite, "~> 0.23"},
       {:ecto_enum, "~> 1.4"},
       {:protoss, "~> 1.1"},
+      {:sqlite_vec, "~> 0.1.0"},
       {:bandit, "~> 1.6", only: [:dev, :test]},
       {:req, "~> 0.5", only: [:test, :dev]},
       {:tidewave, "~> 0.4", only: :dev}
