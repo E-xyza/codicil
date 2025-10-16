@@ -1,5 +1,5 @@
-# Enable compiler tracer for code analysis
-Code.put_compiler_option(:tracers, [Codicil.Tracer])
+# NOTE: Tracer is NOT enabled in test_helper to avoid database contention
+# during parallel test compilation. Specific tracer tests can enable it locally.
 
 # Run migrations before tests
 Ecto.Migrator.run(Codicil.Db.Repo, :code.priv_dir(:codicil) |> Path.join("repo/migrations"), :up,

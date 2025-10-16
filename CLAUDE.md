@@ -684,34 +684,38 @@ Application config should support:
 
 1. **✅ Phase 0: MCP Core** (Complete)
    - Server, supervisor, utilities, Plug adapter
-   - Test suite passing (28/28 tests)
+   - Test suite passing
 
-2. **🚧 Phase 1: Database Layer** (Next)
+2. **✅ Phase 1: Database Layer** (Complete)
    - SQLite setup with Ecto
-   - Schema migrations (functions + edges tables)
-   - Graph query helpers
-   - Vector search with sqlite-vec
+   - Schema migrations (functions, modules, module_dependencies, function_calls tables)
+   - Graph query helpers via Ecto
+   - Context modules (Functions, Modules)
 
-3. **Phase 2: AST Parser**
-   - Parse `.ex`/`.exs` files
-   - Extract functions, modules, relationships
-   - Build call graph
+3. **✅ Phase 2: Compiler Tracer** (Complete - Better than AST Parser!)
+   - Compiler tracer hooks via `Code.put_compiler_option(:tracers, [Codicil.Tracer])`
+   - ModuleTracer GenServer tracks individual module compilation
+   - Extract functions, modules, relationships during compilation
+   - Build call graph from bytecode analysis
+   - Parse source for line numbers and docs
 
-4. **Phase 3: LLM Integration**
-   - Anthropic API client
-   - Function summarization
-   - Batch validation with early stopping
+4. **🚧 Phase 3: LLM Integration** (Partial)
+   - ✅ LLM protocol using Protoss
+   - ✅ Claude, OpenAI, Grok clients
+   - ❌ Function summarizer (needed for semantic search)
+   - ❌ Batch validator (needed for semantic search)
 
-5. **Phase 4: Vector Embeddings**
+5. **❌ Phase 4: Vector Embeddings** (Not Started)
    - Embedding generation (Anthropic or local)
    - Vector storage in SQLite
+   - sqlite-vec extension integration
 
-6. **Phase 5: MCP Tools**
-   - `similar_functions` tool
-   - `function_callers` tool
-   - `function_callees` tool
-   - `module_relationships` tool
+6. **🚧 Phase 5: MCP Tools** (Partial)
+   - ❌ `similar_functions` tool (PRIORITY - needs Phase 4 & 3 completion)
+   - ✅ `function_callers` tool
+   - ✅ `function_callees` tool
+   - ✅ `module_relationships` tool
 
-7. **Phase 6: Indexing & Watcher**
-   - Repository indexing
+7. **❌ Phase 6: Indexing & Watcher** (Not Started)
+   - Repository indexing coordinator
    - File watching for incremental updates

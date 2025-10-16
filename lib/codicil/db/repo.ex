@@ -9,7 +9,12 @@ defmodule Codicil.Db.Repo do
     config =
       config
       |> Keyword.put(:database, database_path)
-      |> Keyword.put_new(:pool_size, 5)
+      |> Keyword.put_new(:pool_size, 10)
+      |> Keyword.put(:busy_timeout, 30000)
+      |> Keyword.put(:journal_mode, :wal)
+      |> Keyword.put(:cache_size, -64000)
+      |> Keyword.put(:temp_store, :memory)
+      |> Keyword.put(:synchronous, :normal)
       |> maybe_use_sandbox_pool()
 
     {:ok, config}
