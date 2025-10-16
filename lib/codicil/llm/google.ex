@@ -9,23 +9,15 @@ defmodule Codicil.LLM.Google do
   Requires Google Cloud credentials and project configuration.
   """
 
-  @default_llm_model "gemini-2.0-flash"
-  @default_embedding_model "text-embedding-004"
   @default_region "us-central1"
 
-  defstruct [
-    :api_key,
-    :project_id,
-    llm_model: @default_llm_model,
-    embedding_model: @default_embedding_model,
-    region: @default_region
-  ]
+  @enforce_keys [:api_key, :project_id, :model]
+  defstruct @enforce_keys ++ [region: @default_region]
 
   @type t :: %__MODULE__{
           api_key: String.t(),
           project_id: String.t(),
-          llm_model: String.t(),
-          embedding_model: String.t(),
+          model: String.t(),
           region: String.t()
         }
 
@@ -38,7 +30,7 @@ defmodule Codicil.LLM.Google do
 
   @impl Codicil.LLM
   def generate_text(
-        %__MODULE__{api_key: api_key, project_id: project_id, llm_model: model, region: region},
+        %__MODULE__{api_key: api_key, project_id: project_id, model: model, region: region},
         prompt,
         opts
       ) do
@@ -98,7 +90,7 @@ defmodule Codicil.LLM.Google do
         %__MODULE__{
           api_key: api_key,
           project_id: project_id,
-          embedding_model: model,
+          model: model,
           region: region
         },
         text,
@@ -122,7 +114,7 @@ defmodule Codicil.LLM.Google do
         %__MODULE__{
           api_key: api_key,
           project_id: project_id,
-          embedding_model: model,
+          model: model,
           region: region
         },
         texts,

@@ -4,45 +4,41 @@ defmodule Codicil.LLMTest do
   alias Codicil.LLM
 
   describe "Anthropic provider" do
-    test "generates text with valid API key" do
+    test "client struct has required fields" do
       client = %LLM.Anthropic{
         api_key: "test-key",
-        llm_model: "claude-3-5-sonnet-20241022",
-        embedding_model: "voyage-3"
+        model: "claude-3-5-sonnet-20241022"
       }
 
       assert %LLM.Anthropic{} = client
       assert client.api_key == "test-key"
-      assert client.llm_model == "claude-3-5-sonnet-20241022"
-      assert client.embedding_model == "voyage-3"
+      assert client.model == "claude-3-5-sonnet-20241022"
     end
 
-    test "uses default models when not specified" do
-      client = %LLM.Anthropic{api_key: "test-key"}
-      assert client.llm_model == "claude-3-5-sonnet-20241022"
-      assert client.embedding_model == "voyage-3"
+    test "supports voyage embeddings model" do
+      client = %LLM.Anthropic{api_key: "test-key", model: "voyage-3"}
+      assert client.model == "voyage-3"
     end
   end
 
   describe "OpenAI provider" do
-    test "generates text with API key" do
+    test "client struct has required fields" do
       client = %LLM.OpenAI{
         api_key: "test-key",
-        llm_model: "gpt-4o",
-        embedding_model: "text-embedding-3-small",
+        model: "gpt-4o",
         base_url: "https://api.openai.com/v1"
       }
 
       assert %LLM.OpenAI{} = client
       assert client.api_key == "test-key"
-      assert client.llm_model == "gpt-4o"
-      assert client.embedding_model == "text-embedding-3-small"
+      assert client.model == "gpt-4o"
+      assert client.base_url == "https://api.openai.com/v1"
     end
 
     test "supports local LLM without auth" do
       client = %LLM.OpenAI{
         api_key: nil,
-        llm_model: "llama3",
+        model: "llama3",
         base_url: "http://localhost:11434/v1"
       }
 
@@ -51,11 +47,9 @@ defmodule Codicil.LLMTest do
       assert client.base_url == "http://localhost:11434/v1"
     end
 
-    test "uses default models and URL when not specified" do
-      client = %LLM.OpenAI{api_key: "test-key"}
+    test "uses default base_url when not specified" do
+      client = %LLM.OpenAI{model: "gpt-4o"}
       assert client.base_url == "https://api.openai.com/v1"
-      assert client.llm_model == "gpt-4o"
-      assert client.embedding_model == "text-embedding-3-small"
     end
   end
 
@@ -81,20 +75,12 @@ defmodule Codicil.LLMTest do
     test "client struct has required fields" do
       client = %LLM.Cohere{
         api_key: "test-key",
-        llm_model: "command-a-03-2025",
-        embedding_model: "embed-english-v3.0"
+        model: "command-a-03-2025"
       }
 
       assert %LLM.Cohere{} = client
       assert client.api_key == "test-key"
-      assert client.llm_model == "command-a-03-2025"
-      assert client.embedding_model == "embed-english-v3.0"
-    end
-
-    test "uses default models when not specified" do
-      client = %LLM.Cohere{api_key: "test-key"}
-      assert client.llm_model == "command-a-03-2025"
-      assert client.embedding_model == "embed-english-v3.0"
+      assert client.model == "command-a-03-2025"
     end
   end
 
@@ -103,23 +89,24 @@ defmodule Codicil.LLMTest do
       client = %LLM.Google{
         api_key: "test-key",
         project_id: "test-project",
-        llm_model: "gemini-2.0-flash",
-        embedding_model: "text-embedding-004",
+        model: "gemini-2.0-flash",
         region: "us-central1"
       }
 
       assert %LLM.Google{} = client
       assert client.api_key == "test-key"
       assert client.project_id == "test-project"
-      assert client.llm_model == "gemini-2.0-flash"
-      assert client.embedding_model == "text-embedding-004"
+      assert client.model == "gemini-2.0-flash"
       assert client.region == "us-central1"
     end
 
-    test "uses default models and region when not specified" do
-      client = %LLM.Google{api_key: "test-key", project_id: "test-project"}
-      assert client.llm_model == "gemini-2.0-flash"
-      assert client.embedding_model == "text-embedding-004"
+    test "uses default region when not specified" do
+      client = %LLM.Google{
+        api_key: "test-key",
+        project_id: "test-project",
+        model: "gemini-2.0-flash"
+      }
+
       assert client.region == "us-central1"
     end
   end

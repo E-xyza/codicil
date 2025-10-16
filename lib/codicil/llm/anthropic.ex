@@ -7,19 +7,12 @@ defmodule Codicil.LLM.Anthropic do
   - Vector embeddings via Voyage AI models
   """
 
-  @default_llm_model "claude-3-5-sonnet-20241022"
-  @default_embedding_model "voyage-3"
-
-  defstruct [
-    :api_key,
-    llm_model: @default_llm_model,
-    embedding_model: @default_embedding_model
-  ]
+  @enforce_keys [:api_key, :model]
+  defstruct @enforce_keys
 
   @type t :: %__MODULE__{
           api_key: String.t(),
-          llm_model: String.t(),
-          embedding_model: String.t()
+          model: String.t()
         }
 
   use Codicil.LLM
@@ -32,7 +25,7 @@ defmodule Codicil.LLM.Anthropic do
   # LLM Implementation
 
   @impl Codicil.LLM
-  def generate_text(%__MODULE__{api_key: api_key, llm_model: model}, prompt, opts) do
+  def generate_text(%__MODULE__{api_key: api_key, model: model}, prompt, opts) do
     max_tokens = Keyword.get(opts, :max_tokens, 1024)
     temperature = Keyword.get(opts, :temperature, 0.7)
     system = Keyword.get(opts, :system)
@@ -95,7 +88,7 @@ defmodule Codicil.LLM.Anthropic do
   # Embeddings Implementation
 
   @impl Codicil.Embeddings
-  def embed(%__MODULE__{api_key: api_key, embedding_model: model}, text, opts) do
+  def embed(%__MODULE__{api_key: api_key, model: model}, text, opts) do
     input_type = Keyword.get(opts, :input_type, "passage")
 
     body = %{
@@ -114,7 +107,7 @@ defmodule Codicil.LLM.Anthropic do
   end
 
   @impl Codicil.Embeddings
-  def embed_batch(%__MODULE__{api_key: api_key, embedding_model: model}, texts, opts) do
+  def embed_batch(%__MODULE__{api_key: api_key, model: model}, texts, opts) do
     input_type = Keyword.get(opts, :input_type, "passage")
 
     body = %{

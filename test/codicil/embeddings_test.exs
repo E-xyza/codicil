@@ -8,19 +8,11 @@ defmodule Codicil.EmbeddingsTest do
     test "client struct has required fields" do
       client = %Anthropic{
         api_key: "test-key",
-        llm_model: "claude-3-5-sonnet-20241022",
-        embedding_model: "voyage-3"
+        model: "voyage-3"
       }
 
       assert client.api_key == "test-key"
-      assert client.embedding_model == "voyage-3"
-      assert client.llm_model == "claude-3-5-sonnet-20241022"
-    end
-
-    test "uses default models when not specified" do
-      client = %Anthropic{api_key: "test-key"}
-      assert client.embedding_model == "voyage-3"
-      assert client.llm_model == "claude-3-5-sonnet-20241022"
+      assert client.model == "voyage-3"
     end
   end
 

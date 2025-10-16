@@ -10,20 +10,13 @@ defmodule Codicil.LLM.OpenAI do
   """
 
   @default_base_url "https://api.openai.com/v1"
-  @default_llm_model "gpt-4o"
-  @default_embedding_model "text-embedding-3-small"
 
-  defstruct [
-    :api_key,
-    llm_model: @default_llm_model,
-    embedding_model: @default_embedding_model,
-    base_url: @default_base_url
-  ]
+  @enforce_keys [:model]
+  defstruct @enforce_keys ++ [:api_key, base_url: @default_base_url]
 
   @type t :: %__MODULE__{
           api_key: String.t() | nil,
-          llm_model: String.t(),
-          embedding_model: String.t(),
+          model: String.t(),
           base_url: String.t()
         }
 
@@ -35,7 +28,7 @@ defmodule Codicil.LLM.OpenAI do
   # LLM Implementation
 
   @impl Codicil.LLM
-  def generate_text(%__MODULE__{api_key: api_key, llm_model: model, base_url: base_url}, prompt, opts) do
+  def generate_text(%__MODULE__{api_key: api_key, model: model, base_url: base_url}, prompt, opts) do
     max_tokens = Keyword.get(opts, :max_tokens, 1024)
     temperature = Keyword.get(opts, :temperature, 0.7)
     system = Keyword.get(opts, :system)
@@ -99,7 +92,7 @@ defmodule Codicil.LLM.OpenAI do
   # Embeddings Implementation
 
   @impl Codicil.Embeddings
-  def embed(%__MODULE__{api_key: api_key, embedding_model: model, base_url: base_url}, text, _opts) do
+  def embed(%__MODULE__{api_key: api_key, model: model, base_url: base_url}, text, _opts) do
     body = %{
       model: model,
       input: text
@@ -115,7 +108,7 @@ defmodule Codicil.LLM.OpenAI do
   end
 
   @impl Codicil.Embeddings
-  def embed_batch(%__MODULE__{api_key: api_key, embedding_model: model, base_url: base_url}, texts, _opts) do
+  def embed_batch(%__MODULE__{api_key: api_key, model: model, base_url: base_url}, texts, _opts) do
     body = %{
       model: model,
       input: texts

@@ -7,20 +7,14 @@ defmodule Codicil.LLM.Cohere do
   - Text embeddings via Embed API
   """
 
-  @default_llm_model "command-a-03-2025"
-  @default_embedding_model "embed-english-v3.0"
   @api_base_url "https://api.cohere.ai/v1"
 
-  defstruct [
-    :api_key,
-    llm_model: @default_llm_model,
-    embedding_model: @default_embedding_model
-  ]
+  @enforce_keys [:api_key, :model]
+  defstruct @enforce_keys
 
   @type t :: %__MODULE__{
           api_key: String.t(),
-          llm_model: String.t(),
-          embedding_model: String.t()
+          model: String.t()
         }
 
   use Codicil.LLM
@@ -31,7 +25,7 @@ defmodule Codicil.LLM.Cohere do
   # LLM Implementation
 
   @impl Codicil.LLM
-  def generate_text(%__MODULE__{api_key: api_key, llm_model: model}, prompt, opts) do
+  def generate_text(%__MODULE__{api_key: api_key, model: model}, prompt, opts) do
     temperature = Keyword.get(opts, :temperature, 0.7)
     max_tokens = Keyword.get(opts, :max_tokens, 4096)
 
@@ -75,7 +69,7 @@ defmodule Codicil.LLM.Cohere do
   # Embeddings Implementation
 
   @impl Codicil.Embeddings
-  def embed(%__MODULE__{api_key: api_key, embedding_model: model}, text, opts) do
+  def embed(%__MODULE__{api_key: api_key, model: model}, text, opts) do
     input_type = Keyword.get(opts, :input_type, "search_document")
 
     body = %{
@@ -94,7 +88,7 @@ defmodule Codicil.LLM.Cohere do
   end
 
   @impl Codicil.Embeddings
-  def embed_batch(%__MODULE__{api_key: api_key, embedding_model: model}, texts, opts) do
+  def embed_batch(%__MODULE__{api_key: api_key, model: model}, texts, opts) do
     input_type = Keyword.get(opts, :input_type, "search_document")
 
     body = %{
