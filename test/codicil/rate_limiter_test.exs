@@ -6,14 +6,15 @@ defmodule Codicil.RateLimiterTest do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    {:ok, pid} = start_supervised({RateLimiter, delay_ms: 10})
-    %{rate_limiter: pid}
+    # Allow the global RateLimiter to access our sandbox
+    Ecto.Adapters.SQL.Sandbox.allow(Repo, self(), Process.whereis(RateLimiter))
+    :ok
   end
 
   describe "enqueue/2" do
-    test "returns :ok immediately", %{rate_limiter: pid} do
+    test "returns :ok immediately" do
       function = %{id: 1, name: "test", module: "Test", docs: "Test function"}
-      assert :ok = RateLimiter.enqueue(pid, function)
+      assert :ok = RateLimiter.enqueue(function)
     end
 
     test "processes function asynchronously" do

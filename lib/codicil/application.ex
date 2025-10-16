@@ -10,6 +10,7 @@ defmodule Codicil.Application do
         [
           Codicil.Db.Repo,
           Codicil.MCP,
+          Codicil.RateLimiter,
           {Registry, keys: :unique, name: Codicil.ModuleTracerRegistry},
           {DynamicSupervisor, strategy: :one_for_one, name: Codicil.ModuleTracerSupervisor}
         ]

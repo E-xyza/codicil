@@ -9,6 +9,7 @@ defmodule Codicil.ModuleTracer do
 
   alias Codicil.Functions
   alias Codicil.Modules
+  alias Codicil.RateLimiter
 
   # BOILERPLATE & INITIALIZATION
 
@@ -98,6 +99,17 @@ defmodule Codicil.ModuleTracer do
       }
 
       {:ok, function} = Functions.upsert(attrs)
+
+      # Enqueue for async summarization and embedding generation if docs exist
+      if docs do
+        RateLimiter.enqueue(%{
+          id: function.id,
+          name: name,
+          module: module,
+          path: file,
+          docs: docs
+        })
+      end
 
       # Extract and store function calls from bytecode
       called_funs =
