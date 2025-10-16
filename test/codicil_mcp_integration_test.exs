@@ -27,8 +27,15 @@ defmodule Codicil.MCPIntegrationTest do
 
   test "connects to HTTP endpoint and receives tools on initialize", %{tools: tools} do
     assert is_list(tools)
-    # No tools implemented yet, should be empty
-    assert tools == []
+    # Should have 4 registered tools
+    assert length(tools) == 4
+
+    # Verify tool names
+    tool_names = Enum.map(tools, & &1["name"])
+    assert "similar_functions" in tool_names
+    assert "function_callers" in tool_names
+    assert "function_callees" in tool_names
+    assert "module_relationships" in tool_names
   end
 
   test "handles ping request" do
@@ -57,8 +64,8 @@ defmodule Codicil.MCPIntegrationTest do
 
     assert response["id"] == id
     assert is_list(response["result"]["tools"])
-    # No tools implemented yet
-    assert response["result"]["tools"] == []
+    # Should have 4 registered tools
+    assert length(response["result"]["tools"]) == 4
   end
 
   test "returns error for invalid method" do

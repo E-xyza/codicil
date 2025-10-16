@@ -11,8 +11,127 @@ defmodule Codicil.MCP.Server do
   ## Tool management functions
 
   defp raw_tools do
-    # TODO: Add tool modules here when implemented
-    []
+    [
+      %{
+        name: "similar_functions",
+        description: """
+        Find functions semantically similar to a natural language description.
+
+        Uses vector similarity search combined with LLM validation to find functions
+        that match your description, even if they don't use the exact same words.
+
+        Examples:
+        - "calculate sum of numbers"
+        - "validate user input"
+        - "parse JSON data"
+        - "handle HTTP requests"
+        """,
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            description: %{
+              type: "string",
+              description: "Natural language description of the desired functionality"
+            },
+            limit: %{
+              type: "number",
+              description: "Maximum number of results to return (default: 10)"
+            },
+            batch_size: %{
+              type: "number",
+              description: "Number of functions to validate per LLM call (default: 20)"
+            },
+            vector_limit: %{
+              type: "number",
+              description: "Number of candidates to retrieve from vector search (default: 100)"
+            }
+          },
+          required: ["description"]
+        },
+        callback: &Codicil.MCP.Tools.SimilarFunctions.call/1
+      },
+      %{
+        name: "function_callers",
+        description: """
+        Find all functions that call a specific target function.
+
+        Analyzes the call graph to show which functions depend on the target function.
+        Useful for impact analysis and understanding code dependencies.
+        """,
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            functionName: %{
+              type: "string",
+              description: "Name of the target function (e.g., 'calculate_total')"
+            },
+            moduleName: %{
+              type: "string",
+              description: "Fully qualified module name (e.g., 'Elixir.MyApp.Calculator')"
+            },
+            arity: %{
+              type: "number",
+              description: "Function arity (number of arguments)"
+            }
+          },
+          required: ["functionName", "moduleName", "arity"]
+        },
+        callback: &Codicil.MCP.Tools.FunctionCallers.call/1
+      },
+      %{
+        name: "function_callees",
+        description: """
+        Find all functions called by a specific source function.
+
+        Shows the functions that the source function depends on.
+        Useful for understanding what a function does and its dependencies.
+        """,
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            functionName: %{
+              type: "string",
+              description: "Name of the source function (e.g., 'process_order')"
+            },
+            moduleName: %{
+              type: "string",
+              description: "Fully qualified module name (e.g., 'Elixir.MyApp.Orders')"
+            },
+            arity: %{
+              type: "number",
+              description: "Function arity (number of arguments)"
+            }
+          },
+          required: ["functionName", "moduleName", "arity"]
+        },
+        callback: &Codicil.MCP.Tools.FunctionCallees.call/1
+      },
+      %{
+        name: "module_relationships",
+        description: """
+        Analyze module dependencies (imports, aliases, uses, requires, and runtime calls).
+
+        Shows both compile-time and runtime dependencies for a module.
+        Useful for understanding module coupling and refactoring impact.
+        """,
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            moduleName: %{
+              type: "string",
+              description: "Fully qualified module name (e.g., 'Elixir.MyApp.User')"
+            },
+            type: %{
+              type: "string",
+              description: "Optional filter: 'compiler' for compile-time or 'runtime' for runtime dependencies",
+              enum: ["compiler", "runtime"]
+            }
+          },
+          required: ["moduleName"]
+        },
+        callback: &Codicil.MCP.Tools.ModuleRelationships.call/1
+      }
+    ]
   end
 
   @doc false
