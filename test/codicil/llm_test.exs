@@ -26,19 +26,21 @@ defmodule Codicil.LLMTest do
     test "generates text with API key" do
       client = %LLM.OpenAI{
         api_key: "test-key",
-        model: "gpt-4o",
+        llm_model: "gpt-4o",
+        embedding_model: "text-embedding-3-small",
         base_url: "https://api.openai.com/v1"
       }
 
       assert %LLM.OpenAI{} = client
       assert client.api_key == "test-key"
-      assert client.model == "gpt-4o"
+      assert client.llm_model == "gpt-4o"
+      assert client.embedding_model == "text-embedding-3-small"
     end
 
     test "supports local LLM without auth" do
       client = %LLM.OpenAI{
         api_key: nil,
-        model: "llama3",
+        llm_model: "llama3",
         base_url: "http://localhost:11434/v1"
       }
 
@@ -47,9 +49,11 @@ defmodule Codicil.LLMTest do
       assert client.base_url == "http://localhost:11434/v1"
     end
 
-    test "uses default OpenAI URL when not specified" do
-      client = %LLM.OpenAI{api_key: "test-key", model: "gpt-4o"}
+    test "uses default models and URL when not specified" do
+      client = %LLM.OpenAI{api_key: "test-key"}
       assert client.base_url == "https://api.openai.com/v1"
+      assert client.llm_model == "gpt-4o"
+      assert client.embedding_model == "text-embedding-3-small"
     end
   end
 
