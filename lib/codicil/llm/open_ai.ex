@@ -20,10 +20,10 @@ defmodule Codicil.LLM.OpenAI do
           base_url: String.t()
         }
 
-  defimpl Codicil.LLM do
-    alias Codicil.LLM.OpenAI
+  use Codicil.LLM
 
-    def generate_text(%OpenAI{api_key: api_key, model: model, base_url: base_url}, prompt, opts) do
+  @impl Codicil.LLM
+  def generate_text(%__MODULE__{api_key: api_key, model: model, base_url: base_url}, prompt, opts) do
       max_tokens = Keyword.get(opts, :max_tokens, 1024)
       temperature = Keyword.get(opts, :temperature, 0.7)
       system = Keyword.get(opts, :system)
@@ -82,6 +82,5 @@ defmodule Codicil.LLM.OpenAI do
         {:error, reason} ->
           {:error, reason}
       end
-    end
   end
 end

@@ -17,12 +17,12 @@ defmodule Codicil.LLM.Grok do
           model: String.t()
         }
 
-  defimpl Codicil.LLM do
-    alias Codicil.LLM.Grok
+  use Codicil.LLM
 
-    @api_base_url "https://api.x.ai/v1"
+  @api_base_url "https://api.x.ai/v1"
 
-    def generate_text(%Grok{api_key: api_key, model: model}, prompt, opts) do
+  @impl Codicil.LLM
+  def generate_text(%__MODULE__{api_key: api_key, model: model}, prompt, opts) do
       max_tokens = Keyword.get(opts, :max_tokens, 1024)
       temperature = Keyword.get(opts, :temperature, 0.7)
       system = Keyword.get(opts, :system)
@@ -75,6 +75,5 @@ defmodule Codicil.LLM.Grok do
         {:error, reason} ->
           {:error, reason}
       end
-    end
   end
 end

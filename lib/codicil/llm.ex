@@ -1,3 +1,5 @@
+use Protoss
+
 defprotocol Codicil.LLM do
   @moduledoc """
   Protocol for LLM client implementations.
