@@ -1,13 +1,14 @@
 defmodule Codicil.MCP.Tools.SimilarFunctions do
   @moduledoc """
-  MCP tool for semantic function search using LLM validation.
+  MCP tool for semantic function search using vector similarity and LLM validation.
 
-  Finds functions semantically similar to a natural language description.
-  Currently uses LLM validation without vector embeddings (future enhancement).
+  Finds functions semantically similar to a natural language description using:
+  1. Vector similarity search (fast, broad recall)
+  2. LLM validation (accurate, reranking)
   """
 
-  alias Codicil.Db.Repo
-  alias Codicil.Db.Function
+  alias Codicil.Functions
+  alias Codicil.Embeddings
   alias Codicil.LLM
   alias Codicil.LLM.Validator
 
@@ -16,9 +17,11 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
 
   ## Parameters
   - `description` - Natural language description of desired functionality
+  - `embeddings_client` - Embeddings client (optional, defaults to env var)
   - `llm_client` - LLM client for validation (optional, defaults to env var)
   - `limit` - Maximum results to return (default: 10)
   - `batch_size` - Functions to validate per LLM call (default: 20)
+  - `vector_limit` - Functions to retrieve from vector search (default: 100)
 
   ## Returns
   - `{:ok, text}` with formatted list of matching functions
@@ -31,19 +34,39 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
   def call(%{"description" => description} = args) do
     limit = Map.get(args, "limit", 10)
     batch_size = Map.get(args, "batch_size", 20)
+    vector_limit = Map.get(args, "vector_limit", 100)
 
-    # Get LLM client from args or environment
+    # Get clients from args or environment
+    embeddings_client =
+      case Map.get(args, "embeddings_client") do
+        nil -> get_default_embeddings_client()
+        client -> client
+      end
+
     llm_client =
       case Map.get(args, "llm_client") do
         nil -> get_default_llm_client()
         client -> client
       end
 
-    if is_nil(llm_client) do
-      {:error,
-       "No LLM client available. Set ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable."}
-    else
-      search_similar_functions(llm_client, description, limit, batch_size)
+    cond do
+      is_nil(embeddings_client) ->
+        {:error,
+         "No embeddings client available. Set ANTHROPIC_API_KEY environment variable."}
+
+      is_nil(llm_client) ->
+        {:error,
+         "No LLM client available. Set ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable."}
+
+      true ->
+        search_similar_functions(
+          embeddings_client,
+          llm_client,
+          description,
+          limit,
+          batch_size,
+          vector_limit
+        )
     end
   end
 
@@ -51,39 +74,52 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
     {:error, "Missing required parameter: description"}
   end
 
-  defp search_similar_functions(llm_client, description, limit, batch_size) do
-    import Ecto.Query
+  defp search_similar_functions(
+         embeddings_client,
+         llm_client,
+         description,
+         limit,
+         batch_size,
+         vector_limit
+       ) do
+    # Step 1: Generate embedding for query description
+    case Embeddings.embed(embeddings_client, description, input_type: "query") do
+      {:ok, %Embeddings.Result{embedding: query_embedding}} ->
+        # Step 2: Vector similarity search
+        candidates = Functions.find_similar(query_embedding, limit: vector_limit)
 
-    # TODO: When sqlite-vec is integrated, use vector similarity search
-    # For now, fetch all functions with summaries and use LLM validation
-    candidates =
-      from(f in Function,
-        where: not is_nil(f.summary) and f.summary != "",
-        select: %{
-          id: f.id,
-          name: f.name,
-          module: f.module,
-          path: f.path,
-          line: f.line,
-          summary: f.summary
-        }
-      )
-      |> Repo.all()
+        if Enum.empty?(candidates) do
+          {:ok, "No functions with embeddings found. Run indexing first."}
+        else
+          # Convert Function structs to maps for validation
+          candidate_maps =
+            Enum.map(candidates, fn f ->
+              %{
+                id: f.id,
+                name: f.name,
+                module: f.module,
+                path: f.path,
+                line: f.line,
+                summary: f.summary
+              }
+            end)
 
-    if Enum.empty?(candidates) do
-      {:ok, "No functions with summaries found. Run indexing first."}
-    else
-      # Validate candidates in batches with early stopping
-      validated = validate_with_early_stopping(llm_client, description, candidates, batch_size)
+          # Step 3: LLM validation with early stopping for reranking
+          validated =
+            validate_with_early_stopping(llm_client, description, candidate_maps, batch_size)
 
-      # Sort by confidence and take top results
-      matches =
-        validated
-        |> Enum.filter(& &1.matches)
-        |> Enum.sort_by(& &1.confidence, :desc)
-        |> Enum.take(limit)
+          # Step 4: Sort by confidence and take top results
+          matches =
+            validated
+            |> Enum.filter(& &1.matches)
+            |> Enum.sort_by(& &1.confidence, :desc)
+            |> Enum.take(limit)
 
-      format_results(matches, description, candidates)
+          format_results(matches, description, candidate_maps, vector_limit)
+        end
+
+      {:error, reason} ->
+        {:error, "Failed to generate query embedding: #{inspect(reason)}"}
     end
   end
 
@@ -111,7 +147,8 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
     end)
   end
 
-  defp format_results(matches, description, all_candidates) when length(matches) > 0 do
+  defp format_results(matches, description, all_candidates, vector_limit)
+       when length(matches) > 0 do
     count = length(matches)
     total_scanned = length(all_candidates)
 
@@ -136,7 +173,7 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
       |> Enum.join("\n")
 
     result = """
-    Found #{count} matching function(s) for "#{description}" (scanned #{total_scanned} total):
+    Found #{count} matching function(s) for "#{description}" (vector search: #{vector_limit}, validated: #{total_scanned}):
 
     #{match_list}
     """
@@ -144,9 +181,17 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
     {:ok, result}
   end
 
-  defp format_results([], description, all_candidates) do
+  defp format_results([], description, all_candidates, vector_limit) do
     {:ok,
-     "No matching functions found for \"#{description}\" (scanned #{length(all_candidates)} functions)."}
+     "No matching functions found for \"#{description}\" (vector search: #{vector_limit}, validated: #{length(all_candidates)})."}
+  end
+
+  defp get_default_embeddings_client do
+    if api_key = System.get_env("ANTHROPIC_API_KEY") do
+      %Embeddings.Anthropic{api_key: api_key}
+    else
+      nil
+    end
   end
 
   defp get_default_llm_client do
