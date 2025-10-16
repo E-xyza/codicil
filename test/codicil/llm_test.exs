@@ -3,22 +3,24 @@ defmodule Codicil.LLMTest do
 
   alias Codicil.LLM
 
-  describe "Claude provider" do
+  describe "Anthropic provider" do
     test "generates text with valid API key" do
-      client = %LLM.Claude{
+      client = %LLM.Anthropic{
         api_key: "test-key",
-        model: "claude-3-5-sonnet-20241022"
+        llm_model: "claude-3-5-sonnet-20241022",
+        embedding_model: "voyage-3"
       }
 
-      # Mock will be needed - for now just test structure
-      assert %LLM.Claude{} = client
+      assert %LLM.Anthropic{} = client
       assert client.api_key == "test-key"
-      assert client.model == "claude-3-5-sonnet-20241022"
+      assert client.llm_model == "claude-3-5-sonnet-20241022"
+      assert client.embedding_model == "voyage-3"
     end
 
-    test "uses default model when not specified" do
-      client = %LLM.Claude{api_key: "test-key"}
-      assert client.model == "claude-3-5-sonnet-20241022"
+    test "uses default models when not specified" do
+      client = %LLM.Anthropic{api_key: "test-key"}
+      assert client.llm_model == "claude-3-5-sonnet-20241022"
+      assert client.embedding_model == "voyage-3"
     end
   end
 
