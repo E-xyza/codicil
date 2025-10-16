@@ -647,6 +647,11 @@ priv/repo/migrations/
   - **DO**: Test business logic, validations, custom behavior, and edge cases
   - **Example of bad test**: `test "schema has id field" do assert Map.has_key?(%Schema{}, :id) end`
   - **Example of good test**: `test "validates email format" do assert {:error, _} = create(%{email: "invalid"}) end`
+- **Don't test function existence**: Do NOT write tests using `function_exported?` or `Code.ensure_loaded?`
+  - **DON'T**: Write tests like `assert function_exported?(MyModule, :my_function, 2)`
+  - **DO**: Write tests that actually call the function and verify its behavior
+  - **Example of bad test**: `test "function exists" do assert function_exported?(Math, :add, 2) end`
+  - **Example of good test**: `test "adds two numbers" do assert Math.add(1, 2) == 3 end`
 
 ## Technical Requirements
 
