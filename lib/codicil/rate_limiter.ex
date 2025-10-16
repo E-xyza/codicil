@@ -26,8 +26,8 @@ defmodule Codicil.RateLimiter do
        queue: :queue.new(),
        delay_ms: delay_ms,
        processing: false,
-       llm_client: get_llm_client(),
-       embeddings_client: get_embeddings_client()
+       llm_client: Application.get_env(:codicil, :llm_client),
+       embeddings_client: Application.get_env(:codicil, :embeddings_client)
      }}
   end
 
@@ -151,50 +151,6 @@ defmodule Codicil.RateLimiter do
 
   defp maybe_put(map, _key, nil), do: map
   defp maybe_put(map, key, value), do: Map.put(map, key, value)
-
-  defp get_llm_client do
-    cond do
-      api_key = System.get_env("ANTHROPIC_API_KEY") ->
-        %Codicil.LLM.Anthropic{api_key: api_key}
-
-      api_key = System.get_env("OPENAI_API_KEY") ->
-        %Codicil.LLM.OpenAI{api_key: api_key}
-
-      api_key = System.get_env("COHERE_API_KEY") ->
-        %Codicil.LLM.Cohere{api_key: api_key}
-
-      true ->
-        case {System.get_env("GOOGLE_API_KEY"), System.get_env("GOOGLE_PROJECT_ID")} do
-          {api_key, project_id} when is_binary(api_key) and is_binary(project_id) ->
-            %Codicil.LLM.Google{api_key: api_key, project_id: project_id}
-
-          _ ->
-            nil
-        end
-    end
-  end
-
-  defp get_embeddings_client do
-    cond do
-      api_key = System.get_env("ANTHROPIC_API_KEY") ->
-        %Codicil.LLM.Anthropic{api_key: api_key}
-
-      api_key = System.get_env("OPENAI_API_KEY") ->
-        %Codicil.LLM.OpenAI{api_key: api_key}
-
-      api_key = System.get_env("COHERE_API_KEY") ->
-        %Codicil.LLM.Cohere{api_key: api_key}
-
-      true ->
-        case {System.get_env("GOOGLE_API_KEY"), System.get_env("GOOGLE_PROJECT_ID")} do
-          {api_key, project_id} when is_binary(api_key) and is_binary(project_id) ->
-            %Codicil.LLM.Google{api_key: api_key, project_id: project_id}
-
-          _ ->
-            nil
-        end
-    end
-  end
 
   # ROUTER
 
