@@ -2,22 +2,19 @@ defmodule CodicilTest.LLM.Mock do
   @moduledoc """
   Mock LLM client for testing.
 
-  This mock client sends messages to a test process instead of making actual API calls.
-  The test process can respond with expected results or verify that calls were made.
+  This mock returns immediate responses without making API calls,
+  allowing tests to verify behavior without network dependencies.
 
   ## Usage
 
       test "calls LLM with correct prompt" do
         mock = %CodicilTest.LLM.Mock{test_pid: self()}
 
-        # The mock will send a message to self() when called
-        result = Codicil.LLM.generate(mock, "test prompt")
+        result = Codicil.LLM.generate_text(mock, "test prompt")
 
-        # Verify the call was made
-        assert_receive {:llm_generate, "test prompt"}
-
-        # Respond with mock result
-        send(mock.test_pid, {:llm_result, {:ok, "mock response"}})
+        # Verify the mock was called
+        assert_receive {:llm_generate_text, "test prompt", []}
+        assert result == {:ok, "mock response"}
       end
   """
 
@@ -27,4 +24,12 @@ defmodule CodicilTest.LLM.Mock do
   @type t :: %__MODULE__{
           test_pid: pid()
         }
+
+  use Codicil.LLM
+
+  @impl Codicil.LLM
+  def generate_text(%__MODULE__{test_pid: test_pid}, prompt, opts) do
+    send(test_pid, {:llm_generate_text, prompt, opts})
+    {:ok, "mock response"}
+  end
 end
