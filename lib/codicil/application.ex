@@ -5,8 +5,10 @@ defmodule Codicil.Application do
 
   @impl true
   def start(_type, _args) do
-    # Configure providers from environment variables at startup
-    configure_providers()
+    # Configure providers from environment variables at startup (skip in test)
+    if Mix.env() != :test do
+      configure_providers()
+    end
 
     children =
       if Application.spec(:mix, :vsn) do
