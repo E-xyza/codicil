@@ -5,10 +5,7 @@ defmodule Codicil.Application do
 
   @impl true
   def start(_type, _args) do
-    # Configure providers from environment variables at startup (skip in test)
-    if Mix.env() != :test do
-      configure_providers()
-    end
+    configure_providers()
 
     children =
       if Application.spec(:mix, :vsn) do
@@ -54,20 +51,25 @@ defmodule Codicil.Application do
     {"google", :embedding} => "text-embedding-004"
   }
 
-  defp configure_providers do
-    llm_provider = System.fetch_env!("CODICIL_LLM_PROVIDER")
-    embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", llm_provider)
+  # Compile-time conditional: no-op in test, full config in dev/prod
+  if Mix.env() == :test do
+    defp configure_providers, do: :ok
+  else
+    defp configure_providers do
+      llm_provider = System.fetch_env!("CODICIL_LLM_PROVIDER")
+      embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", llm_provider)
 
-    llm_model = System.get_env("CODICIL_LLM_MODEL")
-    embedding_model = System.get_env("CODICIL_EMBEDDING_MODEL")
+      llm_model = System.get_env("CODICIL_LLM_MODEL")
+      embedding_model = System.get_env("CODICIL_EMBEDDING_MODEL")
 
-    llm_client = configure_client(llm_provider, llm_model, :llm)
-    embeddings_client = configure_client(embedding_provider, embedding_model, :embedding)
+      llm_client = configure_client(llm_provider, llm_model, :llm)
+      embeddings_client = configure_client(embedding_provider, embedding_model, :embedding)
 
-    Application.put_env(:codicil, :llm_client, llm_client)
-    Application.put_env(:codicil, :embeddings_client, embeddings_client)
+      Application.put_env(:codicil, :llm_client, llm_client)
+      Application.put_env(:codicil, :embeddings_client, embeddings_client)
 
-    log_configuration(llm_provider, llm_model, embedding_provider, embedding_model)
+      log_configuration(llm_provider, llm_model, embedding_provider, embedding_model)
+    end
   end
 
   defp configure_client(provider, model, type) do

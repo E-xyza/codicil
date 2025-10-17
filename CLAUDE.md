@@ -107,6 +107,75 @@ git commit -m "Add Function schema with basic fields
 
 Never skip the RED step - always verify your test fails before implementing!
 
+## CRITICAL: Mix Module Usage
+
+**NEVER call Mix functions at runtime.** The Mix module is only available during compilation and development, not in production releases.
+
+### Rules:
+- **DO NOT** call `Mix.env()` at runtime in function bodies
+- **DO** use conditional compilation with `if Mix.env() == :test do` at module level to define different function implementations
+- **DO NOT** call `Mix.Project.config()` or `Mix.Project.get()` at runtime
+- **DO** capture Mix values at compile time using module attributes: `@version Mix.Project.config()[:version]`
+
+### Why Runtime Mix Calls Fail
+
+Mix is a **build tool**, not a runtime library. When you create a production release with `mix release`, Mix is not included in the release. Any runtime calls to Mix functions will crash your application in production.
+
+### Examples:
+
+**Bad (runtime Mix call):**
+```elixir
+def start(_type, _args) do
+  if Mix.env() == :test do  # ❌ WRONG - Mix.env() called at runtime
+    configure_test()
+  end
+  # ...
+end
+```
+
+**Good (conditional compilation for different function implementations):**
+```elixir
+# Compile-time conditional: no-op in test, full logic in dev/prod
+if Mix.env() == :test do
+  defp configure_providers, do: :ok
+else
+  defp configure_providers do
+    # Full configuration logic here
+    llm_provider = System.fetch_env!("CODICIL_LLM_PROVIDER")
+    # ...
+  end
+end
+
+def start(_type, _args) do
+  configure_providers()  # ✅ Calls the appropriate version based on compile-time env
+  # ...
+end
+```
+
+**Good (module attribute for version):**
+```elixir
+@version Mix.Project.config()[:version]  # ✅ Captured at compile time
+
+def version, do: @version  # ✅ Returns compile-time value
+```
+
+### When to Use Each Pattern
+
+1. **Conditional compilation** (`if Mix.env() == :test do ... end` at module level):
+   - Use when you need **completely different implementations** in different environments
+   - Example: No-op function in test, full logic in production
+   - The condition is evaluated once at compile time, generating only the relevant code
+
+2. **Module attributes** (`@version Mix.Project.config()[:version]`):
+   - Use when you need a **compile-time constant** from Mix
+   - Example: Application version, project config values
+   - The value is captured once at compile time and embedded in the bytecode
+
+3. **Application config** (from `config/*.exs` files):
+   - **DO NOT USE for library code** - libraries don't have config files!
+   - Only use in the host application that depends on the library
+   - Libraries should use conditional compilation or module attributes instead
+
 ## Project Goal
 
 **Codicil** is an Elixir-focused code analysis MCP (Model Context Protocol) server that provides semantic code search and structural analysis for Elixir codebases.

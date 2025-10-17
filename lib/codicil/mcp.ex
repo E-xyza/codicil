@@ -94,6 +94,30 @@ defmodule Codicil.MCP do
       )
   end
 
+  # Compile-time conditional: attempt to get project name from Mix in dev/test, require config in prod
+  if Mix.env() in [:dev, :test] do
+    defp maybe_set_project_name do
+      if module = Mix.Project.get() do
+        project_name = module |> Module.split() |> hd() |> Macro.underscore()
+        Application.put_env(:codicil, :project_name, project_name)
+      else
+        raise """
+        codicil could not determine the current project, please specify a name in your config.exs:
+
+            config :codicil, :project_name, "my_project"
+        """
+      end
+    end
+  else
+    defp maybe_set_project_name do
+      raise """
+      codicil could not determine the current project, please specify a name in your config.exs:
+
+          config :codicil, :project_name, "my_project"
+      """
+    end
+  end
+
   defp init_config() do
     if Application.get_env(:codicil, :root) == nil do
       Application.put_env(:codicil, :root, File.cwd!())
@@ -111,16 +135,7 @@ defmodule Codicil.MCP do
     end
 
     if Application.get_env(:codicil, :project_name) == nil do
-      if module = Mix.Project.get() do
-        project_name = module |> Module.split() |> hd() |> Macro.underscore()
-        Application.put_env(:codicil, :project_name, project_name)
-      else
-        raise """
-        codicil could not determine the current project, please specify a name in your config.exs:
-
-            config :codicil, :project_name, "my_project"
-        """
-      end
+      maybe_set_project_name()
     end
   end
 end
