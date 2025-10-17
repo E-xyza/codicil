@@ -7,10 +7,10 @@ defprotocol Codicil.Embeddings do
   Embeddings convert text into vector representations for semantic search.
   """
 
-  @doc """
-  Result struct containing an embedding vector.
-  """
   defmodule Result do
+    @moduledoc """
+    Result struct containing an embedding vector.
+    """
     @type t :: %__MODULE__{
             embedding: [float()],
             dimensions: pos_integer()

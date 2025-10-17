@@ -108,7 +108,7 @@ defmodule Codicil.FunctionsTest do
   describe "relations" do
     test "can preload module_info from function" do
       # Create a module
-      {:ok, module} =
+      {:ok, _module} =
         Modules.create(%{
           id: MyModule,
           path: "/lib/my_module.ex",

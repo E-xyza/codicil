@@ -8,6 +8,8 @@ defmodule ModuleCompileDependencies do
   # Use creates compile-time dependency (runs macro at compile time)
   use GenServer
 
+  def init(init_arg), do: {:ok, init_arg}
+
   def test_import do
     upcase("hello")
   end

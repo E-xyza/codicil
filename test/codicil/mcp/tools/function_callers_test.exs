@@ -50,7 +50,7 @@ defmodule Codicil.MCP.Tools.FunctionCallersTest do
     %{target: target, caller1: caller1, caller2: caller2}
   end
 
-  test "returns functions that call the target function", %{target: target} do
+  test "returns functions that call the target function", %{target: _target} do
     args = %{
       "functionName" => "target_function",
       "moduleName" => "Elixir.MyModule",
@@ -66,7 +66,7 @@ defmodule Codicil.MCP.Tools.FunctionCallersTest do
 
   test "returns empty result when no callers exist" do
     # Create a function with no callers
-    {:ok, lonely} =
+    {:ok, _lonely} =
       Functions.upsert(%{
         name: "lonely_function",
         module: "Elixir.Lonely",
