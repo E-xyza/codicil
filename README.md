@@ -30,13 +30,6 @@ Codicil makes this possible by:
 
 ### How it works
 
-Codicil hooks into Elixir's compilation process using compiler tracers:
-
-```elixir
-# In your project's config (optional - see below)
-Code.put_compiler_option(:tracers, [Codicil.Tracer])
-```
-
 During compilation, Codicil:
 1. Captures module/function definitions and relationships via `Codicil.Tracer`
 2. Extracts documentation and line numbers from source files
