@@ -129,7 +129,7 @@ end
 
 defp aliases do
   [
-    codicil: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4000) end)'"
+    codicil: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4700) end)'"
   ]
 end
 ```
@@ -140,7 +140,7 @@ Then run:
 mix codicil
 ```
 
-The MCP server will start on `http://localhost:4000/codicil/mcp` and wait for requests from your AI assistant.
+The MCP server will start on `http://localhost:4700/codicil/mcp` and wait for requests from your AI assistant.
 
 #### Compile your project
 

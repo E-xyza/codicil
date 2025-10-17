@@ -194,7 +194,7 @@ end
 Add a Mix alias to start the MCP server:
 ```elixir
 aliases: [
-  codicil: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4000) end)'"
+  codicil: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4700) end)'"
 ]
 ```
 
