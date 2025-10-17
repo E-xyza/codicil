@@ -11,7 +11,7 @@ defmodule Codicil.MCP.Tools.ModuleRelationships do
   Find all module dependencies for the specified module.
 
   ## Parameters
-  - `moduleName` - Fully qualified module name (e.g., "Elixir.MyModule")
+  - `moduleName` - Module name (e.g., "MyModule" or ":gen_server")
   - `type` - Optional filter: "compiler" for compile-time or "runtime" for runtime dependencies
 
   ## Returns
@@ -19,7 +19,9 @@ defmodule Codicil.MCP.Tools.ModuleRelationships do
   - `{:error, reason}` if module not found
   """
   def call(%{"moduleName" => module_name} = args) do
-    case Modules.get(module_name) do
+    normalized_module = Codicil.MCP.normalize_module_name(module_name)
+
+    case Modules.get(normalized_module) do
       nil ->
         {:error, "Module #{module_name} not found"}
 

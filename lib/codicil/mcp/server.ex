@@ -67,7 +67,7 @@ defmodule Codicil.MCP.Server do
             },
             moduleName: %{
               type: "string",
-              description: "Fully qualified module name (e.g., 'Elixir.MyApp.Calculator')"
+              description: "Module name (e.g., 'MyApp.Calculator' or ':gen_server')"
             },
             arity: %{
               type: "number",
@@ -95,7 +95,7 @@ defmodule Codicil.MCP.Server do
             },
             moduleName: %{
               type: "string",
-              description: "Fully qualified module name (e.g., 'Elixir.MyApp.Orders')"
+              description: "Module name (e.g., 'MyApp.Orders' or ':gen_server')"
             },
             arity: %{
               type: "number",
@@ -119,7 +119,7 @@ defmodule Codicil.MCP.Server do
           properties: %{
             moduleName: %{
               type: "string",
-              description: "Fully qualified module name (e.g., 'Elixir.MyApp.User')"
+              description: "Module name (e.g., 'MyApp.User' or ':gen_server')"
             },
             type: %{
               type: "string",

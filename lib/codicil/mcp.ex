@@ -42,6 +42,40 @@ defmodule Codicil.MCP do
   """
   def project_name, do: Application.fetch_env!(:codicil, :project_name)
 
+  @doc """
+  Normalizes a module name from user input to internal Elixir format.
+
+  ## Examples
+
+      iex> Codicil.MCP.normalize_module_name("MyApp.User")
+      "Elixir.MyApp.User"
+
+      iex> Codicil.MCP.normalize_module_name(":gen_server")
+      "gen_server"
+
+      iex> Codicil.MCP.normalize_module_name("Elixir.MyApp.User")
+      "Elixir.MyApp.User"
+  """
+  def normalize_module_name(name) when is_binary(name) do
+    cond do
+      # Already has Elixir. prefix - keep as-is
+      String.starts_with?(name, "Elixir.") ->
+        name
+
+      # Starts with : - it's an atom, remove the colon
+      String.starts_with?(name, ":") ->
+        String.slice(name, 1..-1//1)
+
+      # Starts with capital letter - it's an Elixir alias, add prefix
+      String.match?(name, ~r/^[A-Z]/) ->
+        "Elixir." <> name
+
+      # Otherwise, keep as-is
+      :else ->
+        name
+    end
+  end
+
   defp maybe_silence_logs do
     if Application.get_env(:codicil, :debug) do
       :ok

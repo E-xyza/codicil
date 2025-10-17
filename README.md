@@ -159,9 +159,9 @@ Codicil will automatically:
 Configure your AI assistant to connect to the MCP server. The available tools are:
 
 - **similar_functions** - `{"description": "find functions that validate email addresses"}`
-- **function_callers** - `{"moduleName": "Elixir.MyApp.User", "functionName": "create", "arity": 1}`
-- **function_callees** - `{"moduleName": "Elixir.MyApp.Orders", "functionName": "process", "arity": 1}`
-- **module_relationships** - `{"moduleName": "Elixir.MyApp.Accounts"}`
+- **function_callers** - `{"moduleName": "MyApp.User", "functionName": "create", "arity": 1}`
+- **function_callees** - `{"moduleName": "MyApp.Orders", "functionName": "process", "arity": 1}`
+- **module_relationships** - `{"moduleName": "MyApp.Accounts"}`
 
 ### Development
 

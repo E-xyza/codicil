@@ -10,7 +10,7 @@ defmodule Codicil.MCP.Tools.FunctionCallees do
 
   ## Parameters
   - `functionName` - Name of the source function
-  - `moduleName` - Fully qualified module name (e.g., "Elixir.MyModule")
+  - `moduleName` - Module name (e.g., "MyModule" or ":gen_server")
   - `arity` - Function arity
 
   ## Returns
@@ -18,7 +18,9 @@ defmodule Codicil.MCP.Tools.FunctionCallees do
   - `{:error, reason}` if function not found
   """
   def call(%{"functionName" => name, "moduleName" => module, "arity" => arity}) do
-    case Functions.get_by_mfa({String.to_atom(module), String.to_atom(name), arity}) do
+    normalized_module = Codicil.MCP.normalize_module_name(module)
+
+    case Functions.get_by_mfa({String.to_atom(normalized_module), String.to_atom(name), arity}) do
       nil ->
         {:error, "Function #{module}.#{name}/#{arity} not found"}
 
