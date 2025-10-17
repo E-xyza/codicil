@@ -107,6 +107,49 @@ git commit -m "Add Function schema with basic fields
 
 Never skip the RED step - always verify your test fails before implementing!
 
+## CRITICAL: Avoid Overarchitecting
+
+**Build only what is needed now, not what might be needed later.**
+
+### Rules:
+- **DO NOT** create infrastructure for future features that don't exist yet
+- **DO NOT** add configuration options that aren't currently used
+- **DO NOT** write helper functions before you have at least 2-3 call sites
+- **DO** remove unused code immediately - don't keep it "just in case"
+- **DO** wait until you have a concrete use case before adding abstractions
+
+### Examples of Overarchitecting:
+
+**Bad (infrastructure without users):**
+```elixir
+# These functions aren't used anywhere - delete them!
+def root, do: Application.fetch_env!(:codicil, :root)
+def git_root, do: Application.fetch_env!(:codicil, :git_root)
+def project_name, do: Application.fetch_env!(:codicil, :project_name)
+
+# Complex init_config setting up values that nothing reads
+defp init_config do
+  Application.put_env(:codicil, :root, File.cwd!())
+  # ... more unused setup
+end
+```
+
+**Good (minimal, focused code):**
+```elixir
+# Only add functions when you have actual callers
+# Only add config when features need it
+# Wait for concrete requirements before building infrastructure
+```
+
+### Why This Matters
+
+- **Unused code is technical debt** - it must be maintained, understood, and kept working even though it provides no value
+- **YAGNI (You Aren't Gonna Need It)** - most "future-proofing" code is never actually used
+- **Requirements change** - when you do need the feature, your upfront infrastructure is often wrong anyway
+- **Simplicity is valuable** - less code means less to understand, debug, and maintain
+
+**Rule of thumb:** If removing code wouldn't break any tests, remove it.
+
 ## CRITICAL: Mix Module Usage
 
 **NEVER call Mix functions at runtime.** The Mix module is only available during compilation and development, not in production releases.
@@ -603,16 +646,6 @@ priv/repo/migrations/
   - `:jason` - JSON encoding/decoding (already added)
 
 **No Phoenix required** - This is a library dependency that users add to their Elixir projects.
-
-## Configuration
-
-Application config should support:
-- `:root` - Project root directory (defaults to `File.cwd!()`)
-- `:project_name` - Auto-detect from Mix.Project
-- `:database_path` - SQLite database file path (defaults to `:code.priv_dir(:codicil)/codicil.db`)
-- `:anthropic_api_key` - Claude API key (defaults to `System.get_env("ANTHROPIC_API_KEY")`)
-- `:batch_size` - LLM validation batch size (defaults to 20)
-- `:rate_limit_ms` - Delay between LLM calls (defaults to 1000ms)
 
 ## Project Status
 
