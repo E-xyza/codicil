@@ -216,6 +216,10 @@ Contributions welcome! Please:
 
 See `CLAUDE.md` for detailed development guidelines.
 
+## Acknowledgments
+
+Codicil is inspired by and based on design patterns from [GraphSense](https://github.com/cephalization/graphsense), a TypeScript/Node.js semantic code search tool. GraphSense pioneered the approach of combining vector similarity search with LLM validation for accurate code discovery.
+
 ## License
 
 MIT License - see LICENSE file for details.
