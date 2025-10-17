@@ -223,17 +223,3 @@ Codicil is inspired by and based on design patterns from [GraphSense](https://gi
 ## License
 
 MIT License - see LICENSE file for details.
-
-## Status
-
-**Functionally complete!** All core features are implemented and working:
-- ✅ MCP server with 4 tools
-- ✅ Compiler tracer for automatic indexing
-- ✅ Multi-LLM support (5 providers)
-- ✅ Vector embeddings with sqlite-vec
-- ✅ Function call graph analysis
-- ✅ Module dependency tracking
-
-Remaining tasks:
-- Generate real checksums for change detection
-- Implement cleanup for deleted code
