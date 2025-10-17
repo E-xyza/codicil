@@ -430,6 +430,9 @@ end
 - **ALWAYS** place all `alias` and `require` statements at the head of the module, immediately after `use` statements
 - This follows Elixir convention and makes dependencies immediately visible
 - **DO NOT** place `alias` statements inside function bodies or private function definitions
+- **ALWAYS** use `:else` instead of `true` for the final clause in `cond` statements
+- **Example**: `cond do ... :else -> default_value end` NOT `cond do ... true -> default_value end`
+- This makes the catch-all intent explicit and follows Elixir style conventions
 
 ### Context Module Naming
 - **DO NOT** use redundant names in context functions

@@ -57,7 +57,7 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
         {:error,
          "No LLM client available. Set ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable."}
 
-      true ->
+      :else ->
         search_similar_functions(
           embeddings_client,
           llm_client,

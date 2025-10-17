@@ -205,7 +205,7 @@ defmodule Codicil.MCP.Server do
         {:error,
          "Unsupported protocol version. Server supports #{unquote(@protocol_version)} or later"}
 
-      true ->
+      :else ->
         :ok
     end
   end
@@ -414,7 +414,7 @@ defmodule Codicil.MCP.Server do
       Map.has_key?(message, "id") and Map.has_key?(message, "result") ->
         {:ok, message}
 
-      true ->
+      :else ->
         {:error, :invalid_jsonrpc}
     end
   end
