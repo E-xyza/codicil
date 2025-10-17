@@ -12,9 +12,13 @@ defmodule Codicil.MixProject do
         tidewave:
           "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4000) end)'"
       ],
+      elixirc_paths: elixirc_paths(Mix.env()),
       test_elixirc_options: [docs: true]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/_support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help compile.app" to learn about applications.
   def application do
