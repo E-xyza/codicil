@@ -7,6 +7,7 @@ defmodule Codicil.ModuleTracer do
   """
   use GenServer
 
+  alias Codicil.Checksum
   alias Codicil.Functions
   alias Codicil.Modules
   alias Codicil.RateLimiter
@@ -42,12 +43,24 @@ defmodule Codicil.ModuleTracer do
             when is_tuple(bytecode_instr) and elem(bytecode_instr, 0) in @call_opcodes
 
   defp complete_impl(bytecode, %{module: module, file: file, dependencies: dependencies} = state) do
+    # Extract module info from bytecode
+    {:beam_file, ^module, exports, attributes, _compile_info, functions} =
+      :beam_disasm.file(bytecode)
+
+    # Get module version attribute (auto-generated hash of module contents)
+    module_checksum =
+      case List.keyfind(attributes, :vsn, 0) do
+        {:vsn, [vsn]} when is_integer(vsn) -> Integer.to_string(vsn)
+        {:vsn, [vsn]} when is_list(vsn) -> :erlang.list_to_binary(vsn) |> Base.encode16(case: :lower)
+        _ -> Checksum.module(bytecode)
+      end
+
     # Create or update module record
     {:ok, _module_record} =
       Modules.upsert(%{
         id: module,
         path: file,
-        checksum: "TODO"
+        checksum: module_checksum
       })
 
     # Clear old dependencies before inserting new ones
@@ -68,12 +81,8 @@ defmodule Codicil.ModuleTracer do
       })
     end)
 
-    # Parse source file to extract function line numbers and docs
-    {line_map, doc_map} = parse_source_file(file)
-
-    # Extract function information from disassembled bytecode
-    {:beam_file, _module, exports, _attributes, _compile_info, functions} =
-      :beam_disasm.file(bytecode)
+    # Parse source file to extract function ASTs, line numbers, and docs
+    {line_map, doc_map, ast_map} = parse_source_file(file)
 
     # Build set of exported function names/arities (excluding compiler-generated functions)
     exported_set = for {name, arity, _label} <- exports, into: MapSet.new(), do: {name, arity}
@@ -86,6 +95,10 @@ defmodule Codicil.ModuleTracer do
       exported = MapSet.member?(exported_set, {name, arity})
       line = Map.get(line_map, {name, arity}, 0)
       docs = Map.get(doc_map, {name, arity})
+      fun_ast = Map.get(ast_map, {name, arity})
+
+      # Generate function checksum from AST and docs
+      checksum = if fun_ast, do: Checksum.function(fun_ast, docs), else: "TODO"
 
       attrs = %{
         name: Atom.to_string(name),
@@ -95,7 +108,7 @@ defmodule Codicil.ModuleTracer do
         path: file,
         line: line,
         docs: docs,
-        checksum: "TODO"
+        checksum: checksum
       }
 
       {:ok, function} = Functions.upsert(attrs)
@@ -179,33 +192,34 @@ defmodule Codicil.ModuleTracer do
             extract_function_metadata(ast)
 
           {:error, _} ->
-            {%{}, %{}}
+            {%{}, %{}, %{}}
         end
 
       {:error, _} ->
-        {%{}, %{}}
+        {%{}, %{}, %{}}
     end
   end
 
   defp extract_function_metadata(ast) do
-    {_ast, {line_map, doc_map}} =
-      Macro.prewalk(ast, {%{}, %{}}, fn
+    {_ast, {line_map, doc_map, ast_map}} =
+      Macro.prewalk(ast, {%{}, %{}, %{}}, fn
         # Match @doc attribute followed by function definition
-        {:@, _, [{:doc, _, [doc_string]}]} = node, {lines, docs} when is_binary(doc_string) ->
+        {:@, _, [{:doc, _, [doc_string]}]} = node, {lines, docs, asts} when is_binary(doc_string) ->
           # Strip trailing newlines from doc string
           trimmed_doc = String.trim_trailing(doc_string)
-          {node, {lines, Map.put(docs, :pending_doc, trimmed_doc)}}
+          {node, {lines, Map.put(docs, :pending_doc, trimmed_doc), asts}}
 
         # Match @doc false
-        {:@, _, [{:doc, _, [false]}]} = node, {lines, docs} ->
-          {node, {lines, Map.put(docs, :pending_doc, :hidden)}}
+        {:@, _, [{:doc, _, [false]}]} = node, {lines, docs, asts} ->
+          {node, {lines, Map.put(docs, :pending_doc, :hidden), asts}}
 
         # Match def with previous @doc
-        {:def, meta, [{name, _meta2, args} | _]} = node, {lines, docs}
+        {:def, meta, [{name, _meta2, args} | _]} = node, {lines, docs, asts}
         when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
           key = {name, length(args)}
           lines = Map.put(lines, key, line)
+          asts = Map.put(asts, key, node)
 
           docs =
             case Map.get(docs, :pending_doc) do
@@ -214,14 +228,15 @@ defmodule Codicil.ModuleTracer do
               doc -> docs |> Map.put(key, doc) |> Map.delete(:pending_doc)
             end
 
-          {node, {lines, docs}}
+          {node, {lines, docs, asts}}
 
         # Match defp with previous @doc
-        {:defp, meta, [{name, _meta2, args} | _]} = node, {lines, docs}
+        {:defp, meta, [{name, _meta2, args} | _]} = node, {lines, docs, asts}
         when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
           key = {name, length(args)}
           lines = Map.put(lines, key, line)
+          asts = Map.put(asts, key, node)
 
           docs =
             case Map.get(docs, :pending_doc) do
@@ -230,14 +245,15 @@ defmodule Codicil.ModuleTracer do
               doc -> docs |> Map.put(key, doc) |> Map.delete(:pending_doc)
             end
 
-          {node, {lines, docs}}
+          {node, {lines, docs, asts}}
 
         # Match defmacro with previous @doc
-        {:defmacro, meta, [{name, _meta2, args} | _]} = node, {lines, docs}
+        {:defmacro, meta, [{name, _meta2, args} | _]} = node, {lines, docs, asts}
         when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
           key = {name, length(args)}
           lines = Map.put(lines, key, line)
+          asts = Map.put(asts, key, node)
 
           docs =
             case Map.get(docs, :pending_doc) do
@@ -246,7 +262,7 @@ defmodule Codicil.ModuleTracer do
               doc -> docs |> Map.put(key, doc) |> Map.delete(:pending_doc)
             end
 
-          {node, {lines, docs}}
+          {node, {lines, docs, asts}}
 
         node, acc ->
           {node, acc}
@@ -255,7 +271,7 @@ defmodule Codicil.ModuleTracer do
     # Remove :pending_doc if it exists
     doc_map = Map.delete(doc_map, :pending_doc)
 
-    {line_map, doc_map}
+    {line_map, doc_map, ast_map}
   end
 
   # ROUTER
