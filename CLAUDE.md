@@ -27,7 +27,7 @@ git commit -m "Add Elixir AST parser for function extraction
 
 ## IMPORTANT: Test-Driven Development (TDD) Workflow
 
-**CRITICAL:** From this point forward, all development MUST follow strict Test-Driven Development (TDD):
+**CRITICAL:** All development MUST follow strict Test-Driven Development (TDD):
 
 ### Microfeature Development Cycle
 
@@ -275,153 +275,9 @@ Reference: https://hexdocs.pm/elixir/main/Code.html
 - Combine tracer events with post-compilation introspection for complete picture
 - No AST parsing needed - all info available from compiler and runtime
 
-## GraphSense Transfer Strategy
+## Reference Implementation
 
-The `graphsense/` directory contains a TypeScript/Node.js reference implementation. We need to port its semantic search patterns to Elixir.
-
-### Phase 1: Database Layer (Priority: High)
-
-**Files to create:**
-- `lib/codicil_db/repo.ex` - Ecto repository (Codicil.Db.Repo)
-- `lib/codicil_db/function.ex` - Function schema (Codicil.Db.Function)
-- `lib/codicil_db/edge.ex` - Relationship edge schema (Codicil.Db.Edge)
-- `priv/repo/migrations/YYYYMMDDHHMMSS_create_functions.exs` - Functions table
-- `priv/repo/migrations/YYYYMMDDHHMMSS_create_edges.exs` - Edges table
-- `priv/repo/migrations/YYYYMMDDHHMMSS_add_indices.exs` - Indices for performance
-
-**Patterns from GraphSense:**
-- Dual-database approach (Neo4j → SQLite graph tables, PostgreSQL+pgvector → SQLite+sqlite-vec)
-- Database per repository (isolation via path-based DB files)
-- Schema: `functions` table with id, name, path, start_line, end_line, summary, embedding, checksum
-- Graph constraints: unique (name, path) for functions, unique path for files
-
-**Key Changes:**
-- Replace Neo4j with SQLite graph tables using CTEs for traversal
-- Replace PostgreSQL+pgvector with SQLite+sqlite-vec
-- Use Elixir's `:ecto_sql` with `:ecto_sqlite3` adapter
-- Store relationships as edges table: `edges(from_id, to_id, type)` where type = 'CALLS' | 'IMPORTS_FROM'
-
-### Phase 2: AST Parser (Priority: High)
-
-**Files to create:**
-- `lib/codicil/parser.ex` - Main Elixir AST parser
-- `lib/codicil/parser/function.ex` - Function extraction and analysis
-- `lib/codicil/parser/module.ex` - Module relationship tracking
-- `lib/codicil/parser/calls.ex` - Function call detection
-
-**Patterns from GraphSense (TypeScript AST):**
-- Parse file → extract imports → extract functions → build call graph
-- Queue-based processing with rate limiting (avoid API throttling)
-- Checksum-based change detection (don't re-process unchanged functions)
-- Extract function metadata: name, path, start_line, end_line, full text
-
-**Elixir-Specific Adaptations:**
-- Use `Code.string_to_quoted/2` with `columns: true` for position tracking
-- Pattern match on `{:def, _, _}`, `{:defp, _, _}`, `{:defmacro, _, _}`
-- Handle multi-clause functions (collect all clauses as single entity)
-- Track module attributes: `{:@, _, [{:moduledoc, _, _}]}`, `{:@, _, [{:doc, _, _}]}`
-- Extract relationships: `{:import, _, _}`, `{:alias, _, _}`, `{:use, _, _}`, `{:require, _, _}`
-- Detect function calls by traversing AST for `{name, _, args}` nodes where name is atom
-
-### Phase 3: LLM Integration (Priority: Medium)
-
-**Files to create:**
-- `lib/codicil/llm.ex` - LLM client abstraction
-- `lib/codicil/llm/anthropic.ex` - Claude API integration
-- `lib/codicil/llm/summarizer.ex` - Function summary generation
-- `lib/codicil/llm/validator.ex` - Batch function validation
-
-**Patterns from GraphSense:**
-- Generate function summaries: `generateText(model, prompt: "Given the following function body, generate a summary: ...")`
-- Batch validation: Process 20 functions at a time with structured output
-- Early stopping: Stop on first non-match (assumes similarity-sorted results degrade)
-- Retry logic: 3 attempts with exponential backoff (1s → 2.5s → 6.25s)
-- Schema validation: Use structured output for batch evaluations
-
-**Elixir Adaptations:**
-- Use `req` HTTP client for Anthropic API calls
-- Implement GenServer for rate-limited LLM queue processing
-- Use `Jason` for JSON encoding/decoding
-- Structured output via JSON schema in prompt + validation
-
-### Phase 4: Vector Embeddings (Priority: Medium)
-
-**Files to create:**
-- `lib/codicil/embeddings.ex` - Embedding client abstraction
-- `lib/codicil/embeddings/anthropic.ex` - Claude embeddings (if available)
-- `lib/codicil/embeddings/local.ex` - Local embedding model fallback
-
-**Patterns from GraphSense:**
-- Pinecone embeddings: `pinecone.inference.embed("multilingual-e5-large", [text], {inputType: "passage|query"})`
-- Vector dimension: 1024 (multilingual-e5-large)
-- Separate input types: "passage" for indexing, "query" for searching
-- Store as VECTOR(1024) in PostgreSQL pgvector → SQLite sqlite-vec
-
-**Elixir Adaptations:**
-- Use Anthropic API for embeddings (if available) or local model
-- Store embeddings as binary blobs or JSON arrays in SQLite
-- Use `sqlite-vec` extension for vector similarity search: `SELECT * FROM functions ORDER BY embedding <=> $1 LIMIT 20`
-
-### Phase 5: MCP Tools (Priority: High)
-
-**Files to create:**
-- `lib/codicil/mcp/tools/similar_functions.ex` - Semantic function search
-- `lib/codicil/mcp/tools/function_callers.ex` - Find callers via graph
-- `lib/codicil/mcp/tools/function_callees.ex` - Find callees via graph
-- `lib/codicil/mcp/tools/module_relationships.ex` - Import/alias tracking
-
-**Patterns from GraphSense MCP Tools:**
-
-**similar_functions:**
-```typescript
-// 1. Generate embedding for query
-embedding = await pinecone.inference.embed("multilingual-e5-large", [description])
-
-// 2. Vector similarity search (no limit)
-results = await db.query(`
-  SELECT id, summary, path, name, start_line, end_line,
-         1 - (embedding <=> $1::vector) as similarity_score
-  FROM functions
-  WHERE embedding IS NOT NULL AND summary IS NOT NULL
-  ORDER BY embedding <=> $1::vector
-`, [embedding])
-
-// 3. Batch LLM validation (20 at a time)
-validatedFunctions = await batchValidateFunctions(description, results, batchSize=20)
-
-// 4. Return formatted results
-```
-
-**function_callers:**
-```cypher
-MATCH (caller:Function)-[:CALLS]->(target:Function)
-WHERE target.name = $functionName AND target.path = $functionPath
-RETURN caller.name, caller.path, caller.summary
-```
-
-**function_callees:**
-```cypher
-MATCH (source:Function)-[:CALLS]->(callee:Function)
-WHERE source.name = $functionName AND source.path = $functionPath
-RETURN callee.name, callee.path, callee.summary
-```
-
-**Elixir Adaptations:**
-- Replace Cypher with SQLite CTEs or joins on edges table
-- Use Ecto queries for type safety and composability
-- Return results as `{:ok, text}` or `{:ok, %{content: [%{type: "text", text: ...}]}}`
-
-### Phase 6: Indexing & Watcher (Priority: Low)
-
-**Files to create:**
-- `lib/codicil/indexer.ex` - Main indexing coordinator
-- `lib/codicil/watcher.ex` - File system watcher for incremental updates
-
-**Patterns from GraphSense:**
-- Glob files: `**/*.{ex,exs}` excluding `deps/`, `_build/`, `.git/`
-- Process queue with rate limiting (1 second delay between LLM calls)
-- Checksum-based change detection
-- File watcher for real-time re-indexing
+The `graphsense/` directory contains a TypeScript/Node.js reference implementation with similar functionality. It demonstrates semantic search patterns and can be referenced for design ideas, but new development happens in the main Elixir codebase (`lib/codicil/`).
 
 ## Key Implementation Patterns
 
@@ -686,42 +542,16 @@ Application config should support:
 - `:batch_size` - LLM validation batch size (defaults to 20)
 - `:rate_limit_ms` - Delay between LLM calls (defaults to 1000ms)
 
-## Implementation Order
+## Project Status
 
-1. **✅ Phase 0: MCP Core** (Complete)
-   - Server, supervisor, utilities, Plug adapter
-   - Test suite passing
+**Functionally Complete!** All core phases (MCP server, database, compiler tracer, LLM integration, vector embeddings, and MCP tools) are implemented and working. The tracer automatically indexes modules/functions during compilation, generates summaries and embeddings via rate-limited LLM calls, and stores everything in SQLite with vector search capabilities.
 
-2. **✅ Phase 1: Database Layer** (Complete)
-   - SQLite setup with Ecto
-   - Schema migrations (functions, modules, module_dependencies, function_calls tables)
-   - Graph query helpers via Ecto
-   - Context modules (Functions, Modules)
+### Completed Implementation (Phases 0-5)
 
-3. **✅ Phase 2: Compiler Tracer** (Complete - Better than AST Parser!)
-   - Compiler tracer hooks via `Code.put_compiler_option(:tracers, [Codicil.Tracer])`
-   - ModuleTracer GenServer tracks individual module compilation
-   - Extract functions, modules, relationships during compilation
-   - Build call graph from bytecode analysis
-   - Parse source for line numbers and docs
+All phases complete: MCP Core, Database Layer, Compiler Tracer, LLM Integration (Anthropic/OpenAI/Cohere/Google/Grok), Vector Embeddings (sqlite-vec), and all 4 MCP Tools (similar_functions, function_callers, function_callees, module_relationships). The compiler tracer automatically handles indexing during compilation - no separate indexer needed.
 
-4. **🚧 Phase 3: LLM Integration** (Partial)
-   - ✅ LLM protocol using Protoss
-   - ✅ Claude, OpenAI, Grok clients
-   - ❌ Function summarizer (needed for semantic search)
-   - ❌ Batch validator (needed for semantic search)
+### Remaining Tasks
 
-5. **❌ Phase 4: Vector Embeddings** (Not Started)
-   - Embedding generation (Anthropic or local)
-   - Vector storage in SQLite
-   - sqlite-vec extension integration
+1. **Generate checksums/fingerprints for functions and modules** - Currently using placeholder "TODO" checksums. Need real checksums to skip re-processing unchanged code and avoid unnecessary LLM API calls.
 
-6. **🚧 Phase 5: MCP Tools** (Partial)
-   - ❌ `similar_functions` tool (PRIORITY - needs Phase 4 & 3 completion)
-   - ✅ `function_callers` tool
-   - ✅ `function_callees` tool
-   - ✅ `module_relationships` tool
-
-7. **❌ Phase 6: Indexing & Watcher** (Not Started)
-   - Repository indexing coordinator
-   - File watching for incremental updates
+2. **Implement retirement/cleanup for deleted functions and modules** - Need to detect and remove stale records when files/functions are deleted, preventing unbounded database growth.
