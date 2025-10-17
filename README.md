@@ -199,16 +199,6 @@ Full documentation is available at:
 - **HexDocs**: https://hexdocs.pm/codicil
 - **MCP Protocol Spec**: https://spec.modelcontextprotocol.io
 
-## Contributing
-
-Contributions welcome! Please:
-1. Write tests first (TDD)
-2. Follow the Router Pattern for GenServers (see CLAUDE.md)
-3. Use atomic commits
-4. Run `mix format` before committing
-
-See `CLAUDE.md` for detailed development guidelines.
-
 ## Acknowledgments
 
 Codicil is inspired by and based on design patterns from [GraphSense](https://github.com/cephalization/graphsense), a TypeScript/Node.js semantic code search tool. GraphSense pioneered the approach of combining vector similarity search with LLM validation for accurate code discovery.
