@@ -439,41 +439,163 @@ defmodule Codicil.FunctionsTest do
 
     test "preserves id when upserting" do
       # Create initial function
-      {:ok, initial} = Functions.create(%{
-        name: :test,
-        module: TestModule,
-        arity: 0,
-        exported: true,
-        path: "/test.ex",
-        line: 1,
-        checksum: "v1"
-      })
+      {:ok, initial} =
+        Functions.create(%{
+          name: :test,
+          module: TestModule,
+          arity: 0,
+          exported: true,
+          path: "/test.ex",
+          line: 1,
+          checksum: "v1"
+        })
 
       # Upsert multiple times
-      {:ok, upsert1} = Functions.upsert(%{
-        name: :test,
-        module: TestModule,
-        arity: 0,
-        exported: true,
-        path: "/test.ex",
-        line: 2,
-        checksum: "v2"
-      })
+      {:ok, upsert1} =
+        Functions.upsert(%{
+          name: :test,
+          module: TestModule,
+          arity: 0,
+          exported: true,
+          path: "/test.ex",
+          line: 2,
+          checksum: "v2"
+        })
 
-      {:ok, upsert2} = Functions.upsert(%{
-        name: :test,
-        module: TestModule,
-        arity: 0,
-        exported: true,
-        path: "/test.ex",
-        line: 3,
-        checksum: "v3"
-      })
+      {:ok, upsert2} =
+        Functions.upsert(%{
+          name: :test,
+          module: TestModule,
+          arity: 0,
+          exported: true,
+          path: "/test.ex",
+          line: 3,
+          checksum: "v3"
+        })
 
       # All should have the same ID
       assert initial.id == upsert1.id
       assert initial.id == upsert2.id
       assert upsert2.checksum == "v3"
+    end
+
+    test "returns {:ok, function} when upserting with new checksum" do
+      # Create initial function
+      {:ok, initial} =
+        Functions.create(%{
+          name: :test,
+          module: TestModule,
+          arity: 0,
+          exported: true,
+          path: "/test.ex",
+          line: 1,
+          checksum: "checksum_v1"
+        })
+
+      initial_parsed = initial.parsed
+
+      # Upsert with different checksum - should return {:ok, _}
+      assert {:ok, updated} =
+               Functions.upsert(%{
+                 name: :test,
+                 module: TestModule,
+                 arity: 0,
+                 exported: true,
+                 path: "/test.ex",
+                 line: 2,
+                 checksum: "checksum_v2"
+               })
+
+      # Should have same ID but updated fields
+      assert updated.id == initial.id
+      assert updated.checksum == "checksum_v2"
+      assert updated.line == 2
+      # parsed should NOT be updated (it's in replace_all_except)
+      assert updated.parsed == initial_parsed
+    end
+
+    test "returns {:same, function} when upserting with matching checksum" do
+      # Create initial function
+      {:ok, initial} =
+        Functions.create(%{
+          name: :test,
+          module: TestModule,
+          arity: 0,
+          exported: true,
+          path: "/test.ex",
+          line: 1,
+          checksum: "checksum_v1"
+        })
+
+      # Upsert with same checksum but different other fields
+      # Should return {:same, _} because checksum matches
+      assert {:same, unchanged} =
+               Functions.upsert(%{
+                 name: :test,
+                 module: TestModule,
+                 arity: 0,
+                 # Different field
+                 exported: false,
+                 # Different field
+                 path: "/different.ex",
+                 # Different field
+                 line: 999,
+                 # SAME checksum
+                 checksum: "checksum_v1"
+               })
+
+      # Should have same ID and checksum
+      assert unchanged.id == initial.id
+      assert unchanged.checksum == "checksum_v1"
+      # Other fields should NOT be updated (conflict_where prevented update)
+      assert unchanged.line == 1
+      assert unchanged.path == "/test.ex"
+      assert unchanged.exported == true
+    end
+
+    test "returns {:ok, function} for brand new function (no conflict)" do
+      # Upsert a function that doesn't exist yet
+      assert {:ok, new_function} =
+               Functions.upsert(%{
+                 name: :brand_new,
+                 module: BrandNewModule,
+                 arity: 3,
+                 exported: true,
+                 path: "/new.ex",
+                 line: 5,
+                 checksum: "new_checksum"
+               })
+
+      # Should have an ID and parsed timestamp
+      assert is_integer(new_function.id)
+      assert %DateTime{} = new_function.parsed
+      assert new_function.checksum == "new_checksum"
+    end
+
+    test "placeholder functions have nil parsed field" do
+      # Create a placeholder (no parsed field provided)
+      {:ok, placeholder} =
+        Functions.upsert(%{
+          name: :placeholder_func,
+          module: PlaceholderModule,
+          arity: 1,
+          checksum: "TODO"
+        })
+
+      # Verify parsed is set (upsert adds it via Map.put_new)
+      assert %DateTime{} = placeholder.parsed
+
+      # Now upsert the same placeholder again with same checksum
+      assert {:same, unchanged} =
+               Functions.upsert(%{
+                 name: :placeholder_func,
+                 module: PlaceholderModule,
+                 arity: 1,
+                 checksum: "TODO"
+               })
+
+      # The returned function should have the original parsed timestamp
+      assert unchanged.parsed == placeholder.parsed
     end
   end
 end

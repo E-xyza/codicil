@@ -18,14 +18,30 @@ defmodule Codicil.Functions do
   @doc """
   Creates or updates a function record.
   Uses upsert based on unique constraint (module, name, arity).
+  Skips database write if checksum matches existing record.
+
+  Returns:
+  - `{:ok, function}` - Function was created or updated
+  - `{:same, function}` - Function already exists with same checksum (no write)
+  - `{:error, changeset}` - Validation failed
   """
-  def upsert(attrs) do
-    %Function{}
-    |> Function.changeset(attrs)
-    |> Repo.insert(
-      on_conflict: {:replace_all_except, [:id]},
-      conflict_target: [:module, :name, :arity]
-    )
+  def upsert(%{checksum: checksum} = attrs) do
+    case get_by_mfa({attrs.module, attrs.name, attrs.arity}) do
+      %Function{checksum: ^checksum} = function ->
+        # Function exists with same checksum - no update needed
+        {:same, function}
+
+      _ ->
+        # Function doesn't exist or checksum changed - upsert it
+        attrs
+        |> Map.put_new(:parsed, DateTime.utc_now())
+        |> Function.changeset()
+        |> Repo.insert(
+          on_conflict: {:replace_all_except, [:id, :parsed]},
+          conflict_target: [:module, :name, :arity],
+          returning: true
+        )
+    end
   end
 
   @doc """
@@ -38,7 +54,8 @@ defmodule Codicil.Functions do
     attrs = %{
       module: module,
       name: name,
-      arity: arity
+      arity: arity,
+      checksum: "TODO"
     }
 
     upsert(attrs)
