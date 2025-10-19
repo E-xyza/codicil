@@ -120,4 +120,17 @@ defmodule Codicil.Modules do
     )
     |> Repo.all()
   end
+
+  @doc """
+  Lists all modules associated with a given file path.
+  Returns a list of Module structs.
+  """
+  def list_by_path(path) when is_binary(path) do
+    import Ecto.Query
+
+    from(m in Module,
+      where: m.path == ^path
+    )
+    |> Repo.all()
+  end
 end

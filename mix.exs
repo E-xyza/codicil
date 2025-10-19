@@ -41,6 +41,7 @@ defmodule Codicil.MixProject do
       {:protoss, "~> 1.1"},
       {:sqlite_vec, "~> 0.1.0"},
       {:sourceror, "~> 1.0"},
+      {:file_system, "~> 1.0"},
       {:bandit, "~> 1.6", only: [:dev, :test]},
       {:req, "~> 0.5", only: [:test, :dev]},
       {:tidewave, "~> 0.4", only: :dev}
