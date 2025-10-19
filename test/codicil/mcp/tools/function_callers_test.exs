@@ -9,10 +9,10 @@ defmodule Codicil.MCP.Tools.FunctionCallersTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
     # Create target function
-    {:ok, target} =
+    {_status, target} =
       Functions.upsert(%{
-        name: "target_function",
-        module: "Elixir.MyModule",
+        name: :target_function,
+        module: MyModule,
         arity: 1,
         exported: true,
         path: "/lib/my_module.ex",
@@ -21,10 +21,10 @@ defmodule Codicil.MCP.Tools.FunctionCallersTest do
       })
 
     # Create caller functions
-    {:ok, caller1} =
+    {_status, caller1} =
       Functions.upsert(%{
-        name: "caller_one",
-        module: "Elixir.CallerModule",
+        name: :caller_one,
+        module: CallerModule,
         arity: 0,
         exported: true,
         path: "/lib/caller_module.ex",
@@ -32,10 +32,10 @@ defmodule Codicil.MCP.Tools.FunctionCallersTest do
         checksum: "def456"
       })
 
-    {:ok, caller2} =
+    {_status, caller2} =
       Functions.upsert(%{
-        name: "caller_two",
-        module: "Elixir.AnotherCaller",
+        name: :caller_two,
+        module: AnotherCaller,
         arity: 2,
         exported: false,
         path: "/lib/another_caller.ex",
@@ -66,10 +66,10 @@ defmodule Codicil.MCP.Tools.FunctionCallersTest do
 
   test "returns empty result when no callers exist" do
     # Create a function with no callers
-    {:ok, _lonely} =
+    {_status, _lonely} =
       Functions.upsert(%{
-        name: "lonely_function",
-        module: "Elixir.Lonely",
+        name: :lonely_function,
+        module: Lonely,
         arity: 0,
         exported: true,
         path: "/lib/lonely.ex",

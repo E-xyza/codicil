@@ -7,6 +7,15 @@ defmodule Codicil.TracerTest do
   setup do
     # Start a sandbox transaction for isolated testing
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+
+    # Enable tracer for this test
+    Code.put_compiler_option(:tracers, [Codicil.Tracer])
+
+    on_exit(fn ->
+      # Disable tracer after test
+      Code.put_compiler_option(:tracers, [])
+    end)
+
     :ok
   end
 
@@ -106,17 +115,19 @@ defmodule Codicil.TracerTest do
 
       # Check that remote calls created placeholders
       assert [
-        %{module: "Elixir.Enum", name: "count", arity: 1, parsed: nil}
-      ] = call_external
-      |> Functions.list_calls()
-      |> Enum.sort_by(&{&1.module, &1.name})
+               %{module: "Elixir.Enum", name: "count", arity: 1, parsed: nil}
+             ] =
+               call_external
+               |> Functions.list_calls()
+               |> Enum.sort_by(&{&1.module, &1.name})
 
       assert [
-        %{module: "Elixir.String", name: "trim", arity: 1, parsed: nil},
-        %{module: "Elixir.String", name: "upcase", arity: 1, parsed: nil}
-      ] = call_string
-      |> Functions.list_calls()
-      |> Enum.sort_by(&{&1.module, &1.name})
+               %{module: "Elixir.String", name: "trim", arity: 1, parsed: nil},
+               %{module: "Elixir.String", name: "upcase", arity: 1, parsed: nil}
+             ] =
+               call_string
+               |> Functions.list_calls()
+               |> Enum.sort_by(&{&1.module, &1.name})
 
       # Clean up
       :code.purge(module)
@@ -161,8 +172,51 @@ defmodule Codicil.TracerTest do
 
       # Get runtime dependencies - should include Enum, String, List
       runtime_deps = Codicil.Modules.list_runtime_dependencies(module_record)
+
       assert ["Elixir.Enum", "Elixir.List", "Elixir.String"] =
                Enum.map(runtime_deps, & &1.id) |> Enum.sort()
+
+      # Clean up
+      :code.purge(module)
+      :code.delete(module)
+    end
+
+    test "does not enqueue unchanged functions to RateLimiter" do
+      # Compile a module the first time
+      example_path = Path.join(__DIR__, "tracer_examples/add_one_module.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Verify function was created
+      assert function = Functions.get_by_mfa({AddOneModule, :add_one, 1})
+      assert function.checksum != "TODO"
+      original_checksum = function.checksum
+
+      # Purge and delete module so we can recompile
+      :code.purge(module)
+      :code.delete(module)
+
+      # Get the parsed timestamp before recompilation
+      original_parsed = function.parsed
+
+      # Recompile the same module (unchanged)
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Verify function still exists with same checksum
+      assert recompiled_function = Functions.get_by_mfa({AddOneModule, :add_one, 1})
+      assert recompiled_function.checksum == original_checksum
+      assert recompiled_function.id == function.id
+
+      # If the function was re-enqueued, its parsed timestamp would update
+      # (because RateLimiter processes it and calls Functions.update)
+      # Since checksum hasn't changed, it should NOT be re-enqueued
+      # So parsed timestamp should remain the same
+      assert recompiled_function.parsed == original_parsed
 
       # Clean up
       :code.purge(module)

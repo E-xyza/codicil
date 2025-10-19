@@ -9,10 +9,10 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
     # Create source function
-    {:ok, source} =
+    {_status, source} =
       Functions.upsert(%{
-        name: "source_function",
-        module: "Elixir.MyModule",
+        name: :source_function,
+        module: MyModule,
         arity: 0,
         exported: true,
         path: "/lib/my_module.ex",
@@ -21,10 +21,10 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
       })
 
     # Create callee functions (functions called by source)
-    {:ok, callee1} =
+    {_status, callee1} =
       Functions.upsert(%{
-        name: "helper_one",
-        module: "Elixir.HelperModule",
+        name: :helper_one,
+        module: HelperModule,
         arity: 1,
         exported: false,
         path: "/lib/helper_module.ex",
@@ -32,10 +32,10 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
         checksum: "def456"
       })
 
-    {:ok, callee2} =
+    {_status, callee2} =
       Functions.upsert(%{
-        name: "helper_two",
-        module: "Elixir.AnotherHelper",
+        name: :helper_two,
+        module: AnotherHelper,
         arity: 2,
         exported: true,
         path: "/lib/another_helper.ex",
@@ -66,10 +66,10 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
 
   test "returns empty result when function calls nothing" do
     # Create a function that doesn't call anything
-    {:ok, _isolated} =
+    {_status, _isolated} =
       Functions.upsert(%{
-        name: "isolated_function",
-        module: "Elixir.Isolated",
+        name: :isolated_function,
+        module: Isolated,
         arity: 0,
         exported: true,
         path: "/lib/isolated.ex",

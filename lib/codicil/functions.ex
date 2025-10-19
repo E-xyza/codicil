@@ -25,8 +25,8 @@ defmodule Codicil.Functions do
   - `{:same, function}` - Function already exists with same checksum (no write)
   - `{:error, changeset}` - Validation failed
   """
-  def upsert(%{checksum: checksum} = attrs) do
-    case get_by_mfa({attrs.module, attrs.name, attrs.arity}) do
+  def upsert(%{module: module, name: name, arity: arity, checksum: checksum} = attrs) do
+    case get_by_mfa({module, name, arity}) do
       %Function{checksum: ^checksum} = function ->
         # Function exists with same checksum - no update needed
         {:same, function}

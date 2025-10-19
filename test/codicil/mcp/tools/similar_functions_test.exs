@@ -8,10 +8,10 @@ defmodule Codicil.MCP.Tools.SimilarFunctionsTest do
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
     # Create test functions with summaries and embeddings
-    {:ok, func1} =
+    {_status, func1} =
       Functions.upsert(%{
-        name: "calculate_total",
-        module: "Math.Calculator",
+        name: :calculate_total,
+        module: :"Math.Calculator",
         arity: 1,
         exported: true,
         path: "/lib/math/calculator.ex",
@@ -21,10 +21,10 @@ defmodule Codicil.MCP.Tools.SimilarFunctionsTest do
         embedding: generate_embedding([0.1, 0.2, 0.3])
       })
 
-    {:ok, func2} =
+    {_status, func2} =
       Functions.upsert(%{
-        name: "format_text",
-        module: "Text.Formatter",
+        name: :format_text,
+        module: :"Text.Formatter",
         arity: 2,
         exported: true,
         path: "/lib/text/formatter.ex",
