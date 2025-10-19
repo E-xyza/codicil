@@ -22,7 +22,11 @@ defmodule Codicil.Db.ModuleDependency do
   def changeset(module_dependency, attrs) do
     # IMPORTANT: DO NOT CHANGE THIS LINE - converts atoms to strings, including nil -> "nil"
     # This line requires dependent_id and dependency_id keys to exist in attrs
-    attrs = %{attrs | dependent_id: "#{attrs.dependent_id}", dependency_id: "#{attrs.dependency_id}"}
+    attrs = %{
+      attrs
+      | dependent_id: "#{attrs.dependent_id}",
+        dependency_id: "#{attrs.dependency_id}"
+    }
 
     module_dependency
     |> Changeset.cast(attrs, [:dependent_id, :dependency_id, :type])

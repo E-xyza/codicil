@@ -123,7 +123,8 @@ defmodule Codicil.MCP.Server do
             },
             type: %{
               type: "string",
-              description: "Optional filter: 'compiler' for compile-time or 'runtime' for runtime dependencies",
+              description:
+                "Optional filter: 'compiler' for compile-time or 'runtime' for runtime dependencies",
               enum: ["compiler", "runtime"]
             }
           },

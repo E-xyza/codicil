@@ -37,21 +37,14 @@ defmodule Codicil.MCP.Tools.SimilarFunctions do
 
     # Get clients from args or environment
     embeddings_client =
-      case Map.get(args, "embeddings_client") do
-        nil -> get_default_embeddings_client()
-        client -> client
-      end
+      Map.get(args, "embeddings_client") || get_default_embeddings_client()
 
     llm_client =
-      case Map.get(args, "llm_client") do
-        nil -> get_default_llm_client()
-        client -> client
-      end
+      Map.get(args, "llm_client") || get_default_llm_client()
 
     cond do
       is_nil(embeddings_client) ->
-        {:error,
-         "No embeddings client available. Set ANTHROPIC_API_KEY environment variable."}
+        {:error, "No embeddings client available. Set ANTHROPIC_API_KEY environment variable."}
 
       is_nil(llm_client) ->
         {:error,

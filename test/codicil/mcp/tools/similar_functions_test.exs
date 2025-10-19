@@ -1,5 +1,5 @@
 defmodule Codicil.MCP.Tools.SimilarFunctionsTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.Functions
   alias Codicil.MCP.Tools.SimilarFunctions

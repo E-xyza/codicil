@@ -23,3 +23,6 @@ codicil-*.tar
 /tmp/
 
 /priv/codicil.db*
+
+# Temporary beam files for doc extraction in tests
+/test/_support/beamfiles/

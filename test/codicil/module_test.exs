@@ -1,5 +1,5 @@
 defmodule Codicil.ModulesTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.Modules
   alias Codicil.Db.Repo

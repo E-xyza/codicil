@@ -21,6 +21,7 @@ defmodule Codicil.Db.Function do
     field(:line, :integer)
     field(:parsed, :utc_datetime_usec)
     field(:docs, :string)
+    field(:code, :string)
     field(:summary, :string)
     field(:embedding, :binary)
     field(:checksum, :string)
@@ -43,7 +44,7 @@ defmodule Codicil.Db.Function do
   Normalizes atom values for :name and :module fields to strings.
   Sets :parsed timestamp to current time if not provided.
   """
-  def changeset(function, attrs) do
+  def changeset(function \\ %__MODULE__{}, attrs) do
     attrs = normalize_attrs(attrs)
 
     function
@@ -56,6 +57,7 @@ defmodule Codicil.Db.Function do
       :line,
       :parsed,
       :docs,
+      :code,
       :summary,
       :embedding,
       :checksum
@@ -67,7 +69,7 @@ defmodule Codicil.Db.Function do
   Changeset for creating new function records.
   Requires all fields needed for a fully-defined function.
   """
-  def create_changeset(function, attrs) do
+  def create_changeset(function \\ %__MODULE__{}, attrs) do
     function
     |> changeset(attrs)
     |> Changeset.validate_required([:exported, :path, :line, :checksum])

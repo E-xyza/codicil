@@ -1,5 +1,5 @@
 defmodule Codicil.TracerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.Functions
   alias Codicil.Db.Repo
@@ -17,6 +17,17 @@ defmodule Codicil.TracerTest do
     end)
 
     :ok
+  end
+
+  # Helper to clean up module and its beam file
+  defp cleanup_module(module) do
+    :code.purge(module)
+    :code.delete(module)
+
+    # Delete beam file if it exists
+    beam_dir = Path.join([File.cwd!(), "test", "_support", "beamfiles"])
+    beam_file = Path.join(beam_dir, "#{module}.beam")
+    File.rm(beam_file)
   end
 
   describe "trace/2" do
@@ -38,8 +49,7 @@ defmodule Codicil.TracerTest do
       assert function.line == 2
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
 
     test "marks private functions as exported: false" do
@@ -69,8 +79,7 @@ defmodule Codicil.TracerTest do
       assert hd(callers).id == public_fn.id
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
 
     test "stores function documentation in docs field" do
@@ -94,8 +103,7 @@ defmodule Codicil.TracerTest do
       assert undocumented_fn.docs == nil
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
 
     test "creates placeholders for remote function calls" do
@@ -130,8 +138,7 @@ defmodule Codicil.TracerTest do
                |> Enum.sort_by(&{&1.module, &1.name})
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
 
     test "tracks compile-time module dependencies (import, require, use)" do
@@ -154,8 +161,7 @@ defmodule Codicil.TracerTest do
                Enum.map(dependencies, & &1.id) |> Enum.sort()
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
 
     test "tracks runtime module dependencies (remote calls)" do
@@ -177,8 +183,7 @@ defmodule Codicil.TracerTest do
                Enum.map(runtime_deps, & &1.id) |> Enum.sort()
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
 
     test "does not enqueue unchanged functions to RateLimiter" do
@@ -195,8 +200,7 @@ defmodule Codicil.TracerTest do
       original_checksum = function.checksum
 
       # Purge and delete module so we can recompile
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
 
       # Get the parsed timestamp before recompilation
       original_parsed = function.parsed
@@ -219,8 +223,7 @@ defmodule Codicil.TracerTest do
       assert recompiled_function.parsed == original_parsed
 
       # Clean up
-      :code.purge(module)
-      :code.delete(module)
+      cleanup_module(module)
     end
   end
 end

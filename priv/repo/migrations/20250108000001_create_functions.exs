@@ -11,6 +11,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :line, :integer
       add :parsed, :utc_datetime_usec
       add :docs, :text
+      add :code, :text
       add :summary, :text
       add :embedding, :binary
       add :checksum, :string

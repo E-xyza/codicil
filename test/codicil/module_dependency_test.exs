@@ -1,5 +1,5 @@
 defmodule Codicil.ModuleDependencyTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.Modules
   alias Codicil.Db.Repo
@@ -28,7 +28,11 @@ defmodule Codicil.ModuleDependencyTest do
     end
 
     test "returns error with invalid attributes" do
-      attrs = %{dependent_id: NonExistentModule, dependency_id: AnotherFakeModule, type: :invalid_type}
+      attrs = %{
+        dependent_id: NonExistentModule,
+        dependency_id: AnotherFakeModule,
+        type: :invalid_type
+      }
 
       assert {:error, changeset} = Modules.create_dependency(attrs)
       refute changeset.valid?

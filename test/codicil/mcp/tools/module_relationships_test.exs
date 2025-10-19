@@ -1,5 +1,5 @@
 defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.Db.Repo
   alias Codicil.Modules

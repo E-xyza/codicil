@@ -416,6 +416,57 @@ The `graphsense/` directory contains a TypeScript/Node.js reference implementati
 - Handle multi-clause functions (collect all clauses as single entity)
 - Resolve aliases using `Macro.expand/2` for accurate relationship tracking
 
+### AST Parsing Strategy
+
+**CRITICAL:** Follow this exact strategy when parsing Elixir source files:
+
+- **Use Sourceror for ALL AST parsing** - Sourceror preserves metadata (line numbers, comments) that `Code.string_to_quoted` discards
+- **DO NOT use Sourceror for @doc or @moduledoc extraction** - Use `Code.fetch_docs/1` instead to obtain documentation from compiled modules
+- **Two-phase documentation extraction:**
+  1. Parse with Sourceror to extract ASTs, line numbers, and leading comments from function metadata (`:leading_comments` key)
+  2. After module compilation, use `Code.fetch_docs/1` to extract `@doc` and `@moduledoc` attributes
+  3. Merge results with @doc taking precedence over comments
+
+**Example:**
+```elixir
+# Phase 1: Parse source for ASTs and leading comments (at parse time)
+defp parse_source_file(file_path) do
+  case File.read(file_path) do
+    {:ok, source} ->
+      sourceror_ast = Sourceror.parse_string!(source)
+      {line_map, comment_docs, ast_map} = extract_metadata_sourceror(sourceror_ast)
+      {line_map, comment_docs, ast_map}
+
+    {:error, _} ->
+      {%{}, %{}, %{}}
+  end
+end
+
+# Phase 2: Extract @doc after compilation (in :on_module callback)
+defp extract_compiled_docs(module) do
+  case Code.fetch_docs(module) do
+    {:docs_v1, _, _, _, _, _, docs} ->
+      for {{:function, name, arity}, _, _, doc, _} <- docs, into: %{} do
+        doc_string = case doc do
+          %{"en" => text} -> text
+          :hidden -> nil
+          :none -> nil
+        end
+        {{name, arity}, doc_string}
+      end
+
+    {:error, _} ->
+      %{}
+  end
+end
+```
+
+**Why this matters:**
+- Sourceror is the only way to preserve leading comments (not available in regular AST)
+- `Code.fetch_docs/1` is the canonical way to extract @doc/@moduledoc from compiled modules
+- Public functions typically have @doc, private functions may have leading comments
+- This strategy handles both cases correctly
+
 ### Router Pattern for GenServers
 
 **IMPORTANT:** All GenServers and GenServer-like modules (LiveViews, etc.) should follow the Router Pattern for code organization.
@@ -545,6 +596,9 @@ end
 - **ALWAYS** use `:else` instead of `true` for the final clause in `cond` statements
 - **Example**: `cond do ... :else -> default_value end` NOT `cond do ... true -> default_value end`
 - This makes the catch-all intent explicit and follows Elixir style conventions
+- **PREFER `if value = ...` over `case ... nil ->` for nil checks with fallback values**
+- **Example**: `if value = Application.get_env(:app, :key), do: value, else: default` NOT `case Application.get_env(:app, :key) do nil -> default; value -> value end`
+- This pattern is more idiomatic and concise for "get value or use default" scenarios
 
 ### Context Module Naming
 - **DO NOT** use redundant names in context functions
@@ -607,9 +661,11 @@ priv/repo/migrations/
 - **AST parsing**: Test with various Elixir syntax patterns (macros, protocols, guards)
 - **Tool isolation**: Each tool test should be independent and fast
 - **Property testing**: Use StreamData for AST edge cases
-- **Async tests**: ALWAYS use `async: true` in test modules for parallel execution
-  - Example: `use ExUnit.Case, async: true`
-  - SQLite with sandbox mode supports concurrent tests
+- **Async tests**:
+  - **Default**: `async: true` for tests that don't use the database
+  - **Database tests**: `async: false` for tests that engage Ecto/database operations
+  - **Reason**: SQLite does not support async tests with Ecto.Adapters.SQL.Sandbox due to its single-writer architecture (see [ecto_sqlite3 docs](https://hexdocs.pm/ecto_sqlite3/Ecto.Adapters.SQLite3.html))
+  - Only PostgreSQL adapter supports true async tests with Sandbox mode
 - **Boolean assertions**: Use idiomatic ExUnit assertions for boolean values
   - **DO**: `assert value` instead of `assert value == true`
   - **DO**: `refute value` instead of `assert value == false`

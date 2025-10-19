@@ -112,7 +112,9 @@ defmodule Codicil.Application do
 
     defp log_configuration(llm_provider, llm_model, embedding_provider, embedding_model) do
       llm_model = llm_model || Map.fetch!(@default_models, {llm_provider, :llm})
-      embedding_model = embedding_model || Map.fetch!(@default_models, {embedding_provider, :embedding})
+
+      embedding_model =
+        embedding_model || Map.fetch!(@default_models, {embedding_provider, :embedding})
 
       Logger.info("LLM: #{llm_provider} (#{llm_model})")
       Logger.info("Embeddings: #{embedding_provider} (#{embedding_model})")

@@ -1,5 +1,5 @@
 defmodule Codicil.RateLimiterTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.RateLimiter
   alias Codicil.Db.Repo

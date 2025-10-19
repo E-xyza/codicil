@@ -70,6 +70,7 @@ defmodule Codicil.RateLimiter do
 
         # Spawn task to process this function
         parent = self()
+
         Task.start(fn ->
           process_function(function_info, state)
           # Wait before signaling done

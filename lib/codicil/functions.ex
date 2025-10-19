@@ -26,15 +26,26 @@ defmodule Codicil.Functions do
   - `{:error, changeset}` - Validation failed
   """
   def upsert(%{module: module, name: name, arity: arity, checksum: checksum} = attrs) do
-    case get_by_mfa({module, name, arity}) do
+    # Convert string keys to atoms for get_by_mfa lookup
+    module_atom = if is_binary(module), do: String.to_atom(module), else: module
+    name_atom = if is_binary(name), do: String.to_atom(name), else: name
+
+    case get_by_mfa({module_atom, name_atom, arity}) do
       %Function{checksum: ^checksum} = function ->
         # Function exists with same checksum - no update needed
         {:same, function}
 
       _ ->
         # Function doesn't exist or checksum changed - upsert it
-        attrs
-        |> Map.put_new(:parsed, DateTime.utc_now())
+        # Only set parsed timestamp if not explicitly provided (e.g., placeholders set parsed: nil)
+        attrs_with_parsed =
+          if Map.has_key?(attrs, :parsed) do
+            attrs
+          else
+            Map.put(attrs, :parsed, DateTime.utc_now())
+          end
+
+        attrs_with_parsed
         |> Function.changeset()
         |> Repo.insert(
           on_conflict: {:replace_all_except, [:id, :parsed]},
@@ -51,14 +62,34 @@ defmodule Codicil.Functions do
   Returns {:ok, function} tuple matching the pattern expected by callers.
   """
   def create_placeholder({module, name, arity}) do
-    attrs = %{
-      module: module,
-      name: name,
-      arity: arity,
-      checksum: "TODO"
-    }
+    # Convert atoms to strings for database storage
+    module_str = if is_atom(module), do: Atom.to_string(module), else: module
+    name_str = if is_atom(name), do: Atom.to_string(name), else: name
 
-    upsert(attrs)
+    # Convert back to atoms for lookup
+    module_atom = if is_binary(module_str), do: String.to_atom(module_str), else: module_str
+    name_atom = if is_binary(name_str), do: String.to_atom(name_str), else: name_str
+
+    # Check if function already exists
+    case get_by_mfa({module_atom, name_atom, arity}) do
+      nil ->
+        # Create new placeholder
+        attrs = %{
+          module: module_str,
+          name: name_str,
+          arity: arity,
+          checksum: "TODO",
+          parsed: nil
+        }
+
+        attrs
+        |> Function.changeset()
+        |> Repo.insert()
+
+      existing ->
+        # Return existing function (could be placeholder or real function)
+        {:ok, existing}
+    end
   end
 
   @doc """

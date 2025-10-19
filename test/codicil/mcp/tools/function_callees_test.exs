@@ -1,5 +1,5 @@
 defmodule Codicil.MCP.Tools.FunctionCalleesTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Codicil.Db.Repo
   alias Codicil.Functions
@@ -7,6 +7,8 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
   setup do
     # Sandbox for test isolation
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+
+    Process.sleep(100)
 
     # Create source function
     {_status, source} =
