@@ -7,6 +7,10 @@ defmodule Codicil.MCP.Tools.SimilarFunctionsTest do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+
+    # Allow background processes (RateLimiter tasks) to use the sandbox
+    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+
     # Create test functions with summaries and embeddings
     {_status, func1} =
       Functions.upsert(%{

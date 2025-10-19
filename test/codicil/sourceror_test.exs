@@ -8,14 +8,14 @@ defmodule Codicil.SourcerorTest do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    :ok
-  end
 
-  setup_all do
+    # Allow background processes (tracer GenServers) to use the sandbox
+    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+
     # Enable tracer for compilation
     Code.put_compiler_option(:tracers, [Codicil.Tracer])
 
-    # Compile the test module once for all tests
+    # Compile the test module
     [{module, _}] = Code.compile_file(@test_file)
 
     # Give the background task time to complete (including async doc updates)

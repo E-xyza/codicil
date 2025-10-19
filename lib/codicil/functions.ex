@@ -190,6 +190,21 @@ defmodule Codicil.Functions do
   end
 
   @doc """
+  Lists all functions belonging to a given module.
+  Returns a list of Function structs.
+  """
+  def list_by_module(module) when is_atom(module) do
+    import Ecto.Query
+
+    module_str = Atom.to_string(module)
+
+    from(f in Function,
+      where: f.module == ^module_str
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Finds functions similar to a query vector using cosine distance.
 
   ## Parameters

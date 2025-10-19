@@ -99,10 +99,12 @@ defmodule Codicil.ModuleTracer do
     # Build set of exported function names/arities (excluding compiler-generated functions)
     exported_set = for {name, arity, _label} <- exports, into: MapSet.new(), do: {name, arity}
 
-    for {:function, name, arity, _label, bytecode_instrs} <- functions,
-        name not in ~w[__info__ module_info]a,
-        reduce: MapSet.new() do
-      modules_so_far ->
+    # Track which functions exist in this compilation (for retirement)
+    {seen_functions, runtime_modules} =
+      for {:function, name, arity, _label, bytecode_instrs} <- functions,
+          name not in ~w[__info__ module_info]a,
+          reduce: {MapSet.new(), MapSet.new()} do
+        {seen, modules_so_far} ->
         # Store functions in database
         exported = MapSet.member?(exported_set, {name, arity})
         line = Map.get(line_map, {name, arity}, 0)
@@ -154,20 +156,40 @@ defmodule Codicil.ModuleTracer do
             end
           end
 
-        for mfa <- called_funs, into: modules_so_far do
-          callee =
-            if existing = Functions.get_by_mfa(mfa) do
-              existing
-            else
-              {_status, placeholder} = Functions.create_placeholder(mfa)
-              placeholder
-            end
+        updated_modules =
+          for mfa <- called_funs, into: modules_so_far do
+            callee =
+              if existing = Functions.get_by_mfa(mfa) do
+                existing
+              else
+                {_status, placeholder} = Functions.create_placeholder(mfa)
+                placeholder
+              end
 
-          Functions.add_call(function, callee)
+            Functions.add_call(function, callee)
 
-          elem(mfa, 0)
-        end
+            elem(mfa, 0)
+          end
+
+        # Track this function as seen
+        updated_seen = MapSet.put(seen, {name, arity})
+
+        {updated_seen, updated_modules}
+      end
+
+    # Retire functions that no longer exist in this module
+    existing_functions = Functions.list_by_module(module)
+
+    for existing <- existing_functions do
+      key = {String.to_atom(existing.name), existing.arity}
+
+      unless MapSet.member?(seen_functions, key) do
+        Functions.delete(existing)
+      end
     end
+
+    # Process runtime dependencies
+    runtime_modules
     |> Enum.reject(&(&1 == module))
     |> Enum.each(fn dependency ->
       # Ensure dependency module record exists (placeholder)

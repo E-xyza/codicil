@@ -8,6 +8,9 @@ defmodule Codicil.TracerTest do
     # Start a sandbox transaction for isolated testing
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
+    # Allow background processes (tracer GenServers) to use the sandbox
+    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+
     # Enable tracer for this test
     Code.put_compiler_option(:tracers, [Codicil.Tracer])
 
