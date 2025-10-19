@@ -55,8 +55,16 @@ defmodule Codicil.FileWatcher do
     modules = Modules.list_by_path(path)
 
     for module <- modules do
+      module_atom = String.to_atom(module.id)
+
+      # If this is a .ex file, purge and delete the compiled module from BEAM
+      if Path.extname(path) == ".ex" do
+        :code.purge(module_atom)
+        :code.delete(module_atom)
+      end
+
       # Delete all functions for this module
-      functions = Functions.list_by_module(String.to_atom(module.id))
+      functions = Functions.list_by_module(module_atom)
 
       for function <- functions do
         Functions.delete(function)
