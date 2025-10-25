@@ -722,11 +722,8 @@ priv/repo/migrations/
 
 ### Known TODOs and Technical Debt
 
-1. **Checksum placeholders for dependencies** - Some checksums use "TODO" placeholder:
+1. **Checksum placeholders for dependencies** - Some checksums use `nil`:
    - Functions without AST (e.g., Erlang functions)
    - Module dependencies referenced but not yet compiled
    - These are edge cases that don't affect core functionality
-
-2. **FileSystem conflict handling** - Handle potential conflicts when another subsystem (e.g., Phoenix) also uses FileSystem
-   - Current implementation works for standalone use
-   - May need coordination mechanism for multi-subsystem scenarios
+   - Checksums are only set after dependencies have been processed
