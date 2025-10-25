@@ -97,6 +97,10 @@ defmodule Codicil.FileWatcherTest do
       # Create a real test file
       test_path = Path.join(__DIR__, "tracer_examples/file_watcher_recompile_test.ex")
 
+      # Clean up any existing module first
+      :code.purge(FileWatcherRecompileTest)
+      :code.delete(FileWatcherRecompileTest)
+
       # Clean up on exit
       on_exit(fn ->
         :code.purge(FileWatcherRecompileTest)
