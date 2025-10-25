@@ -94,8 +94,9 @@ defmodule Codicil.FileWatcherTest do
     end
 
     test "recompiles file when modified event received" do
-      # Create a real test file
-      test_path = Path.join(__DIR__, "tracer_examples/file_watcher_recompile_test.ex")
+      # Create a real test file in tmp directory
+      tmp_dir = System.tmp_dir!()
+      test_path = Path.join(tmp_dir, "file_watcher_recompile_test.ex")
 
       # Clean up any existing module first
       :code.purge(FileWatcherRecompileTest)
@@ -143,9 +144,10 @@ defmodule Codicil.FileWatcherTest do
     end
 
     test "file rename reuses existing data and avoids LLM calls" do
-      # Create a real test file at old path
-      old_path = Path.join(__DIR__, "tracer_examples/rename_test_old.ex")
-      new_path = Path.join(__DIR__, "tracer_examples/rename_test_new.ex")
+      # Create a real test file at old path in tmp directory
+      tmp_dir = System.tmp_dir!()
+      old_path = Path.join(tmp_dir, "rename_test_old.ex")
+      new_path = Path.join(tmp_dir, "rename_test_new.ex")
 
       # Clean up on exit
       on_exit(fn ->
