@@ -1,4 +1,5 @@
 defmodule Codicil.Db.Repo do
+  @moduledoc false
   use Ecto.Repo,
     otp_app: :codicil,
     adapter: Ecto.Adapters.SQLite3
