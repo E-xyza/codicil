@@ -49,21 +49,33 @@ defmodule Codicil.Tracer do
   end
 
   def trace({:import, _meta, module, _opts}, env) do
-    dependent = hd(env.context_modules)
-    Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
+    # Ignore if outside module scope (corner case)
+    case env.context_modules do
+      [] -> :ok
+      [dependent | _] -> Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
+    end
+
     :ok
   end
 
   def trace({:require, _meta, module, _opts}, env) do
-    dependent = hd(env.context_modules)
-    Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
+    # Ignore if outside module scope (corner case)
+    case env.context_modules do
+      [] -> :ok
+      [dependent | _] -> Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
+    end
+
     :ok
   end
 
   def trace({type, _meta, module, _opts}, env) when type in [:imported_macro, :remote_macro] do
     # use creates these events - track as compile-time dependency
-    dependent = hd(env.context_modules)
-    Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
+    # Ignore if outside module scope (corner case)
+    case env.context_modules do
+      [] -> :ok
+      [dependent | _] -> Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
+    end
+
     :ok
   end
 

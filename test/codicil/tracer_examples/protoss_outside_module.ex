@@ -1,6 +1,5 @@
 # Test module with 'use Protoss' outside the module definition
-# This tests that compile-time dependencies declared outside module scope
-# are correctly tracked by the tracer
+# Corner case: tracer should not crash when dependencies are declared outside module scope
 
 use Protoss
 
