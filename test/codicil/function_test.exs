@@ -241,6 +241,56 @@ defmodule Codicil.FunctionsTest do
       calls = Functions.list_calls(caller)
       assert length(calls) == 1
     end
+
+    test "handles mutually recursive function calls" do
+      # Setup: Create module and two functions that call each other
+      {:ok, _mod} = Modules.create(%{id: MyModule, path: "/lib/my_module.ex", checksum: "abc"})
+
+      {:ok, even?} =
+        Functions.create(%{
+          name: :is_even,
+          module: MyModule,
+          arity: 1,
+          exported: true,
+          path: "/lib/my_module.ex",
+          line: 10,
+          checksum: "even123"
+        })
+
+      {:ok, odd?} =
+        Functions.create(%{
+          name: :is_odd,
+          module: MyModule,
+          arity: 1,
+          exported: true,
+          path: "/lib/my_module.ex",
+          line: 20,
+          checksum: "odd456"
+        })
+
+      # Create mutual call relationships (even? calls odd?, odd? calls even?)
+      assert :ok = Functions.add_call(even?, odd?)
+      assert :ok = Functions.add_call(odd?, even?)
+
+      # Verify even? calls odd?
+      even_calls = Functions.list_calls(even?)
+      assert length(even_calls) == 1
+      assert hd(even_calls).id == odd?.id
+
+      # Verify odd? calls even?
+      odd_calls = Functions.list_calls(odd?)
+      assert length(odd_calls) == 1
+      assert hd(odd_calls).id == even?.id
+
+      # Verify reverse relationships work
+      even_called_by = Functions.list_called_by(even?)
+      assert length(even_called_by) == 1
+      assert hd(even_called_by).id == odd?.id
+
+      odd_called_by = Functions.list_called_by(odd?)
+      assert length(odd_called_by) == 1
+      assert hd(odd_called_by).id == even?.id
+    end
   end
 
   describe "list_calls/1" do
