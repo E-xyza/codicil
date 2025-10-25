@@ -92,6 +92,14 @@ defmodule Codicil.Functions do
   end
 
   @doc """
+  Lists all functions.
+  Returns a list of function structs.
+  """
+  def list do
+    Repo.all(Function)
+  end
+
+  @doc """
   Retrieves a function by ID.
   Returns the function struct or nil if not found.
   """

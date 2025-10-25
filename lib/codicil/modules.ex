@@ -28,6 +28,14 @@ defmodule Codicil.Modules do
   end
 
   @doc """
+  Lists all modules.
+  Returns a list of module structs.
+  """
+  def list do
+    Repo.all(Module)
+  end
+
+  @doc """
   Retrieves a module by ID.
   Returns the module struct or nil if not found.
   """
