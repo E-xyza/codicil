@@ -9,7 +9,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :exported, :boolean
       add :path, :string
       add :line, :integer
-      add :parsed, :utc_datetime_usec
+      add :parsed_at, :utc_datetime_usec
       add :docs, :text
       add :code, :text
       add :summary, :text

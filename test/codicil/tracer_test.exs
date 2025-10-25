@@ -206,7 +206,7 @@ defmodule Codicil.TracerTest do
       cleanup_module(module)
 
       # Get the parsed timestamp before recompilation
-      original_parsed = function.parsed
+      original_parsed = function.parsed_at
 
       # Recompile the same module (unchanged)
       [{module, _}] = Code.compile_file(example_path)
@@ -223,7 +223,7 @@ defmodule Codicil.TracerTest do
       # (because RateLimiter processes it and calls Functions.update)
       # Since checksum hasn't changed, it should NOT be re-enqueued
       # So parsed timestamp should remain the same
-      assert recompiled_function.parsed == original_parsed
+      assert recompiled_function.parsed_at == original_parsed
 
       # Clean up
       cleanup_module(module)

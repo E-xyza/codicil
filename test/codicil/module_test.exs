@@ -23,7 +23,7 @@ defmodule Codicil.ModulesTest do
       assert module.id == "Elixir.MyApp.MyModule"
       assert module.path == "/lib/my_module.ex"
       assert module.checksum == "abc123"
-      assert %DateTime{} = module.parsed
+      assert %DateTime{} = module.parsed_at
     end
 
     test "returns error with invalid attributes" do

@@ -39,16 +39,16 @@ defmodule Codicil.Functions do
         # Function doesn't exist, checksum changed, or marked for deletion - upsert it
         # Only set parsed timestamp if not explicitly provided (e.g., placeholders set parsed: nil)
         attrs_with_parsed =
-          if Map.has_key?(attrs, :parsed) do
+          if Map.has_key?(attrs, :parsed_at) do
             attrs
           else
-            Map.put(attrs, :parsed, DateTime.utc_now())
+            Map.put(attrs, :parsed_at, DateTime.utc_now())
           end
 
         attrs_with_parsed
         |> Function.changeset()
         |> Repo.insert(
-          on_conflict: {:replace_all_except, [:id, :parsed]},
+          on_conflict: {:replace_all_except, [:id, :parsed_at]},
           conflict_target: [:module, :name, :arity],
           returning: true
         )

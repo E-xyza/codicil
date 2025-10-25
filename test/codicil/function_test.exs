@@ -31,7 +31,7 @@ defmodule Codicil.FunctionsTest do
       assert function.path == "/lib/my_module.ex"
       assert function.line == 10
       assert function.checksum == "abc123def456"
-      assert %DateTime{} = function.parsed
+      assert %DateTime{} = function.parsed_at
     end
 
     test "returns error with invalid attributes" do
@@ -542,7 +542,7 @@ defmodule Codicil.FunctionsTest do
           checksum: "checksum_v1"
         })
 
-      initial_parsed = initial.parsed
+      initial_parsed = initial.parsed_at
 
       # Upsert with different checksum - should return {:ok, _}
       assert {:ok, updated} =
@@ -561,7 +561,7 @@ defmodule Codicil.FunctionsTest do
       assert updated.checksum == "checksum_v2"
       assert updated.line == 2
       # parsed should NOT be updated (it's in replace_all_except)
-      assert updated.parsed == initial_parsed
+      assert updated.parsed_at == initial_parsed
     end
 
     test "returns {:same, function} when upserting with matching checksum" do
@@ -618,7 +618,7 @@ defmodule Codicil.FunctionsTest do
 
       # Should have an ID and parsed timestamp
       assert is_integer(new_function.id)
-      assert %DateTime{} = new_function.parsed
+      assert %DateTime{} = new_function.parsed_at
       assert new_function.checksum == "new_checksum"
     end
 
@@ -633,7 +633,7 @@ defmodule Codicil.FunctionsTest do
         })
 
       # Verify parsed is set (upsert adds it via Map.put_new)
-      assert %DateTime{} = placeholder.parsed
+      assert %DateTime{} = placeholder.parsed_at
 
       # Now upsert the same placeholder again with same checksum
       assert {:same, unchanged} =
@@ -645,7 +645,7 @@ defmodule Codicil.FunctionsTest do
                })
 
       # The returned function should have the original parsed timestamp
-      assert unchanged.parsed == placeholder.parsed
+      assert unchanged.parsed_at == placeholder.parsed_at
     end
   end
 end

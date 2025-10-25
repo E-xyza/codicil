@@ -13,7 +13,7 @@ defmodule Codicil.Db.Module do
   schema "modules" do
     field(:path, :string)
     field(:checksum, :string)
-    field(:parsed, :utc_datetime_usec)
+    field(:parsed_at, :utc_datetime_usec)
     field(:doc, :string)
     field(:summary, :string)
     field(:vector, :binary)
@@ -36,7 +36,7 @@ defmodule Codicil.Db.Module do
       :id,
       :path,
       :checksum,
-      :parsed,
+      :parsed_at,
       :doc,
       :summary,
       :vector,
@@ -54,10 +54,10 @@ defmodule Codicil.Db.Module do
   end
 
   defp maybe_set_parsed(changeset) do
-    if Changeset.get_field(changeset, :parsed) do
+    if Changeset.get_field(changeset, :parsed_at) do
       changeset
     else
-      Changeset.put_change(changeset, :parsed, DateTime.utc_now())
+      Changeset.put_change(changeset, :parsed_at, DateTime.utc_now())
     end
   end
 end

@@ -6,7 +6,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateModules do
       add :id, :string, primary_key: true
       add :path, :string, null: false
       add :checksum, :string
-      add :parsed, :utc_datetime_usec
+      add :parsed_at, :utc_datetime_usec
       add :doc, :text
       add :summary, :text
       add :vector, :binary
