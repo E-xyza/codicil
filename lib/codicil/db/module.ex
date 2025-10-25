@@ -32,7 +32,7 @@ defmodule Codicil.Db.Module do
 
     module
     |> Changeset.cast(attrs, [:id, :path, :checksum, :parsed, :doc, :summary, :vector, :line])
-    |> Changeset.validate_required([:id, :path, :checksum])
+    |> Changeset.validate_required([:id, :path])
     |> maybe_set_parsed()
   end
 

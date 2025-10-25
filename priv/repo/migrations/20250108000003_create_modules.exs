@@ -5,7 +5,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateModules do
     create table(:modules, primary_key: false) do
       add :id, :string, primary_key: true
       add :path, :string, null: false
-      add :checksum, :string, null: false
+      add :checksum, :string
       add :parsed, :utc_datetime_usec
       add :doc, :text
       add :summary, :text

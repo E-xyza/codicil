@@ -80,7 +80,7 @@ defmodule Codicil.ModuleTracer do
     |> Enum.uniq()
     |> Enum.each(fn {dependency, type} ->
       # Ensure dependency module record exists (placeholder)
-      {:ok, _} = Modules.upsert(%{id: dependency, path: "unknown", checksum: "TODO"})
+      {:ok, _} = Modules.upsert(%{id: dependency, path: "unknown", checksum: nil})
 
       # Create dependency relationship
       Modules.create_dependency(%{
@@ -112,7 +112,7 @@ defmodule Codicil.ModuleTracer do
         fun_ast = Map.get(ast_map, {name, arity})
 
         # Generate function checksum from AST and docs
-        checksum = if fun_ast, do: Checksum.function(fun_ast, docs), else: "TODO"
+        checksum = if fun_ast, do: Checksum.function(fun_ast, docs), else: nil
 
         # Convert AST back to source code
         source_code = if fun_ast, do: Sourceror.to_string(fun_ast), else: nil
@@ -193,7 +193,7 @@ defmodule Codicil.ModuleTracer do
     |> Enum.reject(&(&1 == module))
     |> Enum.each(fn dependency ->
       # Ensure dependency module record exists (placeholder)
-      {:ok, _} = Modules.upsert(%{id: dependency, path: "unknown", checksum: "TODO"})
+      {:ok, _} = Modules.upsert(%{id: dependency, path: "unknown", checksum: nil})
 
       # Create dependency relationship
       Modules.create_dependency(%{

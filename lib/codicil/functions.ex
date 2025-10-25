@@ -78,7 +78,7 @@ defmodule Codicil.Functions do
           module: module_str,
           name: name_str,
           arity: arity,
-          checksum: "TODO",
+          checksum: nil,
           parsed: nil
         }
 

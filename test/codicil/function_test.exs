@@ -629,7 +629,7 @@ defmodule Codicil.FunctionsTest do
           name: :placeholder_func,
           module: PlaceholderModule,
           arity: 1,
-          checksum: "TODO"
+          checksum: nil
         })
 
       # Verify parsed is set (upsert adds it via Map.put_new)
@@ -641,7 +641,7 @@ defmodule Codicil.FunctionsTest do
                  name: :placeholder_func,
                  module: PlaceholderModule,
                  arity: 1,
-                 checksum: "TODO"
+                 checksum: nil
                })
 
       # The returned function should have the original parsed timestamp
