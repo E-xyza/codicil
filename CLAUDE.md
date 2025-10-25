@@ -312,6 +312,240 @@ aliases: [
 
 Then run `mix codicil` in your project to start the MCP server.
 
+## Using Codicil in Phoenix Projects
+
+Codicil can be integrated into Phoenix applications to provide semantic code search and analysis for your Phoenix codebase. This section covers installation, configuration, and handling potential conflicts.
+
+### Installation
+
+Add Codicil to your Phoenix project's `mix.exs`:
+
+```elixir
+def deps do
+  [
+    # ... your existing Phoenix dependencies
+    {:codicil, "~> 0.1", only: :dev}
+  ]
+end
+```
+
+**Note**: You do NOT need to add Bandit as a dependency because Phoenix already runs its own HTTP server (usually Cowboy or Bandit).
+
+### Configuration
+
+Codicil requires LLM provider credentials to generate summaries and embeddings. Configure these in your environment (not in config files, as Codicil is a library):
+
+```bash
+# In your .env file or shell environment
+export CODICIL_LLM_PROVIDER="anthropic"
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# Or for other providers:
+export CODICIL_LLM_PROVIDER="openai"
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+Supported providers: `anthropic`, `openai`, `cohere`, `google`, `grok`
+
+### Integration Approach 1: Standalone Process (Recommended)
+
+**Run Codicil as a separate Mix task** in development without integrating it into your Phoenix supervision tree:
+
+```elixir
+# In mix.exs, add an alias:
+def project do
+  [
+    # ... other project config
+    aliases: aliases()
+  ]
+end
+
+defp aliases do
+  [
+    # ... your existing aliases
+    "codicil.server": "run --no-halt -e 'Bandit.start_link(plug: Codicil.Plug, port: 4700)'"
+  ]
+end
+```
+
+**Usage**:
+```bash
+# In one terminal, run your Phoenix server
+mix phx.server
+
+# In another terminal, run Codicil
+mix codicil.server
+```
+
+**Benefits**:
+- Simple - no code changes to your Phoenix app
+- Isolated - Codicil runs independently
+- No FileSystem conflicts (see below)
+- Easy to start/stop without affecting Phoenix
+
+### Integration Approach 2: Embedded in Phoenix Supervision Tree
+
+**Add Codicil to your Phoenix application's supervision tree** for a fully integrated experience:
+
+```elixir
+# In lib/my_app/application.ex
+defmodule MyApp.Application do
+  use Application
+
+  def start(_type, _args) do
+    children = [
+      # ... your existing Phoenix children (Repo, PubSub, Endpoint, etc.)
+
+      # Add Codicil's application supervision tree
+      {Codicil.Application, []},
+
+      # Add Bandit server for Codicil's MCP endpoint
+      {Bandit, plug: Codicil.Plug, port: 4700}
+    ]
+
+    opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+end
+```
+
+**Important**: Add `{:bandit, "~> 1.6"}` to your dependencies if using this approach.
+
+**Benefits**:
+- Fully integrated - Codicil starts automatically with your Phoenix app
+- Single process - no need to manage multiple terminals
+- Codicil's compilation tracer runs automatically as Phoenix recompiles code
+
+**Drawbacks**:
+- Potential FileSystem conflict (see below)
+- More complex startup
+
+### Handling FileSystem Conflicts
+
+Both Phoenix (for live reload) and Codicil (for file watching) use the `FileSystem` library. If you integrate Codicil into Phoenix's supervision tree, you may encounter conflicts.
+
+**Symptoms**:
+- Error: `{:already_started, #PID<...>}` when starting FileSystem
+- File changes not triggering recompilation in Codicil or live reload in Phoenix
+
+**Solution**:
+
+Phoenix typically starts FileSystem in its Endpoint configuration. You have two options:
+
+**Option 1: Share FileSystem (Requires Code Changes)**
+
+Configure both Phoenix and Codicil to use the same FileSystem instance:
+
+```elixir
+# In lib/my_app/application.ex
+def start(_type, _args) do
+  children = [
+    # Start FileSystem once with a name
+    %{
+      id: :shared_file_system,
+      start: {FileSystem, :start_link, [[dirs: [File.cwd!()], name: MyApp.FileSystem]]}
+    },
+
+    # ... other children (Repo, PubSub, etc.)
+
+    # Phoenix Endpoint (will use existing FileSystem)
+    MyAppWeb.Endpoint,
+
+    # Codicil (configure to use existing FileSystem)
+    {Codicil.Application, []},
+    {Bandit, plug: Codicil.Plug, port: 4700}
+  ]
+  # ...
+end
+
+# In lib/codicil/file_watcher.ex (requires modifying Codicil source):
+# Change subscription to use MyApp.FileSystem instead of Codicil.FsWatcher
+FileSystem.subscribe(MyApp.FileSystem)
+```
+
+**Option 2: Use Standalone Process (Simpler)**
+
+Avoid the conflict entirely by running Codicil as a standalone process (see Approach 1 above). This is the recommended approach for most Phoenix projects.
+
+### Database Location
+
+Codicil stores its SQLite database in its own `priv/` directory:
+
+```
+deps/codicil/priv/codicil.db
+```
+
+This is separate from your Phoenix app's database and requires no configuration.
+
+### Testing Considerations
+
+If you're writing tests that compile modules and want Codicil's tracer active:
+
+```elixir
+# In test/test_helper.exs
+# Codicil's tracer is automatically active if Codicil.Application is running
+# If using standalone approach, the tracer won't be active during tests (which is usually fine)
+
+# If you need the tracer active in tests:
+Application.ensure_all_started(:codicil)
+Code.put_compiler_option(:tracers, [Codicil.Tracer])
+
+ExUnit.start()
+```
+
+**Note**: Most Phoenix tests don't need Codicil's tracer active. Only enable it if you're specifically testing Codicil integration.
+
+### Verifying the Integration
+
+Once Codicil is running (either standalone or integrated), verify it's working:
+
+```bash
+# Check that Codicil's MCP server is responding
+curl http://localhost:4700
+
+# Compile some code to trigger indexing
+touch lib/my_app/some_module.ex
+mix compile
+
+# Check the database to see indexed functions
+sqlite3 deps/codicil/priv/codicil.db "SELECT module, name, arity FROM functions LIMIT 10;"
+```
+
+### Troubleshooting
+
+**Problem**: "FileSystem already started" error
+
+**Solution**: Use standalone process approach (Approach 1) or modify Codicil to share FileSystem (see Handling FileSystem Conflicts above).
+
+**Problem**: Functions not being indexed
+
+**Solution**:
+- Check that environment variables are set: `echo $CODICIL_LLM_PROVIDER`
+- Check logs for tracer errors
+- Manually recompile: `mix compile --force`
+
+**Problem**: MCP server not responding on port 4700
+
+**Solution**:
+- Check if port is already in use: `lsof -i :4700`
+- Change port in Bandit config if needed
+- Check that Bandit is starting: Look for "Running Bandit" in logs
+
+### Production Considerations
+
+**DO NOT run Codicil in production**. Codicil is a development tool that:
+- Makes LLM API calls (costs money)
+- Indexes code at runtime (performance overhead)
+- Runs an HTTP server for MCP protocol (security surface)
+
+Always include Codicil as a `:dev` only dependency:
+
+```elixir
+{:codicil, "~> 0.1", only: :dev}
+```
+
+This ensures Codicil is excluded from production releases.
+
 ## Architecture
 
 ### MCP Server (Core Infrastructure - ✅ Complete)
