@@ -140,16 +140,12 @@ defmodule Codicil.MCP.Server do
     tools = raw_tools()
     dispatch_map = Map.new(tools, fn tool -> {tool.name, tool.callback} end)
 
-    # TODO: switch back to persistent_term when we don't support OTP 27 any more
-    # :persistent_term.put({__MODULE__, :tools_and_dispatch}, {tools, dispatch_map})
     :ets.new(:codicil_tools, [:set, :named_table, read_concurrency: true])
     :ets.insert(:codicil_tools, {:tools, {tools, dispatch_map}})
   end
 
   @doc false
   def tools_and_dispatch do
-    # TODO: switch back to persistent_term when we don't support OTP 27 any more
-    # :persistent_term.get({__MODULE__, :tools_and_dispatch})
     [{:tools, tools}] = :ets.lookup(:codicil_tools, :tools)
     tools
   end
