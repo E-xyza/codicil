@@ -167,6 +167,28 @@ defmodule Codicil.TracerTest do
       cleanup_module(module)
     end
 
+    test "tracks compile-time use dependencies outside module scope" do
+      # Compile a module with 'use Protoss' outside the module definition
+      example_path = Path.join(__DIR__, "tracer_examples/protoss_outside_module.ex")
+      [{module, _}] = Code.compile_file(example_path)
+
+      # Give the background task time to complete
+      Process.sleep(100)
+
+      # Verify the module was created
+      assert module_record = Codicil.Modules.get(ProtossOutsideModule)
+      assert module_record.id == "Elixir.ProtossOutsideModule"
+
+      # Get compile-time dependencies
+      dependencies = Codicil.Modules.list_compile_dependencies(module_record)
+
+      # Should have compile-time dependency on Protoss from the 'use Protoss' outside module scope
+      assert ["Elixir.Protoss"] = Enum.map(dependencies, & &1.id) |> Enum.sort()
+
+      # Clean up
+      cleanup_module(module)
+    end
+
     test "tracks runtime module dependencies (remote calls)" do
       # Compile a module that has runtime dependencies only
       example_path = Path.join(__DIR__, "tracer_examples/module_runtime_dependencies.ex")
