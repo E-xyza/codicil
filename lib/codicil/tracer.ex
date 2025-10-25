@@ -16,6 +16,8 @@ defmodule Codicil.Tracer do
   Returns `:ok` as required by the tracer protocol.
   """
   def trace({:on_module, bytecode, _opts}, _env) do
+    ensure_started()
+
     # Extract module name from bytecode
     {:beam_file, module, _exports, _attributes, _compile_info, _functions} =
       :beam_disasm.file(bytecode)
@@ -27,8 +29,7 @@ defmodule Codicil.Tracer do
   end
 
   def trace(:defmodule, env) do
-    # Ensure Codicil application is started before using its infrastructure
-    Application.ensure_all_started(:codicil)
+    ensure_started()
 
     module = hd(env.context_modules)
 
@@ -52,6 +53,8 @@ defmodule Codicil.Tracer do
   end
 
   def trace({:import, _meta, module, _opts}, env) do
+    ensure_started()
+
     # Ignore if outside module scope (corner case)
     case env.context_modules do
       [] -> :ok
@@ -62,6 +65,8 @@ defmodule Codicil.Tracer do
   end
 
   def trace({:require, _meta, module, _opts}, env) do
+    ensure_started()
+
     # Ignore if outside module scope (corner case)
     case env.context_modules do
       [] -> :ok
@@ -72,6 +77,8 @@ defmodule Codicil.Tracer do
   end
 
   def trace({type, _meta, module, _opts}, env) when type in [:imported_macro, :remote_macro] do
+    ensure_started()
+
     # use creates these events - track as compile-time dependency
     # Ignore if outside module scope (corner case)
     case env.context_modules do
@@ -84,5 +91,16 @@ defmodule Codicil.Tracer do
 
   def trace(_event, _env) do
     :ok
+  end
+
+  # Ensure Codicil application is started before using its infrastructure
+  # Cache the result in application env for fast subsequent checks
+  defp ensure_started do
+    if Application.get_env(:codicil, :started) do
+      :ok
+    else
+      Application.ensure_all_started(:codicil)
+      Application.put_env(:codicil, :started, true)
+    end
   end
 end
