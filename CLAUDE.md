@@ -730,7 +730,3 @@ priv/repo/migrations/
 2. **FileSystem conflict handling** - Handle potential conflicts when another subsystem (e.g., Phoenix) also uses FileSystem
    - Current implementation works for standalone use
    - May need coordination mechanism for multi-subsystem scenarios
-
-3. **ETS vs persistent_term** - Currently using ETS for tool callbacks
-   - Plan to switch to persistent_term when dropping OTP 27 support
-   - Low priority optimization
