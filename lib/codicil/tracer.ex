@@ -27,6 +27,9 @@ defmodule Codicil.Tracer do
   end
 
   def trace(:defmodule, env) do
+    # Ensure Codicil application is started before using its infrastructure
+    Application.ensure_all_started(:codicil)
+
     module = hd(env.context_modules)
 
     # Start a ModuleTracer GenServer for this module, registering it via the Registry
