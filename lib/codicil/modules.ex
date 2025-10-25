@@ -22,7 +22,10 @@ defmodule Codicil.Modules do
   def upsert(attrs) do
     %Module{}
     |> Module.changeset(attrs)
-    |> Repo.insert(on_conflict: :replace_all, conflict_target: :id)
+    |> Repo.insert(
+      on_conflict: {:replace_all_except, [:id]},
+      conflict_target: :id
+    )
   end
 
   @doc """
@@ -132,5 +135,27 @@ defmodule Codicil.Modules do
       where: m.path == ^path
     )
     |> Repo.all()
+  end
+
+  @doc """
+  Marks a module for deletion.
+  Preserves all data including checksum for potential reuse on rename.
+  """
+  def mark_for_deletion(%Module{} = module) do
+    module
+    |> Module.mark_for_deletion_changeset()
+    |> Repo.update()
+  end
+
+  @doc """
+  Garbage collects all modules marked for deletion.
+  Called on application startup to clean up stale data.
+  Returns {count, nil} where count is the number of deleted modules.
+  """
+  def garbage_collect_marked do
+    import Ecto.Query
+
+    from(m in Module, where: m.marked_for_deletion == true)
+    |> Repo.delete_all()
   end
 end

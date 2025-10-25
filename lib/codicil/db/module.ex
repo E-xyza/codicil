@@ -18,6 +18,7 @@ defmodule Codicil.Db.Module do
     field(:summary, :string)
     field(:vector, :binary)
     field(:line, :integer)
+    field(:marked_for_deletion, :boolean, default: false)
 
     has_many(:functions, Codicil.Db.Function, foreign_key: :module)
   end
@@ -31,9 +32,25 @@ defmodule Codicil.Db.Module do
       end
 
     module
-    |> Changeset.cast(attrs, [:id, :path, :checksum, :parsed, :doc, :summary, :vector, :line])
+    |> Changeset.cast(attrs, [
+      :id,
+      :path,
+      :checksum,
+      :parsed,
+      :doc,
+      :summary,
+      :vector,
+      :line,
+      :marked_for_deletion
+    ])
     |> Changeset.validate_required([:id, :path])
+    |> Changeset.put_change(:marked_for_deletion, false)
     |> maybe_set_parsed()
+  end
+
+  def mark_for_deletion_changeset(module) do
+    module
+    |> Changeset.change(%{marked_for_deletion: true})
   end
 
   defp maybe_set_parsed(changeset) do

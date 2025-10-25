@@ -23,7 +23,7 @@ defmodule Codicil.FileWatcherTest do
   end
 
   describe "module retirement on file deletion" do
-    test "removes module and its functions when file deleted event received" do
+    test "marks module and its functions for deletion when file deleted event received" do
       # Create a module record
       test_path = "/lib/test_module.ex"
 
@@ -46,9 +46,14 @@ defmodule Codicil.FileWatcherTest do
           checksum: "def456"
         })
 
-      # Verify module and function exist
-      assert Modules.get(TestModule)
-      assert Functions.get_by_mfa({TestModule, :test_function, 1})
+      # Verify module and function exist and are not marked
+      module = Modules.get(TestModule)
+      assert module
+      refute module.marked_for_deletion
+
+      function = Functions.get_by_mfa({TestModule, :test_function, 1})
+      assert function
+      refute function.marked_for_deletion
 
       # Send file deletion event to FileWatcher
       send(Codicil.FileWatcher, {:file_event, self(), {test_path, [:deleted]}})
@@ -56,11 +61,15 @@ defmodule Codicil.FileWatcherTest do
       # Give FileWatcher time to process
       Process.sleep(100)
 
-      # Verify module was removed
-      refute Modules.get(TestModule)
+      # Verify module is marked for deletion (not deleted)
+      module = Modules.get(TestModule)
+      assert module
+      assert module.marked_for_deletion
 
-      # Verify function was removed
-      refute Functions.get_by_mfa({TestModule, :test_function, 1})
+      # Verify function is marked for deletion (not deleted)
+      function = Functions.get_by_mfa({TestModule, :test_function, 1})
+      assert function
+      assert function.marked_for_deletion
     end
 
     test "ignores non-elixir file deletions" do
@@ -127,6 +136,79 @@ defmodule Codicil.FileWatcherTest do
 
       # Verify original function still exists (may have been updated)
       assert Functions.get_by_mfa({FileWatcherRecompileTest, :version, 0})
+    end
+
+    test "file rename reuses existing data and avoids LLM calls" do
+      # Create a real test file at old path
+      old_path = Path.join(__DIR__, "tracer_examples/rename_test_old.ex")
+      new_path = Path.join(__DIR__, "tracer_examples/rename_test_new.ex")
+
+      # Clean up on exit
+      on_exit(fn ->
+        :code.purge(RenameTestModule)
+        :code.delete(RenameTestModule)
+        File.rm(old_path)
+        File.rm(new_path)
+      end)
+
+      File.write!(old_path, """
+      defmodule RenameTestModule do
+        def original_function, do: :ok
+      end
+      """)
+
+      # Compile it initially
+      Code.compile_file(old_path)
+      Process.sleep(100)
+
+      # Verify initial state - module and function exist at old path
+      module = Modules.get(RenameTestModule)
+      assert module
+      assert module.path == old_path
+      refute module.marked_for_deletion
+      original_checksum = module.checksum
+      original_summary = module.summary
+
+      function = Functions.get_by_mfa({RenameTestModule, :original_function, 0})
+      assert function
+      assert function.path == old_path
+      refute function.marked_for_deletion
+      original_function_checksum = function.checksum
+
+      # Simulate rename: delete old, create new
+      send(Codicil.FileWatcher, {:file_event, self(), {old_path, [:deleted]}})
+      Process.sleep(50)
+
+      # Verify marked for deletion
+      module = Modules.get(RenameTestModule)
+      assert module.marked_for_deletion
+      function = Functions.get_by_mfa({RenameTestModule, :original_function, 0})
+      assert function.marked_for_deletion
+
+      # Create file at new location (same content)
+      File.write!(new_path, """
+      defmodule RenameTestModule do
+        def original_function, do: :ok
+      end
+      """)
+
+      send(Codicil.FileWatcher, {:file_event, self(), {new_path, [:created]}})
+      Process.sleep(100)
+
+      # Verify module data was reused (unmarked, path updated, checksum preserved)
+      module = Modules.get(RenameTestModule)
+      assert module
+      assert module.path == new_path
+      refute module.marked_for_deletion
+      assert module.checksum == original_checksum
+      assert module.summary == original_summary
+
+      # Verify function data was reused
+      function = Functions.get_by_mfa({RenameTestModule, :original_function, 0})
+      assert function
+      assert function.path == new_path
+      refute function.marked_for_deletion
+      assert function.checksum == original_function_checksum
     end
   end
 end

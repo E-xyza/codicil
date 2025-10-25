@@ -31,12 +31,12 @@ defmodule Codicil.Functions do
     name_atom = if is_binary(name), do: String.to_atom(name), else: name
 
     case get_by_mfa({module_atom, name_atom, arity}) do
-      %Function{checksum: ^checksum} = function ->
-        # Function exists with same checksum - no update needed
+      %Function{checksum: ^checksum, marked_for_deletion: false} = function ->
+        # Function exists with same checksum and not marked - no update needed
         {:same, function}
 
       _ ->
-        # Function doesn't exist or checksum changed - upsert it
+        # Function doesn't exist, checksum changed, or marked for deletion - upsert it
         # Only set parsed timestamp if not explicitly provided (e.g., placeholders set parsed: nil)
         attrs_with_parsed =
           if Map.has_key?(attrs, :parsed) do
@@ -250,6 +250,41 @@ defmodule Codicil.Functions do
       {:error, _} ->
         []
     end
+  end
+
+  @doc """
+  Lists all functions associated with a given file path.
+  Returns a list of Function structs.
+  """
+  def list_by_path(path) when is_binary(path) do
+    import Ecto.Query
+
+    from(f in Function,
+      where: f.path == ^path
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Marks a function for deletion.
+  Preserves all data including checksum for potential reuse on rename.
+  """
+  def mark_for_deletion(%Function{} = function) do
+    function
+    |> Function.mark_for_deletion_changeset()
+    |> Repo.update()
+  end
+
+  @doc """
+  Garbage collects all functions marked for deletion.
+  Called on application startup to clean up stale data.
+  Returns {count, nil} where count is the number of deleted functions.
+  """
+  def garbage_collect_marked do
+    import Ecto.Query
+
+    from(f in Function, where: f.marked_for_deletion == true)
+    |> Repo.delete_all()
   end
 
   # Helper to convert string keys to atoms for struct creation

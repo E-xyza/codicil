@@ -65,15 +65,15 @@ defmodule Codicil.FileWatcher do
         :code.delete(module_atom)
       end
 
-      # Delete all functions for this module
-      functions = Functions.list_by_module(module_atom)
+      # Mark the module for deletion (preserves data for potential rename)
+      Modules.mark_for_deletion(module)
+    end
 
-      for function <- functions do
-        Functions.delete(function)
-      end
+    # Mark all functions at this path for deletion
+    functions = Functions.list_by_path(path)
 
-      # Delete the module itself
-      Modules.delete(module)
+    for function <- functions do
+      Functions.mark_for_deletion(function)
     end
   end
 

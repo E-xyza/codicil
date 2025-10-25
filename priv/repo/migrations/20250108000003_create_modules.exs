@@ -11,6 +11,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateModules do
       add :summary, :text
       add :vector, :binary
       add :line, :integer
+      add :marked_for_deletion, :boolean, default: false, null: false
     end
 
     create index(:modules, [:path])

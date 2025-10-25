@@ -25,6 +25,7 @@ defmodule Codicil.Db.Function do
     field(:summary, :string)
     field(:embedding, :binary)
     field(:checksum, :string)
+    field(:marked_for_deletion, :boolean, default: false)
 
     belongs_to(:module_info, Codicil.Db.Module, type: :string, foreign_key: :module)
 
@@ -60,9 +61,20 @@ defmodule Codicil.Db.Function do
       :code,
       :summary,
       :embedding,
-      :checksum
+      :checksum,
+      :marked_for_deletion
     ])
     |> Changeset.validate_required([:name, :module, :arity])
+    |> Changeset.put_change(:marked_for_deletion, false)
+  end
+
+  @doc """
+  Changeset for marking a function for deletion.
+  Preserves all other fields including checksum.
+  """
+  def mark_for_deletion_changeset(function) do
+    function
+    |> Changeset.change(%{marked_for_deletion: true})
   end
 
   @doc """

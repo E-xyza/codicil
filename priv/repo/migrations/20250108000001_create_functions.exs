@@ -15,6 +15,7 @@ defmodule Codicil.Db.Repo.Migrations.CreateFunctions do
       add :summary, :text
       add :embedding, :binary
       add :checksum, :string
+      add :marked_for_deletion, :boolean, default: false, null: false
     end
 
     create unique_index(:functions, [:module, :name, :arity])
