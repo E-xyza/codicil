@@ -1,7 +1,6 @@
 defmodule Codicil.MCP.Tools.FunctionCallers do
-  @moduledoc """
-  MCP tool to find all functions that call a target function.
-  """
+  # MCP tool to find all functions that call a target function.
+  @moduledoc false
 
   alias Codicil.Functions
 

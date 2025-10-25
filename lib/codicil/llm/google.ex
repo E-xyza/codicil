@@ -1,13 +1,12 @@
 defmodule Codicil.LLM.Google do
-  @moduledoc """
-  Google Vertex AI client supporting both LLM and embeddings.
-
-  Supports:
-  - Text generation via Gemini models
-  - Text embeddings via Vertex AI API
-
-  Requires Google Cloud credentials and project configuration.
-  """
+  # Google Vertex AI client supporting both LLM and embeddings.
+  #
+  # Supports:
+  # - Text generation via Gemini models
+  # - Text embeddings via Vertex AI API
+  #
+  # Requires Google Cloud credentials and project configuration.
+  @moduledoc false
 
   @default_region "us-central1"
 

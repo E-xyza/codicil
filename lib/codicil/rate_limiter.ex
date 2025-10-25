@@ -1,10 +1,9 @@
 defmodule Codicil.RateLimiter do
-  @moduledoc """
-  GenServer that rate-limits processing of functions for summarization and embedding generation.
-
-  Enqueues functions during compilation and processes them asynchronously with
-  configurable delays between API calls to avoid throttling.
-  """
+  # GenServer that rate-limits processing of functions for summarization and embedding generation.
+  #
+  # Enqueues functions during compilation and processes them asynchronously with
+  # configurable delays between API calls to avoid throttling.
+  @moduledoc false
   use GenServer
 
   alias Codicil.Functions

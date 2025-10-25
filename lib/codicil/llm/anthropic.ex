@@ -1,11 +1,10 @@
 defmodule Codicil.LLM.Anthropic do
-  @moduledoc """
-  Anthropic client for both LLM (Claude) and embeddings (Voyage AI).
-
-  Supports:
-  - Text generation via Claude models
-  - Vector embeddings via Voyage AI models
-  """
+  # Anthropic client for both LLM (Claude) and embeddings (Voyage AI).
+  #
+  # Supports:
+  # - Text generation via Claude models
+  # - Vector embeddings via Voyage AI models
+  @moduledoc false
 
   @enforce_keys [:api_key, :model]
   defstruct @enforce_keys

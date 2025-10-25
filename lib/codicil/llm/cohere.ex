@@ -1,11 +1,10 @@
 defmodule Codicil.LLM.Cohere do
-  @moduledoc """
-  Cohere client supporting both LLM and embeddings.
-
-  Supports:
-  - Text generation via Chat API (Command models)
-  - Text embeddings via Embed API
-  """
+  # Cohere client supporting both LLM and embeddings.
+  #
+  # Supports:
+  # - Text generation via Chat API (Command models)
+  # - Text embeddings via Embed API
+  @moduledoc false
 
   @api_base_url "https://api.cohere.ai/v1"
 

@@ -1,17 +1,15 @@
 defmodule Codicil.LLM.Validator do
-  @moduledoc """
-  LLM-based validation of semantic search results.
-
-  Uses an LLM to validate whether candidate functions truly match a semantic query,
-  enabling early stopping when non-matches are detected.
-  """
+  # LLM-based validation of semantic search results.
+  #
+  # Uses an LLM to validate whether candidate functions truly match a semantic query,
+  # enabling early stopping when non-matches are detected.
+  @moduledoc false
 
   alias Codicil.LLM
 
   defmodule Result do
-    @moduledoc """
-    Result of function validation.
-    """
+    # Result of function validation.
+    @moduledoc false
     @type t :: %__MODULE__{
             function_id: integer(),
             matches: boolean(),

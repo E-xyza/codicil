@@ -1,13 +1,12 @@
 defmodule Codicil.Db.Function do
-  @moduledoc """
-  Schema for storing function metadata and embeddings.
-
-  Functions are indexed from Elixir source files and include:
-  - Basic metadata (name, path, line numbers)
-  - AI-generated summary
-  - Vector embedding for semantic search
-  - Checksum for change detection
-  """
+  # Schema for storing function metadata and embeddings.
+  #
+  # Functions are indexed from Elixir source files and include:
+  # - Basic metadata (name, path, line numbers)
+  # - AI-generated summary
+  # - Vector embedding for semantic search
+  # - Checksum for change detection
+  @moduledoc false
 
   use Ecto.Schema
 

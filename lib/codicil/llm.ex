@@ -1,12 +1,11 @@
 use Protoss
 
 defprotocol Codicil.LLM do
-  @moduledoc """
-  Protocol for LLM client implementations.
-
-  Provides a unified interface for generating text completions across different
-  LLM providers (Claude, OpenAI, Grok, etc.).
-  """
+  # Protocol for LLM client implementations.
+  #
+  # Provides a unified interface for generating text completions across different
+  # LLM providers (Claude, OpenAI, Grok, etc.).
+  @moduledoc false
 
   @doc """
   Generates a text completion from the given prompt.

@@ -1,7 +1,6 @@
 defmodule Codicil.Checksum do
-  @moduledoc """
-  Generates checksums for functions and modules based on their AST and documentation.
-  """
+  # Generates checksums for functions and modules based on their AST and documentation.
+  @moduledoc false
 
   @doc """
   Generates a SHA256 checksum for a function based on its AST and documentation.

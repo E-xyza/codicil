@@ -1,13 +1,12 @@
 defmodule Codicil.LLM.OpenAI do
-  @moduledoc """
-  OpenAI-compatible LLM and embeddings client.
-
-  Supports:
-  - Text generation via OpenAI Chat API
-  - Vector embeddings via OpenAI Embeddings API
-  - Compatible with OpenAI API and local endpoints (Ollama, LM Studio, etc.)
-  - Can be used with or without authentication for local models
-  """
+  # OpenAI-compatible LLM and embeddings client.
+  #
+  # Supports:
+  # - Text generation via OpenAI Chat API
+  # - Vector embeddings via OpenAI Embeddings API
+  # - Compatible with OpenAI API and local endpoints (Ollama, LM Studio, etc.)
+  # - Can be used with or without authentication for local models
+  @moduledoc false
 
   @default_base_url "https://api.openai.com/v1"
 

@@ -1,15 +1,14 @@
 defmodule Codicil.Tracer do
-  @moduledoc """
-  Compiler tracer that captures module compilation for code analysis.
-
-  This module implements Elixir's tracer protocol by providing a `trace/2`
-  function that receives compiler events. The function must return `:ok`
-  and do minimal synchronous work to avoid slowing down compilation.
-
-  The primary event of interest is `:on_module`, which fires when a module
-  is fully compiled. At that point, we can extract function information,
-  documentation, and relationships for analysis.
-  """
+  # Compiler tracer that captures module compilation for code analysis.
+  #
+  # This module implements Elixir's tracer protocol by providing a `trace/2`
+  # function that receives compiler events. The function must return `:ok`
+  # and do minimal synchronous work to avoid slowing down compilation.
+  #
+  # The primary event of interest is `:on_module`, which fires when a module
+  # is fully compiled. At that point, we can extract function information,
+  # documentation, and relationships for analysis.
+  @moduledoc false
 
   @doc """
   Tracer callback function called by the compiler for each trace event.

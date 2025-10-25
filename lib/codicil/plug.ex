@@ -1,9 +1,8 @@
 defmodule Codicil.Plug do
-  @moduledoc """
-  A Plug adapter for Codicil MCP server.
-
-  This module provides HTTP transport for the MCP protocol using Plug.
-  """
+  # A Plug adapter for Codicil MCP server.
+  #
+  # This module provides HTTP transport for the MCP protocol using Plug.
+  @moduledoc false
 
   import Plug.Conn
 

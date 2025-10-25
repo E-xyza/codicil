@@ -1,7 +1,6 @@
 defmodule Codicil.Modules do
-  @moduledoc """
-  Context module for managing module records and dependencies in the database.
-  """
+  # Context module for managing module records and dependencies in the database.
+  @moduledoc false
 
   alias Codicil.Db.Module
   alias Codicil.Db.ModuleDependency

@@ -1,11 +1,10 @@
 defmodule Codicil.Db.ModuleDependency do
-  @moduledoc """
-  Schema for module dependency relationships.
-
-  Tracks two types of dependencies:
-  - :compiler - Compile-time dependencies (import/require/use)
-  - :runtime - Runtime dependencies (function calls between modules)
-  """
+  # Schema for module dependency relationships.
+  #
+  # Tracks two types of dependencies:
+  # - :compiler - Compile-time dependencies (import/require/use)
+  # - :runtime - Runtime dependencies (function calls between modules)
+  @moduledoc false
 
   use Ecto.Schema
   import EctoEnum

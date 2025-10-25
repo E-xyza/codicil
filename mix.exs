@@ -68,7 +68,8 @@ defmodule Codicil.MixProject do
 
   defp package do
     [
-      description: "Semantic code search and analysis for Elixir projects via MCP (Model Context Protocol)",
+      description:
+        "Semantic code search and analysis for Elixir projects via MCP (Model Context Protocol)",
       licenses: ["MIT"],
       links: %{
         "GitHub" => "https://github.com/E-xyza/codicil",

@@ -1,9 +1,8 @@
 defmodule Codicil.LLM.Grok do
-  @moduledoc """
-  xAI Grok LLM client implementation.
-
-  Uses the xAI API which is OpenAI-compatible.
-  """
+  # xAI Grok LLM client implementation.
+  #
+  # Uses the xAI API which is OpenAI-compatible.
+  @moduledoc false
 
   @default_model "grok-beta"
 

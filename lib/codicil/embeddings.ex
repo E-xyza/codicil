@@ -1,16 +1,14 @@
 use Protoss
 
 defprotocol Codicil.Embeddings do
-  @moduledoc """
-  Protocol for embedding generation across different providers.
-
-  Embeddings convert text into vector representations for semantic search.
-  """
+  # Protocol for embedding generation across different providers.
+  #
+  # Embeddings convert text into vector representations for semantic search.
+  @moduledoc false
 
   defmodule Result do
-    @moduledoc """
-    Result struct containing an embedding vector.
-    """
+    # Result struct containing an embedding vector.
+    @moduledoc false
     @type t :: %__MODULE__{
             embedding: [float()],
             dimensions: pos_integer()

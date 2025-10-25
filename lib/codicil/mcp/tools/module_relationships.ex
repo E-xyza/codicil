@@ -1,7 +1,6 @@
 defmodule Codicil.MCP.Tools.ModuleRelationships do
-  @moduledoc """
-  MCP tool to analyze module dependencies (imports, aliases, uses, requires, and runtime calls).
-  """
+  # MCP tool to analyze module dependencies (imports, aliases, uses, requires, and runtime calls).
+  @moduledoc false
 
   alias Codicil.Db.ModuleDependency
   alias Codicil.Db.Repo

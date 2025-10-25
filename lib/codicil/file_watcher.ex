@@ -1,10 +1,9 @@
 defmodule Codicil.FileWatcher do
-  @moduledoc """
-  Watches file system for deletions and retires modules when source files are deleted.
-
-  Subscribes to the Codicil.FsWatcher FileSystem process that is managed by the
-  supervision tree.
-  """
+  # Watches file system for deletions and retires modules when source files are deleted.
+  #
+  # Subscribes to the Codicil.FsWatcher FileSystem process that is managed by the
+  # supervision tree.
+  @moduledoc false
   use GenServer
 
   alias Codicil.Functions

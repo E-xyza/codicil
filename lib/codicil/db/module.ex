@@ -1,9 +1,8 @@
 defmodule Codicil.Db.Module do
-  @moduledoc """
-  Schema for storing module metadata.
-
-  Modules represent Elixir modules in the indexed codebase.
-  """
+  # Schema for storing module metadata.
+  #
+  # Modules represent Elixir modules in the indexed codebase.
+  @moduledoc false
 
   use Ecto.Schema
   alias Ecto.Changeset

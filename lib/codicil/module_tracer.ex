@@ -1,10 +1,9 @@
 defmodule Codicil.ModuleTracer do
-  @moduledoc """
-  GenServer that tracks compilation of a single module.
-
-  Started when :defmodule event is received, stores compilation info,
-  and processes the module when :on_module event completes it.
-  """
+  # GenServer that tracks compilation of a single module.
+  #
+  # Started when :defmodule event is received, stores compilation info,
+  # and processes the module when :on_module event completes it.
+  @moduledoc false
   use GenServer
 
   alias Codicil.Checksum
@@ -105,76 +104,76 @@ defmodule Codicil.ModuleTracer do
           name not in ~w[__info__ module_info]a,
           reduce: {MapSet.new(), MapSet.new()} do
         {seen, modules_so_far} ->
-        # Store functions in database
-        exported = MapSet.member?(exported_set, {name, arity})
-        line = Map.get(line_map, {name, arity}, 0)
-        docs = Map.get(doc_map, {name, arity})
-        fun_ast = Map.get(ast_map, {name, arity})
+          # Store functions in database
+          exported = MapSet.member?(exported_set, {name, arity})
+          line = Map.get(line_map, {name, arity}, 0)
+          docs = Map.get(doc_map, {name, arity})
+          fun_ast = Map.get(ast_map, {name, arity})
 
-        # Generate function checksum from AST and docs
-        checksum = if fun_ast, do: Checksum.function(fun_ast, docs), else: nil
+          # Generate function checksum from AST and docs
+          checksum = if fun_ast, do: Checksum.function(fun_ast, docs), else: nil
 
-        # Convert AST back to source code
-        source_code = if fun_ast, do: Sourceror.to_string(fun_ast), else: nil
+          # Convert AST back to source code
+          source_code = if fun_ast, do: Sourceror.to_string(fun_ast), else: nil
 
-        attrs = %{
-          name: Atom.to_string(name),
-          module: Atom.to_string(module),
-          arity: arity,
-          exported: exported,
-          path: file,
-          line: line,
-          docs: docs,
-          code: source_code,
-          checksum: checksum
-        }
-
-        # Upsert function and check if it was updated or stayed the same
-        {status, function} = Functions.upsert(attrs)
-
-        # Enqueue for async processing only if checksum changed or function is new
-        # {:ok, _} means it was created or updated
-        # {:same, _} means checksum matched, no change
-        if status == :ok do
-          RateLimiter.enqueue(%{
-            id: function.id,
-            name: name,
-            module: module,
+          attrs = %{
+            name: Atom.to_string(name),
+            module: Atom.to_string(module),
+            arity: arity,
+            exported: exported,
             path: file,
-            docs: docs
-          })
-        end
+            line: line,
+            docs: docs,
+            code: source_code,
+            checksum: checksum
+          }
 
-        # Extract and store function calls from bytecode
-        called_funs =
-          for instr <- bytecode_instrs, is_call(instr), uniq: true do
-            case elem(instr, 2) do
-              # External calls: {:call_ext*, arity, {:extfunc, Module, :function, arity}}
-              {:extfunc, mod, fun, arity} -> {mod, fun, arity}
-              # Local calls: {:call*, arity, {Module, :function, arity}}
-              mfa -> mfa
-            end
+          # Upsert function and check if it was updated or stayed the same
+          {status, function} = Functions.upsert(attrs)
+
+          # Enqueue for async processing only if checksum changed or function is new
+          # {:ok, _} means it was created or updated
+          # {:same, _} means checksum matched, no change
+          if status == :ok do
+            RateLimiter.enqueue(%{
+              id: function.id,
+              name: name,
+              module: module,
+              path: file,
+              docs: docs
+            })
           end
 
-        updated_modules =
-          for mfa <- called_funs, into: modules_so_far do
-            callee =
-              if existing = Functions.get_by_mfa(mfa) do
-                existing
-              else
-                {_status, placeholder} = Functions.create_placeholder(mfa)
-                placeholder
+          # Extract and store function calls from bytecode
+          called_funs =
+            for instr <- bytecode_instrs, is_call(instr), uniq: true do
+              case elem(instr, 2) do
+                # External calls: {:call_ext*, arity, {:extfunc, Module, :function, arity}}
+                {:extfunc, mod, fun, arity} -> {mod, fun, arity}
+                # Local calls: {:call*, arity, {Module, :function, arity}}
+                mfa -> mfa
               end
+            end
 
-            Functions.add_call(function, callee)
+          updated_modules =
+            for mfa <- called_funs, into: modules_so_far do
+              callee =
+                if existing = Functions.get_by_mfa(mfa) do
+                  existing
+                else
+                  {_status, placeholder} = Functions.create_placeholder(mfa)
+                  placeholder
+                end
 
-            elem(mfa, 0)
-          end
+              Functions.add_call(function, callee)
 
-        # Track this function as seen
-        updated_seen = MapSet.put(seen, {name, arity})
+              elem(mfa, 0)
+            end
 
-        {updated_seen, updated_modules}
+          # Track this function as seen
+          updated_seen = MapSet.put(seen, {name, arity})
+
+          {updated_seen, updated_modules}
       end
 
     # Retire functions that no longer exist in this module

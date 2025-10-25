@@ -1,17 +1,15 @@
 defmodule Codicil.LLM.Summarizer do
-  @moduledoc """
-  Function summarization using LLMs.
-
-  Generates concise, semantic summaries of Elixir functions for embedding
-  and semantic search purposes.
-  """
+  # Function summarization using LLMs.
+  #
+  # Generates concise, semantic summaries of Elixir functions for embedding
+  # and semantic search purposes.
+  @moduledoc false
 
   alias Codicil.LLM
 
   defmodule Result do
-    @moduledoc """
-    Result of a function summarization.
-    """
+    # Result of a function summarization.
+    @moduledoc false
     @type t :: %__MODULE__{
             summary: String.t(),
             tokens_used: non_neg_integer() | nil

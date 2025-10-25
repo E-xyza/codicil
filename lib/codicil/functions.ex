@@ -1,7 +1,6 @@
 defmodule Codicil.Functions do
-  @moduledoc """
-  Context module for managing function records in the database.
-  """
+  # Context module for managing function records in the database.
+  @moduledoc false
 
   alias Codicil.Db.Function
   alias Codicil.Db.Repo

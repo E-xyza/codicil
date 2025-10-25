@@ -1,11 +1,10 @@
 defmodule Codicil.MCP.Tools.SimilarFunctions do
-  @moduledoc """
-  MCP tool for semantic function search using vector similarity and LLM validation.
-
-  Finds functions semantically similar to a natural language description using:
-  1. Vector similarity search (fast, broad recall)
-  2. LLM validation (accurate, reranking)
-  """
+  # MCP tool for semantic function search using vector similarity and LLM validation.
+  #
+  # Finds functions semantically similar to a natural language description using:
+  # 1. Vector similarity search (fast, broad recall)
+  # 2. LLM validation (accurate, reranking)
+  @moduledoc false
 
   alias Codicil.Functions
   alias Codicil.Embeddings
