@@ -15,7 +15,11 @@ defmodule Codicil.Application do
           Codicil.RateLimiter,
           {Registry, keys: :unique, name: Codicil.ModuleTracerRegistry},
           {DynamicSupervisor, strategy: :one_for_one, name: Codicil.ModuleTracerSupervisor},
-          {Codicil.FileWatcher, dirs: [File.cwd!()]}
+          %{
+            id: Codicil.FsWatcher,
+            start: {FileSystem, :start_link, [[dirs: [File.cwd!()], name: Codicil.FsWatcher]]}
+          },
+          Codicil.FileWatcher
         ]
       else
         Logger.warning("application :codicil is not starting because Mix is not running")

@@ -2,9 +2,8 @@ defmodule Codicil.FileWatcher do
   @moduledoc """
   Watches file system for deletions and retires modules when source files are deleted.
 
-  TODO: Handle conflict when another subsystem (e.g. Phoenix) uses FileSystem.
-  Currently assumes exclusive use of FileSystem. In production, this may need
-  to coordinate with other watchers or use a shared watcher infrastructure.
+  Subscribes to the Codicil.FsWatcher FileSystem process that is managed by the
+  supervision tree.
   """
   use GenServer
 
@@ -13,20 +12,16 @@ defmodule Codicil.FileWatcher do
 
   # BOILERPLATE & INITIALIZATION
 
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link(_opts) do
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   @impl true
-  def init(opts) do
-    # Get the directories to watch from options or use current directory
-    dirs = Keyword.get(opts, :dirs, [File.cwd!()])
+  def init([]) do
+    # Subscribe to the FileSystem process managed by the supervision tree
+    FileSystem.subscribe(Codicil.FsWatcher)
 
-    # Start FileSystem watcher
-    {:ok, watcher_pid} = FileSystem.start_link(dirs: dirs)
-    FileSystem.subscribe(watcher_pid)
-
-    {:ok, %{watcher_pid: watcher_pid, dirs: dirs}}
+    {:ok, %{}}
   end
 
   # ROUTER
