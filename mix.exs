@@ -61,6 +61,7 @@ defmodule Codicil.MixProject do
     [
       main: "Codicil",
       extras: ["README.md"],
+      source_url: "https://github.com/E-xyza/codicil",
       source_ref: "v0.1.0",
       formatters: ["html"]
     ]
