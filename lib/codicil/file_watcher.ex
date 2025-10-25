@@ -33,11 +33,18 @@ defmodule Codicil.FileWatcher do
 
   @impl true
   def handle_info({:file_event, _watcher_pid, {path, events}}, state) do
-    # Check if file was deleted or removed
-    if :deleted in events or :removed in events do
-      # Retire modules associated with this path
-      if Path.extname(path) in [".ex", ".exs"] do
-        retire_modules_for_path(path)
+    if Path.extname(path) in [".ex", ".exs"] do
+      cond do
+        # File was deleted or removed - retire modules
+        :deleted in events or :removed in events ->
+          retire_modules_for_path(path)
+
+        # File was created or modified - trigger recompilation
+        :created in events or :modified in events ->
+          recompile_file(path)
+
+        true ->
+          :ok
       end
     end
 
@@ -73,5 +80,13 @@ defmodule Codicil.FileWatcher do
       # Delete the module itself
       Modules.delete(module)
     end
+  end
+
+  defp recompile_file(path) do
+    # Compile the file - this will trigger the tracer which will update the database
+    Code.compile_file(path)
+  rescue
+    # Ignore compilation errors - let the user handle them
+    _ -> :ok
   end
 end
