@@ -707,12 +707,30 @@ priv/repo/migrations/
 
 **Functionally Complete!** All core phases (MCP server, database, compiler tracer, LLM integration, vector embeddings, and MCP tools) are implemented and working. The tracer automatically indexes modules/functions during compilation, generates summaries and embeddings via rate-limited LLM calls, and stores everything in SQLite with vector search capabilities.
 
-### Completed Implementation (Phases 0-5)
+### Completed Implementation (All Phases)
 
-All phases complete: MCP Core, Database Layer, Compiler Tracer, LLM Integration (Anthropic/OpenAI/Cohere/Google/Grok), Vector Embeddings (sqlite-vec), and all 4 MCP Tools (similar_functions, function_callers, function_callees, module_relationships). The compiler tracer automatically handles indexing during compilation - no separate indexer needed.
+**✅ All phases complete:**
+- **Phase 0**: MCP Core Infrastructure
+- **Phase 1**: Database Layer (SQLite with sqlite-vec)
+- **Phase 2**: Compiler Tracer (automatic indexing during compilation)
+- **Phase 3**: LLM Integration (Anthropic/OpenAI/Cohere/Google/Grok)
+- **Phase 4**: Vector Embeddings (sqlite-vec)
+- **Phase 5**: All 4 MCP Tools (similar_functions, function_callers, function_callees, module_relationships)
+- **Phase 6**: Checksums and change detection (skip re-processing unchanged code)
+- **Phase 7**: Function and module retirement (cleanup deleted code)
+- **Phase 8**: File system watcher (automatic recompilation on file changes)
 
-### Remaining Tasks
+### Known TODOs and Technical Debt
 
-1. **Generate checksums/fingerprints for functions and modules** - Currently using placeholder "TODO" checksums. Need real checksums to skip re-processing unchanged code and avoid unnecessary LLM API calls.
+1. **Checksum placeholders for dependencies** - Some checksums use "TODO" placeholder:
+   - Functions without AST (e.g., Erlang functions)
+   - Module dependencies referenced but not yet compiled
+   - These are edge cases that don't affect core functionality
 
-2. **Implement retirement/cleanup for deleted functions and modules** - Need to detect and remove stale records when files/functions are deleted, preventing unbounded database growth.
+2. **FileSystem conflict handling** - Handle potential conflicts when another subsystem (e.g., Phoenix) also uses FileSystem
+   - Current implementation works for standalone use
+   - May need coordination mechanism for multi-subsystem scenarios
+
+3. **ETS vs persistent_term** - Currently using ETS for tool callbacks
+   - Plan to switch to persistent_term when dropping OTP 27 support
+   - Low priority optimization
