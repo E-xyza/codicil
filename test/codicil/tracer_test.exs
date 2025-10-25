@@ -126,15 +126,15 @@ defmodule Codicil.TracerTest do
 
       # Check that remote calls created placeholders
       assert [
-               %{module: "Elixir.Enum", name: "count", arity: 1, parsed: nil}
+               %{module: "Elixir.Enum", name: "count", arity: 1, parsed_at: nil}
              ] =
                call_external
                |> Functions.list_calls()
                |> Enum.sort_by(&{&1.module, &1.name})
 
       assert [
-               %{module: "Elixir.String", name: "trim", arity: 1, parsed: nil},
-               %{module: "Elixir.String", name: "upcase", arity: 1, parsed: nil}
+               %{module: "Elixir.String", name: "trim", arity: 1, parsed_at: nil},
+               %{module: "Elixir.String", name: "upcase", arity: 1, parsed_at: nil}
              ] =
                call_string
                |> Functions.list_calls()
