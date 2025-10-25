@@ -13,7 +13,15 @@ defmodule Codicil.MixProject do
           "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4000) end)'"
       ],
       elixirc_paths: elixirc_paths(Mix.env()),
-      test_elixirc_options: [docs: true]
+      test_elixirc_options: [docs: true],
+
+      # Docs
+      name: "Codicil",
+      description: "Semantic code search and analysis for Elixir projects via MCP",
+      source_url: "https://github.com/E-xyza/codicil",
+      homepage_url: "https://github.com/E-xyza/codicil",
+      docs: docs(),
+      package: package()
     ]
   end
 
@@ -44,7 +52,29 @@ defmodule Codicil.MixProject do
       {:file_system, "~> 1.0"},
       {:bandit, "~> 1.6"},
       {:req, "~> 0.5"},
-      {:tidewave, "~> 0.4", only: :dev}
+      {:tidewave, "~> 0.4", only: :dev},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "Codicil",
+      extras: ["README.md"],
+      source_ref: "v0.1.0",
+      formatters: ["html"]
+    ]
+  end
+
+  defp package do
+    [
+      description: "Semantic code search and analysis for Elixir projects via MCP (Model Context Protocol)",
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => "https://github.com/E-xyza/codicil",
+        "MCP Spec" => "https://spec.modelcontextprotocol.io"
+      },
+      files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE)
     ]
   end
 end
