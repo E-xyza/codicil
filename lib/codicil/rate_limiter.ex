@@ -6,9 +6,7 @@ defmodule Codicil.RateLimiter do
   @moduledoc false
   use GenServer
 
-  alias Codicil.Functions
-  alias Codicil.LLM.Summarizer
-  alias Codicil.Embeddings
+  alias Codicil.FunctionProcessor
 
   # BOILERPLATE & INITIALIZATION
 
@@ -43,14 +41,9 @@ defmodule Codicil.RateLimiter do
   Enqueue a function for processing (summarization + embedding generation).
   Returns immediately, processing happens asynchronously.
   """
-  @spec enqueue(function_info :: map()) :: :ok
-  def enqueue(function_info) do
-    enqueue(__MODULE__, function_info)
-  end
-
-  @spec enqueue(pid() | atom(), function_info :: map()) :: :ok
-  def enqueue(pid, function_info) do
-    GenServer.call(pid, {:enqueue, function_info})
+  @spec enqueue(pid() | __MODULE__, function_info :: map()) :: :ok
+  def enqueue(server \\ __MODULE__, function_info) do
+    GenServer.call(server, {:enqueue, function_info})
   end
 
   # API IMPLEMENTATION
@@ -79,7 +72,7 @@ defmodule Codicil.RateLimiter do
 
         # TODO: These tasks should be properly supervised
         Task.start_link(fn ->
-          process_function(function_info, state)
+          FunctionProcessor.process(function_info, state.llm_client, state.embeddings_client)
           # Wait before signaling done
           Process.sleep(state.delay_ms)
           GenServer.call(parent, :processing_done)
@@ -101,73 +94,6 @@ defmodule Codicil.RateLimiter do
       {:reply, :ok, state, {:continue, :process_next}}
     end
   end
-
-  # HELPER FUNCTIONS
-
-  defp process_function(function_info, state) do
-    # Determine if we should generate summary:
-    # - All exported (public) functions
-    # - Private functions with documentation
-    should_summarize =
-      Map.get(function_info, :exported, false) or has_docs?(function_info)
-
-    # Generate summary if appropriate
-    summary =
-      if should_summarize do
-        case Summarizer.summarize_function(state.llm_client, function_info) do
-          {:ok, %{summary: summary}} -> summary
-          {:error, _reason} -> nil
-        end
-      else
-        nil
-      end
-
-    # Generate embedding if we have summary
-    embedding =
-      if summary do
-        case Embeddings.embed(state.embeddings_client, summary, input_type: "passage") do
-          {:ok, %{embedding: embedding}} ->
-            # Convert to binary format for storage
-            embedding
-            |> Enum.map(&<<&1::float-32-native>>)
-            |> IO.iodata_to_binary()
-
-          {:error, _reason} ->
-            nil
-        end
-      else
-        nil
-      end
-
-    # Update function record with results
-    case Functions.get(function_info.id) do
-      nil ->
-        :ok
-
-      function ->
-        attrs =
-          %{}
-          |> maybe_put(:summary, summary)
-          |> maybe_put(:embedding, embedding)
-
-        if map_size(attrs) > 0 do
-          Functions.update(function, attrs)
-        end
-    end
-
-    :ok
-  end
-
-  defp has_docs?(function_info) do
-    case Map.get(function_info, :docs) do
-      nil -> false
-      "" -> false
-      docs when is_binary(docs) -> true
-    end
-  end
-
-  defp maybe_put(map, _key, nil), do: map
-  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 
   # ROUTER
 
