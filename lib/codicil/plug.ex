@@ -27,7 +27,9 @@ defmodule Codicil.Plug do
         |> Codicil.MCP.Server.handle_http_message()
 
       _ ->
-        send_resp(conn, 404, "Not Found")
+        conn
+        |> send_resp(404, "Not Found")
+        |> halt()
     end
   end
 end

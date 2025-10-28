@@ -422,6 +422,7 @@ defmodule Codicil.MCP.Server do
     conn
     |> put_resp_content_type("application/json")
     |> send_resp(conn.status || 200, Jason.encode!(data))
+    |> halt()
   end
 
   defp send_jsonrpc_error(conn, id, code, message, data \\ nil) do
@@ -441,6 +442,7 @@ defmodule Codicil.MCP.Server do
     conn
     |> put_resp_content_type("application/json")
     |> send_resp(200, Jason.encode!(response))
+    |> halt()
   end
 
   def handle_http_message(conn) do
