@@ -41,16 +41,16 @@ defmodule Codicil.RateLimiter do
   Enqueue a function for processing (summarization + embedding generation).
   Returns immediately, processing happens asynchronously.
   """
-  @spec enqueue(pid() | __MODULE__, function_info :: map()) :: :ok
-  def enqueue(server \\ __MODULE__, function_info) do
-    GenServer.call(server, {:enqueue, function_info})
+  @spec enqueue(pid() | __MODULE__, function :: Codicil.Db.Function.t()) :: :ok
+  def enqueue(server \\ __MODULE__, function) do
+    GenServer.call(server, {:enqueue, function})
   end
 
   # API IMPLEMENTATION
 
-  defp enqueue_impl(function_info, _from, state) do
+  defp enqueue_impl(function, _from, state) do
     # Add to queue
-    new_queue = :queue.in(function_info, state.queue)
+    new_queue = :queue.in(function, state.queue)
     new_state = %{state | queue: new_queue}
 
     # If not currently processing, start processing
@@ -63,7 +63,7 @@ defmodule Codicil.RateLimiter do
 
   defp process_next_impl(state) do
     case :queue.out(state.queue) do
-      {{:value, function_info}, remaining_queue} ->
+      {{:value, function}, remaining_queue} ->
         # Mark as processing
         new_state = %{state | queue: remaining_queue, processing: true}
 
@@ -72,7 +72,7 @@ defmodule Codicil.RateLimiter do
 
         # TODO: These tasks should be properly supervised
         Task.start_link(fn ->
-          FunctionProcessor.process(function_info, state.llm_client, state.embeddings_client)
+          FunctionProcessor.process(function, state.llm_client, state.embeddings_client)
           # Wait before signaling done
           Process.sleep(state.delay_ms)
           GenServer.call(parent, :processing_done)
@@ -98,8 +98,8 @@ defmodule Codicil.RateLimiter do
   # ROUTER
 
   @impl true
-  def handle_call({:enqueue, function_info}, from, state) do
-    enqueue_impl(function_info, from, state)
+  def handle_call({:enqueue, function}, from, state) do
+    enqueue_impl(function, from, state)
   end
 
   @impl true

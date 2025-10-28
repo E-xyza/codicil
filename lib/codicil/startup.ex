@@ -51,17 +51,8 @@ defmodule Codicil.Startup do
     if count > 0 do
       Logger.info("Found #{count} incomplete function entries, queueing for processing")
 
-      Enum.each(incomplete_functions, fn function ->
-        RateLimiter.enqueue(%{
-          id: function.id,
-          name: function.name,
-          module: function.module,
-          path: function.path,
-          docs: function.docs,
-          code: function.code,
-          exported: function.exported
-        })
-      end)
+      # Pass Function structs directly to RateLimiter
+      Enum.each(incomplete_functions, &RateLimiter.enqueue/1)
     else
       Logger.info("No incomplete function entries found")
     end

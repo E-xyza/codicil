@@ -135,13 +135,8 @@ defmodule Codicil.ModuleTracer do
           # {:ok, _} means it was created or updated
           # {:same, _} means checksum matched, no change
           if status == :ok do
-            RateLimiter.enqueue(%{
-              id: function.id,
-              name: name,
-              module: module,
-              path: file,
-              docs: docs
-            })
+            # Pass Function struct directly to RateLimiter
+            RateLimiter.enqueue(function)
           end
 
           # Extract and store function calls from bytecode
