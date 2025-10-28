@@ -59,11 +59,11 @@ defmodule Codicil do
 
   ### 5. Set up the MCP endpoint
 
-  **For Phoenix projects**, add to your router:
+  **For Phoenix projects**, add to your endpoint:
 
   ```elixir
   if Code.ensure_loaded?(Codicil) do
-    forward "/codicil/mcp", Codicil.Plug
+    plug Codicil.Plug
   end
   ```
 

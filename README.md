@@ -120,14 +120,13 @@ Continue with these steps if you're using Phoenix.
 Add the Codicil MCP endpoint to your Phoenix router. Edit `lib/my_app_web/router.ex`:
 
 ```elixir
-defmodule MyAppWeb.Router do
-  use MyAppWeb, :router
+defmodule MyAppWeb.Endpoint do
 
-  # ... your existing pipelines and routes
+  # ... your endpoint stuff
 
   # Codicil MCP endpoint (only available when Codicil is loaded)
   if Code.ensure_loaded?(Codicil) do
-    forward "/codicil/mcp", Codicil.Plug
+    plug Codicil.Plug
   end
 end
 ```
