@@ -8,10 +8,7 @@ defmodule Codicil.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: [
-        tidewave:
-          "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4000) end)'"
-      ],
+      aliases: aliases(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
       test_elixirc_options: [docs: true],
 
@@ -27,6 +24,15 @@ defmodule Codicil.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/_support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp aliases(:dev) do
+    [
+      tidewave:
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4000) end)'"
+    ]
+  end
+
+  defp aliases(_), do: []
 
   # Run "mix help compile.app" to learn about applications.
   def application do
