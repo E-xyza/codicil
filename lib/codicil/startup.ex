@@ -15,25 +15,18 @@ defmodule Codicil.Startup do
   alias Codicil.RateLimiter
 
   def start_link(_arg) do
-    # Only start if RateLimiter is running (skips when clients not configured)
+    # Always garbage collect marked entries on startup (synchronously)
+    garbage_collect_marked()
+
+    # Only spawn task to scan incomplete entries if RateLimiter is running
     if Process.whereis(RateLimiter) do
-      Task.start_link(__MODULE__, :run, [])
+      Task.start_link(__MODULE__, :scan_incomplete_entries, [])
     else
       :ignore
     end
   end
 
-  def run do
-    # Step 1: Garbage collect marked entries
-    garbage_collect_marked()
-
-    # Step 2: Scan for incomplete entries and queue for processing
-    scan_incomplete_entries()
-
-    :ok
-  end
-
-  defp garbage_collect_marked do
+  def garbage_collect_marked do
     {module_count, _} = Modules.garbage_collect_marked()
     {function_count, _} = Functions.garbage_collect_marked()
 
@@ -44,7 +37,7 @@ defmodule Codicil.Startup do
     end
   end
 
-  defp scan_incomplete_entries do
+  def scan_incomplete_entries do
     Logger.info("Scanning for incomplete function entries...")
 
     # Find functions that need processing:
