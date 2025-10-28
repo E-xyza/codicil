@@ -50,12 +50,13 @@ defmodule Codicil.Application do
   #
   # Environment variables:
   # - CODICIL_LLM_PROVIDER: anthropic | openai | cohere | google (required)
-  # - CODICIL_EMBEDDING_PROVIDER: anthropic | openai | cohere | google (optional, defaults to LLM provider)
+  # - CODICIL_EMBEDDING_PROVIDER: voyage | openai | cohere | google (optional, defaults to voyage)
   # - CODICIL_LLM_MODEL: Override default LLM model (optional)
   # - CODICIL_EMBEDDING_MODEL: Override default embedding model (optional)
   #
   # Provider-specific credentials (required based on provider):
   # - ANTHROPIC_API_KEY
+  # - VOYAGE_API_KEY (required if using voyage for embeddings)
   # - OPENAI_API_KEY (optional for local servers)
   # - OPENAI_BASE_URL (optional, for local servers like Ollama)
   # - COHERE_API_KEY
@@ -67,7 +68,7 @@ defmodule Codicil.Application do
   else
     @default_models %{
       {"anthropic", :llm} => "claude-3-5-sonnet-20241022",
-      {"anthropic", :embedding} => "voyage-3",
+      {"voyage", :embedding} => "voyage-3",
       {"openai", :llm} => "gpt-4o",
       {"openai", :embedding} => "text-embedding-3-small",
       {"cohere", :llm} => "command-a-03-2025",
@@ -78,7 +79,8 @@ defmodule Codicil.Application do
 
     defp configure_providers do
       llm_provider = System.fetch_env!("CODICIL_LLM_PROVIDER")
-      embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", llm_provider)
+      # Default to voyage for embeddings (works well with any LLM provider)
+      embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", "voyage")
 
       llm_model = System.get_env("CODICIL_LLM_MODEL")
       embedding_model = System.get_env("CODICIL_EMBEDDING_MODEL")
@@ -100,6 +102,12 @@ defmodule Codicil.Application do
         "anthropic" ->
           %Codicil.LLM.Anthropic{
             api_key: System.fetch_env!("ANTHROPIC_API_KEY"),
+            model: model
+          }
+
+        "voyage" ->
+          %Codicil.LLM.Voyage{
+            api_key: System.fetch_env!("VOYAGE_API_KEY"),
             model: model
           }
 
@@ -127,7 +135,7 @@ defmodule Codicil.Application do
           }
 
         _ ->
-          raise "Unknown provider: #{provider}. Must be one of: anthropic, openai, cohere, google"
+          raise "Unknown provider: #{provider}. Must be one of: anthropic, voyage, openai, cohere, google"
       end
     end
 
