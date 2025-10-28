@@ -20,11 +20,7 @@ defmodule Codicil.Application do
             start: {FileSystem, :start_link, [[dirs: [File.cwd!()], name: Codicil.FsWatcher]]}
           },
           Codicil.FileWatcher,
-          %{
-            id: :garbage_collector,
-            start: {Task, :start_link, [&garbage_collect_marked/0]},
-            restart: :transient
-          }
+          Codicil.Startup
         ]
       else
         Logger.warning("application :codicil is not starting because Mix is not running")
@@ -33,17 +29,6 @@ defmodule Codicil.Application do
 
     opts = [strategy: :one_for_one, name: Codicil.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp garbage_collect_marked do
-    {module_count, _} = Codicil.Modules.garbage_collect_marked()
-    {function_count, _} = Codicil.Functions.garbage_collect_marked()
-
-    if module_count > 0 or function_count > 0 do
-      Logger.info(
-        "Garbage collected #{module_count} modules and #{function_count} functions marked for deletion"
-      )
-    end
   end
 
   # Provider Configuration

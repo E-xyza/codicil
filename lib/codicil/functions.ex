@@ -100,6 +100,27 @@ defmodule Codicil.Functions do
   end
 
   @doc """
+  Lists functions that need processing (summarization or embedding).
+
+  Returns functions where:
+  - Exported functions without summary OR embedding
+  - Functions with docs but without summary OR embedding
+  - Not marked for deletion
+  """
+  def list_incomplete do
+    import Ecto.Query
+
+    from(f in Function,
+      where: f.marked_for_deletion == false,
+      where:
+        (f.exported == true and (is_nil(f.summary) or is_nil(f.embedding))) or
+          (not is_nil(f.docs) and f.docs != "" and
+             (is_nil(f.summary) or is_nil(f.embedding)))
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Retrieves a function by ID.
   Returns the function struct or nil if not found.
   """
