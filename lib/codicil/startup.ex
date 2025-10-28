@@ -15,7 +15,12 @@ defmodule Codicil.Startup do
   alias Codicil.RateLimiter
 
   def start_link(_arg) do
-    Task.start_link(__MODULE__, :run, [])
+    # Only start if RateLimiter is running (skips when clients not configured)
+    if Process.whereis(RateLimiter) do
+      Task.start_link(__MODULE__, :run, [])
+    else
+      :ignore
+    end
   end
 
   def run do
@@ -40,37 +45,32 @@ defmodule Codicil.Startup do
   end
 
   defp scan_incomplete_entries do
-    # Skip if RateLimiter isn't running (happens when clients not configured)
-    if Process.whereis(RateLimiter) do
-      Logger.info("Scanning for incomplete function entries...")
+    Logger.info("Scanning for incomplete function entries...")
 
-      # Find functions that need processing:
-      # 1. Exported functions without summary (need summarization from code)
-      # 2. Functions with docs but without summary (need summarization from docs)
-      # 3. Functions with summary but without embedding (need embedding)
-      incomplete_functions = Functions.list_incomplete()
+    # Find functions that need processing:
+    # 1. Exported functions without summary (need summarization from code)
+    # 2. Functions with docs but without summary (need summarization from docs)
+    # 3. Functions with summary but without embedding (need embedding)
+    incomplete_functions = Functions.list_incomplete()
 
-      count = length(incomplete_functions)
+    count = length(incomplete_functions)
 
-      if count > 0 do
-        Logger.info("Found #{count} incomplete function entries, queueing for processing")
+    if count > 0 do
+      Logger.info("Found #{count} incomplete function entries, queueing for processing")
 
-        Enum.each(incomplete_functions, fn function ->
-          RateLimiter.enqueue(%{
-            id: function.id,
-            name: function.name,
-            module: function.module,
-            path: function.path,
-            docs: function.docs,
-            code: function.code,
-            exported: function.exported
-          })
-        end)
-      else
-        Logger.info("No incomplete function entries found")
-      end
+      Enum.each(incomplete_functions, fn function ->
+        RateLimiter.enqueue(%{
+          id: function.id,
+          name: function.name,
+          module: function.module,
+          path: function.path,
+          docs: function.docs,
+          code: function.code,
+          exported: function.exported
+        })
+      end)
     else
-      Logger.info("RateLimiter not running, skipping incomplete entries scan")
+      Logger.info("No incomplete function entries found")
     end
   end
 end
