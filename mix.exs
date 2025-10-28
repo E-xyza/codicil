@@ -82,7 +82,7 @@ defmodule Codicil.MixProject do
         "GitHub" => "https://github.com/E-xyza/codicil",
         "MCP Spec" => "https://spec.modelcontextprotocol.io"
       },
-      files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE)
+      files: ~w(lib priv/repo .formatter.exs mix.exs README.md LICENSE)
     ]
   end
 end
