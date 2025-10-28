@@ -12,6 +12,13 @@ defmodule Codicil.FileWatcherTest do
     # Allow background processes (file watcher) to use the sandbox
     Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
 
+    # Start RateLimiter with mock clients
+    start_supervised!(
+      {Codicil.RateLimiter,
+       llm_client: %CodicilTest.LLM.Mock{test_pid: self()},
+       embeddings_client: %CodicilTest.Embeddings.Mock{test_pid: self()}}
+    )
+
     # Enable tracer for recompilation tests
     Code.put_compiler_option(:tracers, [Codicil.Tracer])
 

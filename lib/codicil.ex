@@ -32,8 +32,12 @@ defmodule Codicil do
   ### 3. Configure environment variables
 
   ```bash
-  export CODICIL_LLM_PROVIDER=anthropic  # or: openai, cohere, google, grok
-  export ANTHROPIC_API_KEY=your_key_here
+  export CODICIL_LLM_PROVIDER=openai  # or: anthropic, cohere, google, grok
+  export OPENAI_API_KEY=your_key_here
+
+  # Optional: Separate embeddings provider (defaults to openai)
+  # export CODICIL_EMBEDDING_PROVIDER=voyage
+  # export VOYAGE_API_KEY=your_voyage_key_here
   ```
 
   ### 4. Enable the compiler tracer
@@ -96,15 +100,16 @@ defmodule Codicil do
 
   Set these environment variables to customize Codicil:
 
-  - `CODICIL_LLM_PROVIDER` - LLM provider (required): `anthropic`, `openai`, `cohere`, `google`, `grok`
+  - `CODICIL_LLM_PROVIDER` - LLM provider (required): `openai`, `anthropic`, `cohere`, `google`, `grok`
   - `CODICIL_LLM_MODEL` - Override default model for summaries
-  - `CODICIL_EMBEDDING_PROVIDER` - Separate provider for embeddings (defaults to LLM provider)
+  - `CODICIL_EMBEDDING_PROVIDER` - Separate provider for embeddings (defaults to same as LLM provider)
   - `CODICIL_EMBEDDING_MODEL` - Override default embedding model
 
   Provider-specific API keys:
-  - `ANTHROPIC_API_KEY` - For Anthropic Claude
-  - `OPENAI_API_KEY` - For OpenAI
+  - `OPENAI_API_KEY` - For OpenAI (default)
   - `OPENAI_BASE_URL` - For OpenAI-compatible local models (e.g., Ollama)
+  - `ANTHROPIC_API_KEY` - For Anthropic Claude
+  - `VOYAGE_API_KEY` - For Voyage AI embeddings (if using voyage provider)
   - `COHERE_API_KEY` - For Cohere
   - `GOOGLE_API_KEY` - For Google Gemini
 
@@ -121,7 +126,7 @@ defmodule Codicil do
 
   ## Production Warning
 
-  **DO NOT use Codicil in production.** It is a development tool that:
+  **DO NOT deploy Codicil to production.** It is a development tool that:
   - Makes LLM API calls (costs money)
   - Indexes code at runtime (performance overhead)
   - Runs an HTTP server (security surface)

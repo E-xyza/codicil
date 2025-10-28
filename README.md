@@ -64,16 +64,21 @@ Create or edit your `.env` file (or set in your shell):
 
 ```bash
 # Required: Choose your LLM provider
-export CODICIL_LLM_PROVIDER=anthropic  # or: openai, cohere, google, grok
+export CODICIL_LLM_PROVIDER=openai  # or: anthropic, cohere, google, grok
 
 # Required: Add your API key for the chosen provider
-export ANTHROPIC_API_KEY=your_key_here
-# OR
 export OPENAI_API_KEY=your_key_here
+# OR
+export ANTHROPIC_API_KEY=your_key_here
 # OR
 export COHERE_API_KEY=your_key_here
 # OR
 export GOOGLE_API_KEY=your_key_here
+
+# Optional: Embeddings provider (defaults to openai)
+# If you want to use Voyage AI for embeddings:
+# export CODICIL_EMBEDDING_PROVIDER=voyage
+# export VOYAGE_API_KEY=your_voyage_key_here
 ```
 
 Load the environment variables:
@@ -437,7 +442,7 @@ Vector search is powered by the `sqlite-vec` extension.
 
 ## Production Warning
 
-**DO NOT run Codicil in production.** Codicil is a development tool that:
+**DO NOT deploy Codicil to production.** Codicil is a development tool that:
 - Makes LLM API calls (costs money)
 - Indexes code at runtime (performance overhead)
 - Runs an HTTP server (security surface)

@@ -13,21 +13,28 @@ defmodule Codicil.RateLimiter do
   # BOILERPLATE & INITIALIZATION
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    {name, init_opts} = Keyword.pop(opts, :name, __MODULE__)
+    GenServer.start_link(__MODULE__, init_opts, name: name)
   end
 
   @impl true
   def init(opts) do
     delay_ms = Keyword.get(opts, :delay_ms, 1000)
+    llm_client = Keyword.get(opts, :llm_client, Application.get_env(:codicil, :llm_client))
+    embeddings_client = Keyword.get(opts, :embeddings_client, Application.get_env(:codicil, :embeddings_client))
 
-    {:ok,
-     %{
-       queue: :queue.new(),
-       delay_ms: delay_ms,
-       processing: false,
-       llm_client: Application.get_env(:codicil, :llm_client),
-       embeddings_client: Application.get_env(:codicil, :embeddings_client)
-     }}
+    if llm_client && embeddings_client do
+      {:ok,
+       %{
+         queue: :queue.new(),
+         delay_ms: delay_ms,
+         processing: false,
+         llm_client: llm_client,
+         embeddings_client: embeddings_client
+       }}
+    else
+      :ignore
+    end
   end
 
   # API
@@ -70,7 +77,8 @@ defmodule Codicil.RateLimiter do
         # Spawn task to process this function
         parent = self()
 
-        Task.start(fn ->
+        # TODO: These tasks should be properly supervised
+        Task.start_link(fn ->
           process_function(function_info, state)
           # Wait before signaling done
           Process.sleep(state.delay_ms)
@@ -97,20 +105,21 @@ defmodule Codicil.RateLimiter do
   # HELPER FUNCTIONS
 
   defp process_function(function_info, state) do
-    # Generate summary if we have docs
+    # Determine if we should generate summary:
+    # - All exported (public) functions
+    # - Private functions with documentation
+    should_summarize =
+      Map.get(function_info, :exported, false) or has_docs?(function_info)
+
+    # Generate summary if appropriate
     summary =
-      case Map.get(function_info, :docs) do
-        nil ->
-          nil
-
-        "" ->
-          nil
-
-        docs when is_binary(docs) ->
-          case Summarizer.summarize_function(state.llm_client, function_info) do
-            {:ok, %{summary: summary}} -> summary
-            {:error, _reason} -> nil
-          end
+      if should_summarize do
+        case Summarizer.summarize_function(state.llm_client, function_info) do
+          {:ok, %{summary: summary}} -> summary
+          {:error, _reason} -> nil
+        end
+      else
+        nil
       end
 
     # Generate embedding if we have summary
@@ -147,6 +156,14 @@ defmodule Codicil.RateLimiter do
     end
 
     :ok
+  end
+
+  defp has_docs?(function_info) do
+    case Map.get(function_info, :docs) do
+      nil -> false
+      "" -> false
+      docs when is_binary(docs) -> true
+    end
   end
 
   defp maybe_put(map, _key, nil), do: map

@@ -49,16 +49,16 @@ defmodule Codicil.Application do
   # Provider Configuration
   #
   # Environment variables:
-  # - CODICIL_LLM_PROVIDER: anthropic | openai | cohere | google (required)
-  # - CODICIL_EMBEDDING_PROVIDER: voyage | openai | cohere | google (optional, defaults to voyage)
+  # - CODICIL_LLM_PROVIDER: openai | anthropic | cohere | google | grok (required)
+  # - CODICIL_EMBEDDING_PROVIDER: openai | voyage | cohere | google (optional, defaults to openai)
   # - CODICIL_LLM_MODEL: Override default LLM model (optional)
   # - CODICIL_EMBEDDING_MODEL: Override default embedding model (optional)
   #
   # Provider-specific credentials (required based on provider):
+  # - OPENAI_API_KEY
+  # - OPENAI_BASE_URL (optional, for local servers like Ollama)
   # - ANTHROPIC_API_KEY
   # - VOYAGE_API_KEY (required if using voyage for embeddings)
-  # - OPENAI_API_KEY (optional for local servers)
-  # - OPENAI_BASE_URL (optional, for local servers like Ollama)
   # - COHERE_API_KEY
   # - GOOGLE_API_KEY + GOOGLE_PROJECT_ID
 
@@ -67,10 +67,10 @@ defmodule Codicil.Application do
     defp configure_providers, do: :ok
   else
     @default_models %{
-      {"anthropic", :llm} => "claude-3-5-sonnet-20241022",
-      {"voyage", :embedding} => "voyage-3",
       {"openai", :llm} => "gpt-4o",
       {"openai", :embedding} => "text-embedding-3-small",
+      {"anthropic", :llm} => "claude-3-5-sonnet-20241022",
+      {"voyage", :embedding} => "voyage-3",
       {"cohere", :llm} => "command-a-03-2025",
       {"cohere", :embedding} => "embed-english-v3.0",
       {"google", :llm} => "gemini-2.0-flash",
@@ -79,8 +79,8 @@ defmodule Codicil.Application do
 
     defp configure_providers do
       llm_provider = System.fetch_env!("CODICIL_LLM_PROVIDER")
-      # Default to voyage for embeddings (works well with any LLM provider)
-      embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", "voyage")
+      # Default to same provider as LLM for embeddings (or openai if LLM provider doesn't support embeddings)
+      embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", llm_provider)
 
       llm_model = System.get_env("CODICIL_LLM_MODEL")
       embedding_model = System.get_env("CODICIL_EMBEDDING_MODEL")

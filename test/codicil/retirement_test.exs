@@ -11,6 +11,13 @@ defmodule Codicil.RetirementTest do
     # Allow background processes (tracer GenServers) to use the sandbox
     Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
 
+    # Start RateLimiter with mock clients
+    start_supervised!(
+      {Codicil.RateLimiter,
+       llm_client: %CodicilTest.LLM.Mock{test_pid: self()},
+       embeddings_client: %CodicilTest.Embeddings.Mock{test_pid: self()}}
+    )
+
     Process.sleep(100)
 
     # Enable tracer for this test

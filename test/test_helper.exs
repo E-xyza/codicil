@@ -22,6 +22,12 @@ Application.put_env(:codicil, :predoc_callback, fn module, bytecode ->
   :code.add_pathz(String.to_charlist(beam_dir))
 end)
 
+# Configure mock LLM and embeddings clients for testing
+# Using nil test_pid for silent operation during application startup
+# Individual tests can override these with custom clients if needed
+Application.put_env(:codicil, :llm_client, %CodicilTest.LLM.Mock{})
+Application.put_env(:codicil, :embeddings_client, %CodicilTest.Embeddings.Mock{})
+
 ExUnit.start()
 
 # Set up sandbox mode (Repo is already started by the application with sandbox pool in test env)

@@ -16,20 +16,21 @@ defmodule CodicilTest.LLM.Mock do
         assert_receive {:llm_generate_text, "test prompt", []}
         assert result == {:ok, "mock response"}
       end
+
+  If `test_pid` is nil, the mock operates silently without sending messages.
   """
 
-  @enforce_keys [:test_pid]
-  defstruct [:test_pid]
+  defstruct test_pid: nil
 
   @type t :: %__MODULE__{
-          test_pid: pid()
+          test_pid: pid() | nil
         }
 
   use Codicil.LLM
 
   @impl Codicil.LLM
   def generate_text(%__MODULE__{test_pid: test_pid}, prompt, opts) do
-    send(test_pid, {:llm_generate_text, prompt, opts})
+    if test_pid, do: send(test_pid, {:llm_generate_text, prompt, opts})
     {:ok, "mock response"}
   end
 end
