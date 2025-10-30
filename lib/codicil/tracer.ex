@@ -42,7 +42,8 @@ defmodule Codicil.Tracer do
   defp do_trace(:defmodule, env) do
     ensure_started()
 
-    module = hd(env.context_modules)
+    # Use env.module which is always the module being compiled
+    module = env.module
 
     # Start a ModuleTracer GenServer for this module, registering it via the Registry
     child_spec = %{
@@ -62,39 +63,28 @@ defmodule Codicil.Tracer do
     end
   end
 
-  defp do_trace({:import, _meta, module, _opts}, env) do
+  defp do_trace({:import, _meta, module, _opts}, env) when not is_nil(env.module) do
     ensure_started()
 
-    # Ignore if outside module scope (corner case)
-    case env.context_modules do
-      [] -> :ok
-      [dependent | _] -> Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
-    end
+    Codicil.ModuleTracer.add_dependency(env.module, module, :compiler)
 
     :ok
   end
 
-  defp do_trace({:require, _meta, module, _opts}, env) do
+  defp do_trace({:require, _meta, module, _opts}, env) when not is_nil(env.module) do
     ensure_started()
 
-    # Ignore if outside module scope (corner case)
-    case env.context_modules do
-      [] -> :ok
-      [dependent | _] -> Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
-    end
+    Codicil.ModuleTracer.add_dependency(env.module, module, :compiler)
 
     :ok
   end
 
-  defp do_trace({type, _meta, module, _opts}, env) when type in [:imported_macro, :remote_macro] do
+  defp do_trace({type, _meta, module, _opts}, env)
+       when type in [:imported_macro, :remote_macro] and not is_nil(env.module) do
     ensure_started()
 
     # use creates these events - track as compile-time dependency
-    # Ignore if outside module scope (corner case)
-    case env.context_modules do
-      [] -> :ok
-      [dependent | _] -> Codicil.ModuleTracer.add_dependency(dependent, module, :compiler)
-    end
+    Codicil.ModuleTracer.add_dependency(env.module, module, :compiler)
 
     :ok
   end

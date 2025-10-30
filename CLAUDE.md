@@ -467,7 +467,7 @@ FileSystem.subscribe(MyApp.FileSystem)
 
 Avoid the conflict entirely by running Codicil as a standalone process (see Approach 1 above). This is the recommended approach for most Phoenix projects.
 
-### Database Location
+### Location
 
 Codicil stores its SQLite database in its own `priv/` directory:
 
