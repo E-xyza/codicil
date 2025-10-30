@@ -629,6 +629,7 @@ defmodule Codicil.FunctionsTest do
           name: :placeholder_func,
           module: PlaceholderModule,
           arity: 1,
+          exported: true,
           checksum: nil
         })
 
@@ -641,6 +642,7 @@ defmodule Codicil.FunctionsTest do
                  name: :placeholder_func,
                  module: PlaceholderModule,
                  arity: 1,
+                 exported: true,
                  checksum: nil
                })
 

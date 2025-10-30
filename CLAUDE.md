@@ -870,9 +870,10 @@ Follow Elixir standards for data retrieval functions:
 ### Migration Strategy
 - **Each table gets its own migration file**
 - **Indices and foreign keys** MAY be in separate migrations (use judgement)
-- **DO NOT create new migrations** to modify existing tables
-- **DO** modify the original migration file if changes are needed
-- This keeps migration history clean and deployment simple
+- **DO create new migrations** for schema changes using `mix ecto.gen.migration <name> -r Codicil.Db.Repo`
+- **Example**: `mix ecto.gen.migration add_checksum_to_functions -r Codicil.Db.Repo`
+- This keeps migration history clean and changes reproducible across environments
+- **Note**: Modify existing migrations only if explicitly instructed to do so
 
 ### Example Structure
 ```

@@ -63,7 +63,7 @@ defmodule Codicil.Db.Function do
       :checksum,
       :marked_for_deletion
     ])
-    |> Changeset.validate_required([:name, :module, :arity])
+    |> Changeset.validate_required([:name, :module, :arity, :exported])
     |> Changeset.put_change(:marked_for_deletion, false)
   end
 
