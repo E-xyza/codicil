@@ -15,6 +15,9 @@ defmodule Codicil.Tracer do
 
   Returns `:ok` as required by the tracer protocol.
   """
+
+  require Logger
+
   def trace({:on_module, bytecode, _opts}, _env) do
     ensure_started()
 
@@ -46,7 +49,6 @@ defmodule Codicil.Tracer do
         :ok
 
       {:error, {:already_started, _pid}} ->
-        require Logger
         Logger.warning("Module already being traced: #{inspect(module)} in #{env.file}")
         :ok
     end
@@ -96,11 +98,26 @@ defmodule Codicil.Tracer do
   # Ensure Codicil application is started before using its infrastructure
   # Cache the result in application env for fast subsequent checks
   defp ensure_started do
-    if Application.get_env(:codicil, :started) do
-      :ok
+    with true <- !Application.get_env(:codicil, :started),
+        {:error, reason} <- Application.ensure_all_started(:codicil) do
+        startup_fail(reason)
+    end
+    Application.put_env(:codicil, :started, true)
+  end
+
+  defp startup_fail(reason) do
+    if System.get_env("CODICIL_LLM_PROVIDER", "") != "" do
+      raise "Failed to start Codicil (#{inspect reason})"
     else
-      Application.ensure_all_started(:codicil)
-      Application.put_env(:codicil, :started, true)
+      raise """
+      CODICIL_LLM_PROVIDER environment variable is not set.
+
+      Please set it to one of: openai, anthropic, cohere, google, grok
+
+      Example:
+        export CODICIL_LLM_PROVIDER=openai
+        export OPENAI_API_KEY=your_api_key
+      """
     end
   end
 end
