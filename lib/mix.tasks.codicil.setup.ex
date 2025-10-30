@@ -13,8 +13,6 @@ defmodule Mix.Tasks.Codicil.Setup do
 
   use Mix.Task
 
-  @requirements ["app.config"]
-
   @impl Mix.Task
   def run(_args) do
     Mix.shell().info("Setting up Codicil database...")
