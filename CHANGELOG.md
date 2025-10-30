@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - TBD
 
+### Added
+
+- `mix codicil.setup` task for easy database initialization (creates database and runs migrations)
+
 ### Changed
 
 - **BREAKING**: The `exported` field in the `functions` table is now required (NOT NULL constraint added)

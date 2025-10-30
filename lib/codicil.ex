@@ -25,8 +25,7 @@ defmodule Codicil do
 
   ```bash
   mix deps.get
-  mix ecto.create -r Codicil.Db.Repo
-  mix ecto.migrate -r Codicil.Db.Repo
+  mix codicil.setup
   ```
 
   ### 3. Configure environment variables

@@ -54,8 +54,7 @@ mix deps.get
 Codicil uses SQLite to store indexed code. Initialize it:
 
 ```bash
-mix ecto.create -r Codicil.Db.Repo
-mix ecto.migrate -r Codicil.Db.Repo
+mix codicil.setup
 ```
 
 #### Step 3: Configure Environment Variables
@@ -379,8 +378,7 @@ export CODICIL_LLM_MODEL=llama3
 ### "Database not found"
 
 **Solution**:
-- Initialize the database: `mix ecto.create -r Codicil.Db.Repo`
-- Run migrations: `mix ecto.migrate -r Codicil.Db.Repo`
+- Initialize the database: `mix codicil.setup`
 
 ### "Port 4700 already in use" (Non-Phoenix)
 
@@ -417,9 +415,8 @@ cd codicil
 # Install dependencies
 mix deps.get
 
-# Create and migrate database
-mix ecto.create -r Codicil.Db.Repo
-mix ecto.migrate -r Codicil.Db.Repo
+# Set up database
+mix codicil.setup
 
 # Run tests
 mix test
