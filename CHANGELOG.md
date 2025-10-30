@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - TBD
+## [0.2.0] - 2025-10-30
 
 ### Added
 
@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING**: The `exported` field in the `functions` table is now required (NOT NULL constraint added)
 - Updated `Function` changeset to require the `exported` field at validation level
 - Placeholder functions (for external dependencies) now always have `exported: true` by default
+
+### Improved
+
+- Tracer now provides clear error messages when `CODICIL_LLM_PROVIDER` is not set
+- Better startup error handling to prevent silent compilation failures
 
 ## [0.1.0] - 2025-01-08
 
