@@ -18,7 +18,15 @@ defmodule Codicil.Tracer do
 
   require Logger
 
-  def trace({:on_module, bytecode, _opts}, _env) do
+  def trace(event, env) do
+    if Application.get_env(:codicil, :skip_startup) do
+      :ok
+    else
+      do_trace(event, env)
+    end
+  end
+
+  defp do_trace({:on_module, bytecode, _opts}, _env) do
     ensure_started()
 
     # Extract module name from bytecode
@@ -31,7 +39,7 @@ defmodule Codicil.Tracer do
     :ok
   end
 
-  def trace(:defmodule, env) do
+  defp do_trace(:defmodule, env) do
     ensure_started()
 
     module = hd(env.context_modules)
@@ -54,7 +62,7 @@ defmodule Codicil.Tracer do
     end
   end
 
-  def trace({:import, _meta, module, _opts}, env) do
+  defp do_trace({:import, _meta, module, _opts}, env) do
     ensure_started()
 
     # Ignore if outside module scope (corner case)
@@ -66,7 +74,7 @@ defmodule Codicil.Tracer do
     :ok
   end
 
-  def trace({:require, _meta, module, _opts}, env) do
+  defp do_trace({:require, _meta, module, _opts}, env) do
     ensure_started()
 
     # Ignore if outside module scope (corner case)
@@ -78,7 +86,7 @@ defmodule Codicil.Tracer do
     :ok
   end
 
-  def trace({type, _meta, module, _opts}, env) when type in [:imported_macro, :remote_macro] do
+  defp do_trace({type, _meta, module, _opts}, env) when type in [:imported_macro, :remote_macro] do
     ensure_started()
 
     # use creates these events - track as compile-time dependency
@@ -91,7 +99,7 @@ defmodule Codicil.Tracer do
     :ok
   end
 
-  def trace(_event, _env) do
+  defp do_trace(_event, _env) do
     :ok
   end
 

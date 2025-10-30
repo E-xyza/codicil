@@ -15,6 +15,9 @@ defmodule Mix.Tasks.Codicil.Setup do
 
   @impl Mix.Task
   def run(_args) do
+    # Signal to tracer not to start the application during setup
+    Application.put_env(:codicil, :skip_startup, true)
+
     Mix.shell().info("Setting up Codicil database...")
 
     # Create the database
