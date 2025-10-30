@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-10-30
+
+### Fixed
+
+- Fix tracer crash when compiling files with top-level defimpl statements
+
 ## [0.2.0] - 2025-10-30
 
 ### Added
