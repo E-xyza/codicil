@@ -195,6 +195,25 @@ defp aliases do
 end
 ```
 
+#### Step 6a (Non-Phoenix, Optional): Combining Multiple MCP Servers
+
+If you want to run multiple MCP servers simultaneously (e.g., Codicil + Tidewave), you can combine them in a single Mix alias:
+
+```elixir
+defp aliases do
+  [
+    # ... your existing aliases (if any)
+    mcp: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4700); Bandit.start_link(plug: Tidewave, port: 4000) end)'"
+  ]
+end
+```
+
+This will start both MCP servers in the same Agent:
+- Codicil MCP server on `http://localhost:4700/codicil/mcp`
+- Tidewave MCP server on `http://localhost:4700/tidewave/mcp`
+
+**Note**: Each MCP server needs its own port. Adjust port numbers as needed.
+
 #### Step 7 (Non-Phoenix): Start MCP Server and Compile
 
 Start the MCP server:

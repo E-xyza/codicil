@@ -78,6 +78,13 @@ defmodule Codicil do
 
   Then run `mix codicil` to start the MCP server.
 
+  **To combine multiple MCP servers** (e.g., Codicil + Tidewave):
+
+  ```elixir
+  # In aliases
+  mcp: "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Codicil.Plug, port: 4700); Bandit.start_link(plug: Tidewave, port: 4000) end)'"
+  ```
+
   ### 6. Compile your project
 
   ```bash
@@ -116,12 +123,12 @@ defmodule Codicil do
 
   Codicil uses Elixir's compiler tracer system to capture code structure during compilation:
 
-  1. `Codicil.Tracer` receives compilation events for all modules and functions
-  2. Extracted metadata is processed by `Codicil.ModuleTracer` GenServers
-  3. `Codicil.RateLimiter` queues functions for LLM processing (rate-limited)
+  1. The compiler tracer receives compilation events for all modules and functions
+  2. Extracted metadata is processed by dedicated GenServers per module
+  3. Functions are queued for LLM processing with rate limiting
   4. Summaries and embeddings are generated and stored in SQLite
-  5. `Codicil.FileWatcher` monitors file changes and triggers recompilation
-  6. AI assistants query the indexed code via MCP tools through `Codicil.Plug`
+  5. A file watcher monitors changes and triggers recompilation
+  6. AI assistants query the indexed code via MCP tools over HTTP
 
   ## Production Warning
 
