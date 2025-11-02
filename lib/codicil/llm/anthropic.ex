@@ -71,6 +71,17 @@ defmodule Codicil.LLM.Anthropic do
             _ -> ""
           end
 
+        # Log token usage
+        if usage = Map.get(response, "usage") do
+          input_tokens = Map.get(usage, "input_tokens", 0)
+          output_tokens = Map.get(usage, "output_tokens", 0)
+          require Logger
+
+          Logger.info(
+            "Anthropic LLM call - Model: #{model}, Input tokens: #{input_tokens}, Output tokens: #{output_tokens}, Total: #{input_tokens + output_tokens}"
+          )
+        end
+
         {:ok, text}
 
       {:ok, %{status: status, body: body}} ->

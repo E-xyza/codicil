@@ -357,7 +357,15 @@ defmodule Codicil.MCP.Server do
 
   defp handle_call_tool(request_id, %{"name" => name} = params, assigns) do
     args = Map.get(params, "arguments", %{})
-    result_or_error(request_id, dispatch(name, args, assigns))
+    Logger.info("MCP tool call: #{name} with args: #{inspect(args)}")
+    result = dispatch(name, args, assigns)
+
+    case result do
+      {:ok, _} -> Logger.info("MCP tool call succeeded: #{name}")
+      {:error, reason} -> Logger.warning("MCP tool call failed: #{name} - #{inspect(reason)}")
+    end
+
+    result_or_error(request_id, result)
   end
 
   defp safe_call_tool(request_id, params, assigns) do

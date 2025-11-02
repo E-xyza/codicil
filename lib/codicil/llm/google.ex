@@ -71,6 +71,18 @@ defmodule Codicil.LLM.Google do
            ]
          ) do
       {:ok, %{status: 200, body: response}} ->
+        # Log token usage
+        if usage_metadata = Map.get(response, "usageMetadata") do
+          prompt_tokens = Map.get(usage_metadata, "promptTokenCount", 0)
+          candidates_tokens = Map.get(usage_metadata, "candidatesTokenCount", 0)
+          total_tokens = Map.get(usage_metadata, "totalTokenCount", prompt_tokens + candidates_tokens)
+          require Logger
+
+          Logger.info(
+            "Google LLM call - Model: #{model}, Input tokens: #{prompt_tokens}, Output tokens: #{candidates_tokens}, Total: #{total_tokens}"
+          )
+        end
+
         {:ok, response}
 
       {:ok, %{status: status, body: body}} ->

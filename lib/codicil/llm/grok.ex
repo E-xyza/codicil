@@ -65,6 +65,18 @@ defmodule Codicil.LLM.Grok do
             _ -> ""
           end
 
+        # Log token usage (xAI uses OpenAI-compatible format)
+        if usage = Map.get(response, "usage") do
+          prompt_tokens = Map.get(usage, "prompt_tokens", 0)
+          completion_tokens = Map.get(usage, "completion_tokens", 0)
+          total_tokens = Map.get(usage, "total_tokens", prompt_tokens + completion_tokens)
+          require Logger
+
+          Logger.info(
+            "Grok LLM call - Model: #{model}, Input tokens: #{prompt_tokens}, Output tokens: #{completion_tokens}, Total: #{total_tokens}"
+          )
+        end
+
         {:ok, text}
 
       {:ok, %{status: status, body: body}} ->

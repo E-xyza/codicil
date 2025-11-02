@@ -77,6 +77,18 @@ defmodule Codicil.LLM.OpenAI do
             _ -> ""
           end
 
+        # Log token usage
+        if usage = Map.get(response, "usage") do
+          prompt_tokens = Map.get(usage, "prompt_tokens", 0)
+          completion_tokens = Map.get(usage, "completion_tokens", 0)
+          total_tokens = Map.get(usage, "total_tokens", prompt_tokens + completion_tokens)
+          require Logger
+
+          Logger.info(
+            "OpenAI LLM call - Model: #{model}, Input tokens: #{prompt_tokens}, Output tokens: #{completion_tokens}, Total: #{total_tokens}"
+          )
+        end
+
         {:ok, text}
 
       {:ok, %{status: status, body: body}} ->
@@ -97,7 +109,7 @@ defmodule Codicil.LLM.OpenAI do
       input: text
     }
 
-    case make_embeddings_request(api_key, base_url, body) do
+    case make_embeddings_request(api_key, base_url, body, model) do
       {:ok, %{"data" => [%{"embedding" => embedding}]}} ->
         {:ok, %Result{embedding: embedding, dimensions: length(embedding)}}
 
@@ -113,7 +125,7 @@ defmodule Codicil.LLM.OpenAI do
       input: texts
     }
 
-    case make_embeddings_request(api_key, base_url, body) do
+    case make_embeddings_request(api_key, base_url, body, model) do
       {:ok, %{"data" => data}} ->
         results =
           Enum.map(data, fn %{"embedding" => embedding} ->
@@ -127,7 +139,7 @@ defmodule Codicil.LLM.OpenAI do
     end
   end
 
-  defp make_embeddings_request(api_key, base_url, body) do
+  defp make_embeddings_request(api_key, base_url, body, model) do
     # Build headers - include auth only if api_key is present
     headers =
       [{"content-type", "application/json"}] ++
@@ -143,6 +155,13 @@ defmodule Codicil.LLM.OpenAI do
            headers: headers
          ) do
       {:ok, %{status: 200, body: response}} ->
+        # Log token usage for embeddings
+        if usage = Map.get(response, "usage") do
+          total_tokens = Map.get(usage, "total_tokens", 0)
+          require Logger
+          Logger.info("OpenAI Embeddings call - Model: #{model}, Total tokens: #{total_tokens}")
+        end
+
         {:ok, response}
 
       {:ok, %{status: status, body: body}} ->
