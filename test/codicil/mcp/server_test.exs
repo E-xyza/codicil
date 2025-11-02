@@ -104,8 +104,8 @@ defmodule Codicil.MCP.ServerTest do
       assert response_body["jsonrpc"] == "2.0"
       assert response_body["id"] == "2"
       assert is_list(response_body["result"]["tools"])
-      # Should have 4 registered tools
-      assert length(response_body["result"]["tools"]) == 4
+      # Should have 5 registered tools
+      assert length(response_body["result"]["tools"]) == 5
 
       # Verify tool names
       tool_names = Enum.map(response_body["result"]["tools"], & &1["name"])
@@ -113,6 +113,7 @@ defmodule Codicil.MCP.ServerTest do
       assert "function_callers" in tool_names
       assert "function_callees" in tool_names
       assert "module_relationships" in tool_names
+      assert "module_file" in tool_names
     end
 
     test "returns error for invalid JSON-RPC message", %{conn: conn} do

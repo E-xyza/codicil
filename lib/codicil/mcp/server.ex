@@ -131,6 +131,25 @@ defmodule Codicil.MCP.Server do
           required: ["moduleName"]
         },
         callback: &Codicil.MCP.Tools.ModuleRelationships.call/1
+      },
+      %{
+        name: "module_file",
+        description: """
+        Get the file path where a module is defined.
+
+        Returns the absolute or relative path to the source file containing the module.
+        """,
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            moduleName: %{
+              type: "string",
+              description: "Module name (e.g., 'MyApp.User' or ':gen_server')"
+            }
+          },
+          required: ["moduleName"]
+        },
+        callback: &Codicil.MCP.Tools.ModuleFile.call/1
       }
     ]
   end
