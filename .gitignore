@@ -26,3 +26,5 @@ codicil-*.tar
 
 # Temporary beam files for doc extraction in tests
 /test/_support/beamfiles/
+
+.envrc

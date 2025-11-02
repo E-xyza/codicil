@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-11-01
+
+### Added
+
+- `mix codicil.migrate` task for running database migrations
+- `module_file` MCP tool to get the file path where a module is defined
+- `function_code` MCP tool to retrieve function source code with preceding module-level use/alias/import directives
+- Documentation for combining multiple MCP servers (Codicil + Tidewave) in README and module docs
+
 ## [0.2.1] - 2025-10-30
 
 ### Fixed
