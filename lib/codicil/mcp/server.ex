@@ -150,6 +150,34 @@ defmodule Codicil.MCP.Server do
           required: ["moduleName"]
         },
         callback: &Codicil.MCP.Tools.ModuleFile.call/1
+      },
+      %{
+        name: "function_code",
+        description: """
+        Get the source code for a function, including preceding module-level directives.
+
+        Returns the function code with any module-level use/alias/import statements
+        that precede it in the source file. Useful for understanding function context.
+        """,
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            moduleName: %{
+              type: "string",
+              description: "Module name (e.g., 'MyApp.User' or ':gen_server')"
+            },
+            functionName: %{
+              type: "string",
+              description: "Function name (e.g., 'process_order')"
+            },
+            arity: %{
+              type: "number",
+              description: "Function arity (number of arguments)"
+            }
+          },
+          required: ["moduleName", "functionName", "arity"]
+        },
+        callback: &Codicil.MCP.Tools.FunctionCode.call/1
       }
     ]
   end
