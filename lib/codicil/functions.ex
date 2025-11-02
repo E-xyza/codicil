@@ -251,8 +251,8 @@ defmodule Codicil.Functions do
   def find_similar(query_vector, opts \\ []) when is_list(query_vector) do
     limit = Keyword.get(opts, :limit, 20)
 
-    # Convert query vector to JSON format for sqlite-vec
-    # sqlite-vec accepts JSON arrays: '[1.0, 2.0, 3.0]'
+    # Convert query vector to JSON format for vec_f32()
+    # sqlite-vec's vec_f32() function accepts JSON arrays: '[1.0, 2.0, 3.0]'
     query_json = Jason.encode!(query_vector)
 
     # Use raw SQL for vector similarity search

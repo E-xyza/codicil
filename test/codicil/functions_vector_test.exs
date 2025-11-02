@@ -7,6 +7,11 @@ defmodule Codicil.FunctionsVectorTest do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+
+    # Clean up any existing data to ensure test isolation
+    Repo.delete_all(Codicil.Db.Function)
+    Repo.delete_all(Codicil.Db.Module)
+
     :ok
   end
 
