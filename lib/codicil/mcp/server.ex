@@ -13,18 +13,24 @@ defmodule Codicil.MCP.Server do
   defp raw_tools do
     [
       %{
-        name: "similar_functions",
+        name: "find_similar_functions",
         description: """
-        Find functions semantically similar to a natural language description.
+        Searches the codebase for functions that match a natural language description using semantic similarity.
 
-        Uses vector similarity search combined with LLM validation to find functions
-        that match your description, even if they don't use the exact same words.
+        Use this tool when:
+        - Searching for functions by describing what they do (not exact names)
+        - Locating functionality like "functions that validate input" or "code that parses JSON"
+        - Finding examples of specific patterns or behaviors in the codebase
+        - Answering "how do I" or "where is" questions about functionality
+        - Discovering if functionality already exists before implementing it
 
         Examples:
-        - "calculate sum of numbers"
-        - "validate user input"
-        - "parse JSON data"
-        - "handle HTTP requests"
+        - "find functions that calculate sum of numbers"
+        - "search for validation logic"
+        - "where is JSON parsing handled"
+        - "show me HTTP request handlers"
+
+        Returns: List of matching functions with module name, function name, arity, code snippet, and similarity score.
         """,
         inputSchema: %{
           type: "object",
@@ -51,12 +57,19 @@ defmodule Codicil.MCP.Server do
         callback: &Codicil.MCP.Tools.SimilarFunctions.call/1
       },
       %{
-        name: "function_callers",
+        name: "list_function_callers",
         description: """
-        Find all functions that call a specific target function.
+        Lists all functions that call a specific target function by analyzing the call graph.
 
-        Analyzes the call graph to show which functions depend on the target function.
-        Useful for impact analysis and understanding code dependencies.
+        Use this tool when:
+        - Finding where a function is used in the codebase
+        - Understanding the impact of changing a function (blast radius analysis)
+        - Tracing which code depends on a specific function
+        - Debugging: understanding execution flow or where a function is invoked
+        - Refactoring: assessing which callers need updates when changing a function signature
+        - Performing impact analysis before modifying or removing a function
+
+        Returns: List of caller functions with module name, function name, arity, and file location.
         """,
         inputSchema: %{
           type: "object",
@@ -79,12 +92,19 @@ defmodule Codicil.MCP.Server do
         callback: &Codicil.MCP.Tools.FunctionCallers.call/1
       },
       %{
-        name: "function_callees",
+        name: "list_function_callees",
         description: """
-        Find all functions called by a specific source function.
+        Lists all functions called by a specific source function, showing its dependencies.
 
-        Shows the functions that the source function depends on.
-        Useful for understanding what a function does and its dependencies.
+        Use this tool when:
+        - Understanding what a function depends on and what it calls internally
+        - Seeing the call tree or execution flow from a specific function
+        - Identifying which functions are invoked when specific code runs
+        - Debugging: tracing execution path to understand what code will run
+        - Refactoring: identifying which functions need to be updated together
+        - Analyzing function behavior by examining its dependencies
+
+        Returns: List of called functions with module name, function name, arity, and file location.
         """,
         inputSchema: %{
           type: "object",
@@ -107,12 +127,18 @@ defmodule Codicil.MCP.Server do
         callback: &Codicil.MCP.Tools.FunctionCallees.call/1
       },
       %{
-        name: "module_relationships",
+        name: "list_module_dependencies",
         description: """
-        Analyze module dependencies (imports, aliases, uses, requires, and runtime calls).
+        Lists all dependencies for a module, including imports, aliases, uses, requires, and runtime calls.
 
-        Shows both compile-time and runtime dependencies for a module.
-        Useful for understanding module coupling and refactoring impact.
+        Use this tool when:
+        - Understanding what a module depends on and what it imports
+        - Analyzing module coupling and relationships in the codebase
+        - Assessing refactoring impact at the module level
+        - Examining module structure and connections
+        - Planning architectural changes or decoupling
+
+        Returns: Lists of compile-time dependencies (import/alias/use/require) and runtime dependencies (function calls) with module names and dependency types.
         """,
         inputSchema: %{
           type: "object",
@@ -133,11 +159,19 @@ defmodule Codicil.MCP.Server do
         callback: &Codicil.MCP.Tools.ModuleRelationships.call/1
       },
       %{
-        name: "module_file",
+        name: "get_module_file_path",
         description: """
-        Get the file path where a module is defined.
+        Gets the file path where a module is defined in the codebase.
 
-        Returns the absolute or relative path to the source file containing the module.
+        IMPORTANT: Use this tool instead of `ls` or `grep` commands to find module locations. This provides accurate, indexed results.
+
+        Use this tool when:
+        - Locating the source file for a module
+        - Finding where a module is defined in the codebase
+        - Needing the file path to read, edit, or reference a module
+        - Navigating to a module's definition
+
+        Returns: Absolute or relative file path to the source file containing the module.
         """,
         inputSchema: %{
           type: "object",
@@ -152,12 +186,20 @@ defmodule Codicil.MCP.Server do
         callback: &Codicil.MCP.Tools.ModuleFile.call/1
       },
       %{
-        name: "function_code",
+        name: "get_function_source_code",
         description: """
-        Get the source code for a function, including preceding module-level directives.
+        Retrieves the complete source code for a function, including module-level directives (use/alias/import) and file location.
 
-        Returns the function code with any module-level use/alias/import statements
-        that precede it in the source file. Useful for understanding function context.
+        IMPORTANT: Use this tool instead of `grep` or reading files directly to get function source code. This provides the complete function with all necessary context (imports, aliases, etc.).
+
+        Use this tool when:
+        - Reading or examining a specific function's implementation
+        - Understanding how a function works
+        - Needing the full context of a function including its imports and aliases
+        - Reviewing code before making changes
+        - Analyzing function implementation details
+
+        Returns: Function source code with file path, line number, and any preceding use/alias/import statements for full context.
         """,
         inputSchema: %{
           type: "object",

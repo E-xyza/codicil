@@ -109,12 +109,12 @@ defmodule Codicil.MCP.ServerTest do
 
       # Verify tool names
       tool_names = Enum.map(response_body["result"]["tools"], & &1["name"])
-      assert "similar_functions" in tool_names
-      assert "function_callers" in tool_names
-      assert "function_callees" in tool_names
-      assert "module_relationships" in tool_names
-      assert "module_file" in tool_names
-      assert "function_code" in tool_names
+      assert "find_similar_functions" in tool_names
+      assert "list_function_callers" in tool_names
+      assert "list_function_callees" in tool_names
+      assert "list_module_dependencies" in tool_names
+      assert "get_module_file_path" in tool_names
+      assert "get_function_source_code" in tool_names
     end
 
     test "returns error for invalid JSON-RPC message", %{conn: conn} do

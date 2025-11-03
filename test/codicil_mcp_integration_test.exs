@@ -32,12 +32,12 @@ defmodule Codicil.MCPIntegrationTest do
 
     # Verify tool names
     tool_names = Enum.map(tools, & &1["name"])
-    assert "similar_functions" in tool_names
-    assert "function_callers" in tool_names
-    assert "function_callees" in tool_names
-    assert "module_relationships" in tool_names
-    assert "module_file" in tool_names
-    assert "function_code" in tool_names
+    assert "find_similar_functions" in tool_names
+    assert "list_function_callers" in tool_names
+    assert "list_function_callees" in tool_names
+    assert "list_module_dependencies" in tool_names
+    assert "get_module_file_path" in tool_names
+    assert "get_function_source_code" in tool_names
   end
 
   test "handles ping request" do
@@ -137,7 +137,7 @@ defmodule Codicil.MCPIntegrationTest do
     assert response["id"] == "init"
     assert response["result"]["tools"]
     assert response["result"]["serverInfo"]["name"] == "Codicil MCP Server"
-    assert response["result"]["serverInfo"]["version"] == "0.3.0"
+    assert response["result"]["serverInfo"]["version"] == "0.4.0"
 
     response["result"]["tools"]
   end
