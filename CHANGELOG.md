@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-11-03
+
+### Changed
+
+- **BREAKING**: Renamed all MCP tools for better discoverability and consistency:
+  - `similar_functions` → `find_similar_functions`
+  - `function_callers` → `list_function_callers`
+  - `function_callees` → `list_function_callees`
+  - `module_relationships` → `list_module_dependencies`
+  - `module_file` → `get_module_file_path`
+  - `function_code` → `get_function_source_code`
+
+### Improved
+
+- Enhanced all MCP tool descriptions with:
+  - Clear use cases and trigger phrases for better AI assistant tool selection
+  - Explicit debugging and refactoring contexts for callers/callees tools
+  - Important notes to use indexed tools instead of shell commands (`ls`, `grep`)
+  - More action-oriented naming (find/list/get prefixes)
+
+### Fixed
+
+- Multi-clause functions now correctly capture all clauses in the `code` field
+- Added comprehensive test coverage for multi-clause function extraction
+- Fixed RateLimiter error handling in tests when GenServer is not running
+
 ## [0.3.0] - 2025-11-01
 
 ### Added

@@ -16,7 +16,7 @@ defmodule Codicil do
   ```elixir
   def deps do
     [
-      {:codicil, "~> 0.1", only: [:dev, :test]}
+      {:codicil, "~> 0.4", only: [:dev, :test]}
     ]
   end
   ```
@@ -97,10 +97,12 @@ defmodule Codicil do
 
   Once configured, your AI assistant can use these tools:
 
-  - `similar_functions` - Find functions by semantic description
-  - `function_callers` - Find what calls a specific function
-  - `function_callees` - Find what a function calls
-  - `module_relationships` - Analyze module dependencies
+  - `find_similar_functions` - Find functions by semantic description
+  - `list_function_callers` - Find what calls a specific function (useful for debugging and refactoring)
+  - `list_function_callees` - Find what a function calls (useful for debugging and refactoring)
+  - `list_module_dependencies` - Analyze module dependencies
+  - `get_module_file_path` - Get file path for a module (use instead of `ls` or `grep`)
+  - `get_function_source_code` - Get complete function source with context (use instead of `grep`)
 
   ## Configuration
 

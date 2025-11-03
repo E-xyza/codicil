@@ -38,7 +38,7 @@ Add Codicil to your `mix.exs`:
 def deps do
   [
     # ... your existing dependencies
-    {:codicil, "~> 0.3", only: [:dev, :test]}
+    {:codicil, "~> 0.4", only: [:dev, :test]}
   ]
 end
 ```
@@ -163,7 +163,7 @@ Add Bandit to serve the MCP endpoint. Edit `mix.exs`:
 def deps do
   [
     # ... your existing dependencies
-    {:codicil, "~> 0.3", only: [:dev, :test]},
+    {:codicil, "~> 0.4", only: [:dev, :test]},
     {:bandit, "~> 1.6", only: :dev}  # HTTP server for MCP
   ]
 end
@@ -247,10 +247,12 @@ Once Codicil is running, configure your AI assistant (Claude Desktop, Cline, etc
 - **Transport**: HTTP with SSE
 
 The following MCP tools are now available:
-- `similar_functions` - Semantic search by description
-- `function_callers` - Find what calls a function
-- `function_callees` - Find what a function calls
-- `module_relationships` - Analyze module dependencies
+- `find_similar_functions` - Semantic search by description
+- `list_function_callers` - Find what calls a function (useful for debugging and refactoring)
+- `list_function_callees` - Find what a function calls (useful for debugging and refactoring)
+- `list_module_dependencies` - Analyze module dependencies
+- `get_module_file_path` - Get file path for a module (use instead of `ls` or `grep`)
+- `get_function_source_code` - Get complete function source with context (use instead of `grep`)
 
 ## Verify It's Working
 
@@ -308,9 +310,9 @@ Compilation → Tracer → ModuleTracer GenServer → RateLimiter → LLM/Embedd
 
 ## MCP Tool Reference
 
-### similar_functions
+### find_similar_functions
 
-Find functions by semantic description:
+Find functions by semantic description using vector similarity search:
 
 ```json
 {
@@ -319,9 +321,9 @@ Find functions by semantic description:
 }
 ```
 
-### function_callers
+### list_function_callers
 
-Find what calls a specific function:
+Find what calls a specific function (useful for debugging and impact analysis during refactoring):
 
 ```json
 {
@@ -331,9 +333,9 @@ Find what calls a specific function:
 }
 ```
 
-### function_callees
+### list_function_callees
 
-Find what a function calls:
+Find what a function calls (useful for debugging execution paths and refactoring):
 
 ```json
 {
@@ -343,13 +345,35 @@ Find what a function calls:
 }
 ```
 
-### module_relationships
+### list_module_dependencies
 
-Analyze module dependencies (imports, aliases, uses, requires):
+Analyze module dependencies (imports, aliases, uses, requires, and runtime calls):
 
 ```json
 {
   "moduleName": "MyApp.Accounts"
+}
+```
+
+### get_module_file_path
+
+Get the file path where a module is defined. **Use this instead of `ls` or `grep` for accurate results.**
+
+```json
+{
+  "moduleName": "MyApp.User"
+}
+```
+
+### get_function_source_code
+
+Get complete function source code with module directives and location. **Use this instead of `grep` or file reading for complete context.**
+
+```json
+{
+  "moduleName": "MyApp.User",
+  "functionName": "create",
+  "arity": 1
 }
 ```
 
