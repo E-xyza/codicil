@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-11-03
+
+### Removed
+
+- **BREAKING**: Removed `get_module_file_path` MCP tool as it duplicates functionality available in Tidewave
+- Reduced tool count from 6 to 5 tools to minimize overlap between MCP servers
+
 ## [0.4.0] - 2025-11-03
 
 ### Changed
