@@ -56,7 +56,7 @@ defmodule Codicil.MCP.Tools.FunctionCodeTest do
     %{module: module, function: function, test_file: test_file}
   end
 
-  test "returns function code with module directives" do
+  test "returns function code with module directives", %{test_file: test_file} do
     args = %{
       "moduleName" => "Elixir.TestModule",
       "functionName" => "test_function",
@@ -69,6 +69,9 @@ defmodule Codicil.MCP.Tools.FunctionCodeTest do
     assert code =~ "use GenServer"
     assert code =~ "alias Some.Other.Module"
     assert code =~ "import Enum"
+
+    # Should include location header
+    assert code =~ "# #{test_file}:6"
 
     # Should include function code
     assert code =~ "def test_function(arg1, arg2)"

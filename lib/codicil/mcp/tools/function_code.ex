@@ -24,7 +24,7 @@ defmodule Codicil.MCP.Tools.FunctionCode do
          {:ok, module} <- get_module(normalized_module),
          {:ok, source} <- File.read(module.path),
          {:ok, directives} <- extract_directives(source) do
-      code = build_code_output(directives, function.code)
+      code = build_code_output(directives, function)
       {:ok, code}
     else
       {:error, reason} -> {:error, reason}
@@ -87,10 +87,22 @@ defmodule Codicil.MCP.Tools.FunctionCode do
     Enum.reverse(directives)
   end
 
-  defp build_code_output([], function_code), do: function_code
+  defp build_code_output([], function) do
+    build_with_location(function)
+  end
 
-  defp build_code_output(directives, function_code) do
+  defp build_code_output(directives, function) do
     directive_code = Enum.join(directives, "\n")
-    "#{directive_code}\n\n#{function_code}"
+    location_header = build_location_header(function)
+    "#{directive_code}\n\n#{location_header}\n#{function.code}"
+  end
+
+  defp build_with_location(function) do
+    location_header = build_location_header(function)
+    "#{location_header}\n#{function.code}"
+  end
+
+  defp build_location_header(function) do
+    "# #{function.path}:#{function.line}"
   end
 end
