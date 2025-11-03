@@ -108,13 +108,20 @@ defmodule Codicil.ModuleTracer do
           exported = MapSet.member?(exported_set, {name, arity})
           line = Map.get(line_map, {name, arity}, 0)
           docs = Map.get(doc_map, {name, arity})
-          fun_ast = Map.get(ast_map, {name, arity})
+          fun_asts = Map.get(ast_map, {name, arity})
 
           # Generate function checksum from AST and docs
-          checksum = if fun_ast, do: Checksum.function(fun_ast, docs), else: nil
+          checksum = if fun_asts, do: Checksum.function(fun_asts, docs), else: nil
 
-          # Convert AST back to source code
-          source_code = if fun_ast, do: Sourceror.to_string(fun_ast), else: nil
+          # Convert AST back to source code (handle multiple clauses)
+          source_code =
+            if fun_asts do
+              fun_asts
+              |> Enum.map(&Sourceror.to_string/1)
+              |> Enum.join("\n")
+            else
+              nil
+            end
 
           attrs = %{
             name: Atom.to_string(name),
@@ -135,8 +142,12 @@ defmodule Codicil.ModuleTracer do
           # {:ok, _} means it was created or updated
           # {:same, _} means checksum matched, no change
           if status == :ok do
-            # Pass Function struct directly to RateLimiter
-            RateLimiter.enqueue(function)
+            # Pass Function struct directly to RateLimiter (if it's running)
+            try do
+              RateLimiter.enqueue(function)
+            catch
+              :exit, _ -> :ok
+            end
           end
 
           # Extract and store function calls from bytecode
@@ -286,14 +297,22 @@ defmodule Codicil.ModuleTracer do
         when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
           key = {name, length(args)}
-          lines = Map.put(lines, key, line)
-          asts = Map.put(asts, key, node)
 
-          # Extract leading comments from Sourceror metadata
+          # For lines: only store the first occurrence (earliest line number)
+          lines = if Map.has_key?(lines, key), do: lines, else: Map.put(lines, key, line)
+
+          # For ASTs: append to list to collect all clauses
+          asts = Map.update(asts, key, [node], fn existing -> existing ++ [node] end)
+
+          # Extract leading comments from Sourceror metadata (only from first clause)
           docs =
-            case extract_leading_comments(meta) do
-              nil -> docs
-              comments -> Map.put(docs, key, comments)
+            if Map.has_key?(docs, key) do
+              docs
+            else
+              case extract_leading_comments(meta) do
+                nil -> docs
+                comments -> Map.put(docs, key, comments)
+              end
             end
 
           {node, {lines, docs, asts}}
@@ -303,14 +322,22 @@ defmodule Codicil.ModuleTracer do
         when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
           key = {name, length(args)}
-          lines = Map.put(lines, key, line)
-          asts = Map.put(asts, key, node)
 
-          # Extract leading comments from Sourceror metadata
+          # For lines: only store the first occurrence (earliest line number)
+          lines = if Map.has_key?(lines, key), do: lines, else: Map.put(lines, key, line)
+
+          # For ASTs: append to list to collect all clauses
+          asts = Map.update(asts, key, [node], fn existing -> existing ++ [node] end)
+
+          # Extract leading comments from Sourceror metadata (only from first clause)
           docs =
-            case extract_leading_comments(meta) do
-              nil -> docs
-              comments -> Map.put(docs, key, comments)
+            if Map.has_key?(docs, key) do
+              docs
+            else
+              case extract_leading_comments(meta) do
+                nil -> docs
+                comments -> Map.put(docs, key, comments)
+              end
             end
 
           {node, {lines, docs, asts}}
@@ -320,14 +347,22 @@ defmodule Codicil.ModuleTracer do
         when is_atom(name) and is_list(args) ->
           line = Keyword.get(meta, :line)
           key = {name, length(args)}
-          lines = Map.put(lines, key, line)
-          asts = Map.put(asts, key, node)
 
-          # Extract leading comments from Sourceror metadata
+          # For lines: only store the first occurrence (earliest line number)
+          lines = if Map.has_key?(lines, key), do: lines, else: Map.put(lines, key, line)
+
+          # For ASTs: append to list to collect all clauses
+          asts = Map.update(asts, key, [node], fn existing -> existing ++ [node] end)
+
+          # Extract leading comments from Sourceror metadata (only from first clause)
           docs =
-            case extract_leading_comments(meta) do
-              nil -> docs
-              comments -> Map.put(docs, key, comments)
+            if Map.has_key?(docs, key) do
+              docs
+            else
+              case extract_leading_comments(meta) do
+                nil -> docs
+                comments -> Map.put(docs, key, comments)
+              end
             end
 
           {node, {lines, docs, asts}}
