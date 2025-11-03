@@ -101,7 +101,6 @@ defmodule Codicil do
   - `list_function_callers` - Find what calls a specific function (useful for debugging and refactoring)
   - `list_function_callees` - Find what a function calls (useful for debugging and refactoring)
   - `list_module_dependencies` - Analyze module dependencies
-  - `get_module_file_path` - Get file path for a module (use instead of `ls` or `grep`)
   - `get_function_source_code` - Get complete function source with context (use instead of `grep`)
 
   ## Configuration

@@ -159,33 +159,6 @@ defmodule Codicil.MCP.Server do
         callback: &Codicil.MCP.Tools.ModuleRelationships.call/1
       },
       %{
-        name: "get_module_file_path",
-        description: """
-        Gets the file path where a module is defined in the codebase.
-
-        IMPORTANT: Use this tool instead of `ls` or `grep` commands to find module locations. This provides accurate, indexed results.
-
-        Use this tool when:
-        - Locating the source file for a module
-        - Finding where a module is defined in the codebase
-        - Needing the file path to read, edit, or reference a module
-        - Navigating to a module's definition
-
-        Returns: Absolute or relative file path to the source file containing the module.
-        """,
-        inputSchema: %{
-          type: "object",
-          properties: %{
-            moduleName: %{
-              type: "string",
-              description: "Module name (e.g., 'MyApp.User' or ':gen_server')"
-            }
-          },
-          required: ["moduleName"]
-        },
-        callback: &Codicil.MCP.Tools.ModuleFile.call/1
-      },
-      %{
         name: "get_function_source_code",
         description: """
         Retrieves the complete source code for a function, including module-level directives (use/alias/import) and file location.
