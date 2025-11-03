@@ -137,7 +137,7 @@ defmodule Codicil.MCPIntegrationTest do
     assert response["id"] == "init"
     assert response["result"]["tools"]
     assert response["result"]["serverInfo"]["name"] == "Codicil MCP Server"
-    assert response["result"]["serverInfo"]["version"] == "0.4.0"
+    assert response["result"]["serverInfo"]["version"] == "0.4.1"
 
     response["result"]["tools"]
   end

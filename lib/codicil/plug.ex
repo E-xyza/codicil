@@ -28,8 +28,6 @@ defmodule Codicil.Plug do
 
       _ ->
         conn
-        |> send_resp(404, "Not Found")
-        |> halt()
     end
   end
 end
