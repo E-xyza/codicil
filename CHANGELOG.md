@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-01-09
+
+### Added
+
+- Support for overriding MCP tool descriptions at compile time via application configuration
+  - Example: `config :codicil, Codicil.MCP.Tools.FindSimilarFunctions, "custom description"`
+
 ## [0.5.0] - 2025-11-03
 
 ### Removed
