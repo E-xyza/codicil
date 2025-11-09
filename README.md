@@ -370,9 +370,16 @@ Get complete function source code with module directives and location. **Use thi
 
 ### Customizing Tool Descriptions
 
-You can override the default MCP tool descriptions at compile time to optimize how your AI assistant uses these tools. Customizing descriptions can improve tool selection accuracy and reduce unnecessary tool calls.
+You can override the default MCP tool descriptions at compile time to optimize how your AI assistant uses these tools. Different models (Claude, GPT-4, Codex, etc.) may have different preferences for how tools are described, so customizing descriptions can improve tool selection accuracy and reduce unnecessary tool calls.
 
-Add to your `config/config.exs` (or `config/dev.exs`):
+To see the current default descriptions, use IEx:
+
+```elixir
+iex -S mix
+iex> Codicil.MCP.Tool.get_description(Codicil.MCP.Tools.FindSimilarFunctions)
+```
+
+To customize descriptions, add to your `config/config.exs` (or `config/dev.exs`):
 
 ```elixir
 config :codicil, Codicil.MCP.Tools.FindSimilarFunctions, """

@@ -1,21 +1,18 @@
 defmodule Codicil.MCP.Tools.FindSimilarFunctions do
   use Codicil.MCP.Tool, """
-  Searches the codebase for functions that match a natural language description using semantic similarity.
+  Find functions by describing what they do in natural language. Searches using semantic similarity, not exact names.
 
   Use this tool when:
-  - Searching for functions by describing what they do (not exact names)
-  - Locating functionality like "functions that validate input" or "code that parses JSON"
-  - Finding examples of specific patterns or behaviors in the codebase
-  - Answering "how do I" or "where is" questions about functionality
-  - Discovering if functionality already exists before implementing it
+  - You need to find existing functionality by describing its behavior
+  - The user asks "how do I" or "where is" questions about code capabilities
+  - Checking if functionality already exists before implementing something new
 
   Examples:
-  - "find functions that calculate sum of numbers"
-  - "search for validation logic"
-  - "where is JSON parsing handled"
-  - "show me HTTP request handlers"
+  - "functions that validate email addresses"
+  - "code that parses JSON responses"
+  - "database query builders"
 
-  Returns: List of matching functions with module name, function name, arity, code snippet, and similarity score.
+  Returns: Ranked list of matching functions (not comprehensive - semantic search results).
   """
 
   alias Codicil.Functions
