@@ -370,25 +370,21 @@ Get complete function source code with module directives and location. **Use thi
 
 ### Customizing Tool Descriptions
 
-You can override the default MCP tool descriptions at compile time using application configuration. This is useful if you want to customize how tools appear to your AI assistant.
+You can override the default MCP tool descriptions at compile time to optimize how your AI assistant uses these tools. Customizing descriptions can improve tool selection accuracy and reduce unnecessary tool calls.
 
 Add to your `config/config.exs` (or `config/dev.exs`):
 
 ```elixir
-config :codicil, Codicil.MCP.Tools.FindSimilarFunctions,
-  "Custom description for the semantic search tool"
+config :codicil, Codicil.MCP.Tools.FindSimilarFunctions, """
+Find functions by semantic description. Use this when searching for functionality
+by behavior rather than by name. Returns ranked results with code snippets.
+"""
 
-config :codicil, Codicil.MCP.Tools.ListFunctionCallers,
-  "Custom description for the callers tool"
-
-config :codicil, Codicil.MCP.Tools.ListFunctionCallees,
-  "Custom description for the callees tool"
-
-config :codicil, Codicil.MCP.Tools.ListModuleDependencies,
-  "Custom description for the dependencies tool"
-
-config :codicil, Codicil.MCP.Tools.GetFunctionSourceCode,
-  "Custom description for the source code tool"
+# Other configurable tool modules:
+# - Codicil.MCP.Tools.ListFunctionCallers
+# - Codicil.MCP.Tools.ListFunctionCallees
+# - Codicil.MCP.Tools.ListModuleDependencies
+# - Codicil.MCP.Tools.GetFunctionSourceCode
 ```
 
 After changing tool descriptions, recompile:
