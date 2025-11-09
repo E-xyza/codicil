@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.FunctionCodeTest do
+defmodule Codicil.MCP.Tools.GetFunctionSourceCodeTest do
   use ExUnit.Case, async: false
 
   alias Codicil.Db.Repo
@@ -63,7 +63,7 @@ defmodule Codicil.MCP.Tools.FunctionCodeTest do
       "arity" => 2
     }
 
-    assert {:ok, code} = Codicil.MCP.Tools.FunctionCode.call(args)
+    assert {:ok, code} = Codicil.MCP.Tools.GetFunctionSourceCode.call(args)
 
     # Should include directives
     assert code =~ "use GenServer"
@@ -85,7 +85,7 @@ defmodule Codicil.MCP.Tools.FunctionCodeTest do
       "arity" => 0
     }
 
-    assert {:error, reason} = Codicil.MCP.Tools.FunctionCode.call(args)
+    assert {:error, reason} = Codicil.MCP.Tools.GetFunctionSourceCode.call(args)
     assert reason =~ "not found"
   end
 
@@ -96,7 +96,7 @@ defmodule Codicil.MCP.Tools.FunctionCodeTest do
       "arity" => 0
     }
 
-    assert {:error, reason} = Codicil.MCP.Tools.FunctionCode.call(args)
+    assert {:error, reason} = Codicil.MCP.Tools.GetFunctionSourceCode.call(args)
     assert reason =~ "not found"
   end
 
@@ -151,7 +151,7 @@ defmodule Codicil.MCP.Tools.FunctionCodeTest do
       "arity" => 1
     }
 
-    assert {:ok, code} = Codicil.MCP.Tools.FunctionCode.call(args)
+    assert {:ok, code} = Codicil.MCP.Tools.GetFunctionSourceCode.call(args)
 
     # Should include all three clauses
     assert code =~ "def process(nil), do: :error"

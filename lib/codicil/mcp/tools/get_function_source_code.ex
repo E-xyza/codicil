@@ -1,6 +1,21 @@
-defmodule Codicil.MCP.Tools.FunctionCode do
-  # MCP tool to retrieve function code with preceding module-level imports and aliases.
-  @moduledoc false
+defmodule Codicil.MCP.Tools.GetFunctionSourceCode do
+  use Codicil.MCP.Tool, """
+  Get complete source code for a function with full context: module directives (use/alias/import) and file location.
+
+  IMPORTANT: Use this tool instead of grep or reading files directly. It provides the complete function with all necessary context.
+
+  Use this tool when:
+  - You need to read or examine a specific function's implementation
+  - Understanding how a function works requires seeing its full context
+  - Reviewing code before making changes
+
+  Examples:
+  - Get User.create/1 with all its imports and aliases to understand dependencies
+  - Read a controller action with its plug declarations
+  - Examine a GenServer callback with its use directives
+
+  Returns: Complete function source with file path, line number, and module-level directives.
+  """
 
   alias Codicil.Functions
   alias Codicil.Modules

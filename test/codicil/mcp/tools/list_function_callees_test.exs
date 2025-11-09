@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.FunctionCalleesTest do
+defmodule Codicil.MCP.Tools.ListFunctionCalleesTest do
   use ExUnit.Case, async: false
 
   alias Codicil.Db.Repo
@@ -59,7 +59,7 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
       "arity" => 0
     }
 
-    assert {:ok, result} = Codicil.MCP.Tools.FunctionCallees.call(args)
+    assert {:ok, result} = Codicil.MCP.Tools.ListFunctionCallees.call(args)
     assert result =~ "helper_one"
     assert result =~ "HelperModule"
     assert result =~ "helper_two"
@@ -85,7 +85,7 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
       "arity" => 0
     }
 
-    assert {:ok, result} = Codicil.MCP.Tools.FunctionCallees.call(args)
+    assert {:ok, result} = Codicil.MCP.Tools.ListFunctionCallees.call(args)
     assert result =~ "No callees found"
   end
 
@@ -96,7 +96,7 @@ defmodule Codicil.MCP.Tools.FunctionCalleesTest do
       "arity" => 0
     }
 
-    assert {:error, reason} = Codicil.MCP.Tools.FunctionCallees.call(args)
+    assert {:error, reason} = Codicil.MCP.Tools.ListFunctionCallees.call(args)
     assert reason =~ "not found"
   end
 end
