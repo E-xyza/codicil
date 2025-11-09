@@ -1,6 +1,17 @@
 defmodule Codicil.MCP.Tools.ListFunctionCallers do
-  # MCP tool to find all functions that call a target function.
-  @moduledoc false
+  use Codicil.MCP.Tool, """
+  Lists all functions that call a specific target function by analyzing the call graph.
+
+  Use this tool when:
+  - Finding where a function is used in the codebase
+  - Understanding the impact of changing a function (blast radius analysis)
+  - Tracing which code depends on a specific function
+  - Debugging: understanding execution flow or where a function is invoked
+  - Refactoring: assessing which callers need updates when changing a function signature
+  - Performing impact analysis before modifying or removing a function
+
+  Returns: List of caller functions with module name, function name, arity, and file location.
+  """
 
   alias Codicil.Functions
 

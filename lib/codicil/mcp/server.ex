@@ -3,6 +3,13 @@ defmodule Codicil.MCP.Server do
 
   require Logger
 
+  alias Codicil.MCP.Tool
+  alias Codicil.MCP.Tools.FindSimilarFunctions
+  alias Codicil.MCP.Tools.GetFunctionSourceCode
+  alias Codicil.MCP.Tools.ListFunctionCallees
+  alias Codicil.MCP.Tools.ListFunctionCallers
+  alias Codicil.MCP.Tools.ListModuleDependencies
+
   import Plug.Conn
 
   @protocol_version "2025-03-26"
@@ -14,24 +21,7 @@ defmodule Codicil.MCP.Server do
     [
       %{
         name: "find_similar_functions",
-        description: """
-        Searches the codebase for functions that match a natural language description using semantic similarity.
-
-        Use this tool when:
-        - Searching for functions by describing what they do (not exact names)
-        - Locating functionality like "functions that validate input" or "code that parses JSON"
-        - Finding examples of specific patterns or behaviors in the codebase
-        - Answering "how do I" or "where is" questions about functionality
-        - Discovering if functionality already exists before implementing it
-
-        Examples:
-        - "find functions that calculate sum of numbers"
-        - "search for validation logic"
-        - "where is JSON parsing handled"
-        - "show me HTTP request handlers"
-
-        Returns: List of matching functions with module name, function name, arity, code snippet, and similarity score.
-        """,
+        description: Tool.get_description(FindSimilarFunctions),
         inputSchema: %{
           type: "object",
           properties: %{
@@ -54,23 +44,11 @@ defmodule Codicil.MCP.Server do
           },
           required: ["description"]
         },
-        callback: &Codicil.MCP.Tools.FindSimilarFunctions.call/1
+        callback: &FindSimilarFunctions.call/1
       },
       %{
         name: "list_function_callers",
-        description: """
-        Lists all functions that call a specific target function by analyzing the call graph.
-
-        Use this tool when:
-        - Finding where a function is used in the codebase
-        - Understanding the impact of changing a function (blast radius analysis)
-        - Tracing which code depends on a specific function
-        - Debugging: understanding execution flow or where a function is invoked
-        - Refactoring: assessing which callers need updates when changing a function signature
-        - Performing impact analysis before modifying or removing a function
-
-        Returns: List of caller functions with module name, function name, arity, and file location.
-        """,
+        description: Tool.get_description(ListFunctionCallers),
         inputSchema: %{
           type: "object",
           properties: %{
@@ -89,23 +67,11 @@ defmodule Codicil.MCP.Server do
           },
           required: ["functionName", "moduleName", "arity"]
         },
-        callback: &Codicil.MCP.Tools.ListFunctionCallers.call/1
+        callback: &ListFunctionCallers.call/1
       },
       %{
         name: "list_function_callees",
-        description: """
-        Lists all functions called by a specific source function, showing its dependencies.
-
-        Use this tool when:
-        - Understanding what a function depends on and what it calls internally
-        - Seeing the call tree or execution flow from a specific function
-        - Identifying which functions are invoked when specific code runs
-        - Debugging: tracing execution path to understand what code will run
-        - Refactoring: identifying which functions need to be updated together
-        - Analyzing function behavior by examining its dependencies
-
-        Returns: List of called functions with module name, function name, arity, and file location.
-        """,
+        description: Tool.get_description(ListFunctionCallees),
         inputSchema: %{
           type: "object",
           properties: %{
@@ -124,22 +90,11 @@ defmodule Codicil.MCP.Server do
           },
           required: ["functionName", "moduleName", "arity"]
         },
-        callback: &Codicil.MCP.Tools.ListFunctionCallees.call/1
+        callback: &ListFunctionCallees.call/1
       },
       %{
         name: "list_module_dependencies",
-        description: """
-        Lists all dependencies for a module, including imports, aliases, uses, requires, and runtime calls.
-
-        Use this tool when:
-        - Understanding what a module depends on and what it imports
-        - Analyzing module coupling and relationships in the codebase
-        - Assessing refactoring impact at the module level
-        - Examining module structure and connections
-        - Planning architectural changes or decoupling
-
-        Returns: Lists of compile-time dependencies (import/alias/use/require) and runtime dependencies (function calls) with module names and dependency types.
-        """,
+        description: Tool.get_description(ListModuleDependencies),
         inputSchema: %{
           type: "object",
           properties: %{
@@ -156,24 +111,11 @@ defmodule Codicil.MCP.Server do
           },
           required: ["moduleName"]
         },
-        callback: &Codicil.MCP.Tools.ListModuleDependencies.call/1
+        callback: &ListModuleDependencies.call/1
       },
       %{
         name: "get_function_source_code",
-        description: """
-        Retrieves the complete source code for a function, including module-level directives (use/alias/import) and file location.
-
-        IMPORTANT: Use this tool instead of `grep` or reading files directly to get function source code. This provides the complete function with all necessary context (imports, aliases, etc.).
-
-        Use this tool when:
-        - Reading or examining a specific function's implementation
-        - Understanding how a function works
-        - Needing the full context of a function including its imports and aliases
-        - Reviewing code before making changes
-        - Analyzing function implementation details
-
-        Returns: Function source code with file path, line number, and any preceding use/alias/import statements for full context.
-        """,
+        description: Tool.get_description(GetFunctionSourceCode),
         inputSchema: %{
           type: "object",
           properties: %{
@@ -192,7 +134,7 @@ defmodule Codicil.MCP.Server do
           },
           required: ["moduleName", "functionName", "arity"]
         },
-        callback: &Codicil.MCP.Tools.GetFunctionSourceCode.call/1
+        callback: &GetFunctionSourceCode.call/1
       }
     ]
   end

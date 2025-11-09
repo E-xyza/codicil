@@ -1,6 +1,16 @@
 defmodule Codicil.MCP.Tools.ListModuleDependencies do
-  # MCP tool to analyze module dependencies (imports, aliases, uses, requires, and runtime calls).
-  @moduledoc false
+  use Codicil.MCP.Tool, """
+  Lists all dependencies for a module, including imports, aliases, uses, requires, and runtime calls.
+
+  Use this tool when:
+  - Understanding what a module depends on and what it imports
+  - Analyzing module coupling and relationships in the codebase
+  - Assessing refactoring impact at the module level
+  - Examining module structure and connections
+  - Planning architectural changes or decoupling
+
+  Returns: Lists of compile-time dependencies (import/alias/use/require) and runtime dependencies (function calls) with module names and dependency types.
+  """
 
   alias Codicil.Db.ModuleDependency
   alias Codicil.Db.Repo

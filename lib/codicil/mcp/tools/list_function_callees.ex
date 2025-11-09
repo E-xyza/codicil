@@ -1,6 +1,17 @@
 defmodule Codicil.MCP.Tools.ListFunctionCallees do
-  # MCP tool to find all functions called by a source function.
-  @moduledoc false
+  use Codicil.MCP.Tool, """
+  Lists all functions called by a specific source function, showing its dependencies.
+
+  Use this tool when:
+  - Understanding what a function depends on and what it calls internally
+  - Seeing the call tree or execution flow from a specific function
+  - Identifying which functions are invoked when specific code runs
+  - Debugging: tracing execution path to understand what code will run
+  - Refactoring: identifying which functions need to be updated together
+  - Analyzing function behavior by examining its dependencies
+
+  Returns: List of called functions with module name, function name, arity, and file location.
+  """
 
   alias Codicil.Functions
 
