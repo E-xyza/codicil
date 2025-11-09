@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.FunctionCode do
+defmodule Codicil.MCP.Tools.GetFunctionSourceCode do
   # MCP tool to retrieve function code with preceding module-level imports and aliases.
   @moduledoc false
 

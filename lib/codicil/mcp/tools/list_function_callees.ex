@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.FunctionCallees do
+defmodule Codicil.MCP.Tools.ListFunctionCallees do
   # MCP tool to find all functions called by a source function.
   @moduledoc false
 

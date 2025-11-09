@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.FunctionCallers do
+defmodule Codicil.MCP.Tools.ListFunctionCallers do
   # MCP tool to find all functions that call a target function.
   @moduledoc false
 

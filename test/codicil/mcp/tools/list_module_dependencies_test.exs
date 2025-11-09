@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
+defmodule Codicil.MCP.Tools.ListModuleDependenciesTest do
   use ExUnit.Case, async: false
 
   alias Codicil.Db.Repo
@@ -53,7 +53,7 @@ defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
       "moduleName" => "Elixir.MyApp.MainModule"
     }
 
-    assert {:ok, result} = Codicil.MCP.Tools.ModuleRelationships.call(args)
+    assert {:ok, result} = Codicil.MCP.Tools.ListModuleDependencies.call(args)
     assert result =~ "MyApp.HelperModule"
     assert result =~ "SomeLib.Utility"
     assert result =~ "compile-time"
@@ -66,7 +66,7 @@ defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
       "type" => "compiler"
     }
 
-    assert {:ok, result} = Codicil.MCP.Tools.ModuleRelationships.call(args)
+    assert {:ok, result} = Codicil.MCP.Tools.ListModuleDependencies.call(args)
     assert result =~ "MyApp.HelperModule"
     assert result =~ "compile-time"
     refute result =~ "SomeLib.Utility"
@@ -79,7 +79,7 @@ defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
       "type" => "runtime"
     }
 
-    assert {:ok, result} = Codicil.MCP.Tools.ModuleRelationships.call(args)
+    assert {:ok, result} = Codicil.MCP.Tools.ListModuleDependencies.call(args)
     assert result =~ "SomeLib.Utility"
     assert result =~ "runtime"
     refute result =~ "MyApp.HelperModule"
@@ -98,7 +98,7 @@ defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
       "moduleName" => "Elixir.Lonely"
     }
 
-    assert {:ok, result} = Codicil.MCP.Tools.ModuleRelationships.call(args)
+    assert {:ok, result} = Codicil.MCP.Tools.ListModuleDependencies.call(args)
     assert result =~ "No dependencies found"
   end
 
@@ -107,7 +107,7 @@ defmodule Codicil.MCP.Tools.ModuleRelationshipsTest do
       "moduleName" => "Elixir.Ghost"
     }
 
-    assert {:error, reason} = Codicil.MCP.Tools.ModuleRelationships.call(args)
+    assert {:error, reason} = Codicil.MCP.Tools.ListModuleDependencies.call(args)
     assert reason =~ "not found"
   end
 end

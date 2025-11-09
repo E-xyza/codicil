@@ -54,7 +54,7 @@ defmodule Codicil.MCP.Server do
           },
           required: ["description"]
         },
-        callback: &Codicil.MCP.Tools.SimilarFunctions.call/1
+        callback: &Codicil.MCP.Tools.FindSimilarFunctions.call/1
       },
       %{
         name: "list_function_callers",
@@ -89,7 +89,7 @@ defmodule Codicil.MCP.Server do
           },
           required: ["functionName", "moduleName", "arity"]
         },
-        callback: &Codicil.MCP.Tools.FunctionCallers.call/1
+        callback: &Codicil.MCP.Tools.ListFunctionCallers.call/1
       },
       %{
         name: "list_function_callees",
@@ -124,7 +124,7 @@ defmodule Codicil.MCP.Server do
           },
           required: ["functionName", "moduleName", "arity"]
         },
-        callback: &Codicil.MCP.Tools.FunctionCallees.call/1
+        callback: &Codicil.MCP.Tools.ListFunctionCallees.call/1
       },
       %{
         name: "list_module_dependencies",
@@ -156,7 +156,7 @@ defmodule Codicil.MCP.Server do
           },
           required: ["moduleName"]
         },
-        callback: &Codicil.MCP.Tools.ModuleRelationships.call/1
+        callback: &Codicil.MCP.Tools.ListModuleDependencies.call/1
       },
       %{
         name: "get_function_source_code",
@@ -192,7 +192,7 @@ defmodule Codicil.MCP.Server do
           },
           required: ["moduleName", "functionName", "arity"]
         },
-        callback: &Codicil.MCP.Tools.FunctionCode.call/1
+        callback: &Codicil.MCP.Tools.GetFunctionSourceCode.call/1
       }
     ]
   end

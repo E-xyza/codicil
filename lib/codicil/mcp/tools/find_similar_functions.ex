@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.SimilarFunctions do
+defmodule Codicil.MCP.Tools.FindSimilarFunctions do
   # MCP tool for semantic function search using vector similarity and LLM validation.
   #
   # Finds functions semantically similar to a natural language description using:

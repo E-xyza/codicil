@@ -1,8 +1,8 @@
-defmodule Codicil.MCP.Tools.SimilarFunctionsTest do
+defmodule Codicil.MCP.Tools.FindSimilarFunctionsTest do
   use ExUnit.Case, async: false
 
   alias Codicil.Functions
-  alias Codicil.MCP.Tools.SimilarFunctions
+  alias Codicil.MCP.Tools.FindSimilarFunctions
   alias Codicil.Db.Repo
 
   setup do
@@ -43,13 +43,13 @@ defmodule Codicil.MCP.Tools.SimilarFunctionsTest do
 
   describe "call/1" do
     test "requires description parameter" do
-      assert {:error, _} = SimilarFunctions.call(%{})
+      assert {:error, _} = FindSimilarFunctions.call(%{})
     end
 
     test "returns structured result on success" do
       # This test will need actual embeddings/LLM clients to work
       # For now, just verify the function exists and returns the right structure
-      result = SimilarFunctions.call(%{"description" => "calculate sum"})
+      result = FindSimilarFunctions.call(%{"description" => "calculate sum"})
       assert match?({:ok, _text} when is_binary(_text), result) or match?({:error, _}, result)
     end
   end

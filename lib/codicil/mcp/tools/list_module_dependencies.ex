@@ -1,4 +1,4 @@
-defmodule Codicil.MCP.Tools.ModuleRelationships do
+defmodule Codicil.MCP.Tools.ListModuleDependencies do
   # MCP tool to analyze module dependencies (imports, aliases, uses, requires, and runtime calls).
   @moduledoc false
 
