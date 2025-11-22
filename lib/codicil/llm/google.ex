@@ -75,7 +75,10 @@ defmodule Codicil.LLM.Google do
         if usage_metadata = Map.get(response, "usageMetadata") do
           prompt_tokens = Map.get(usage_metadata, "promptTokenCount", 0)
           candidates_tokens = Map.get(usage_metadata, "candidatesTokenCount", 0)
-          total_tokens = Map.get(usage_metadata, "totalTokenCount", prompt_tokens + candidates_tokens)
+
+          total_tokens =
+            Map.get(usage_metadata, "totalTokenCount", prompt_tokens + candidates_tokens)
+
           require Logger
 
           Logger.info(

@@ -132,6 +132,38 @@ defmodule Codicil.Modules do
   end
 
   @doc """
+  Lists all compile-time dependents for the given module.
+  (Modules that depend ON this module at compile time)
+  """
+  def list_compile_dependents(%Module{id: id}) do
+    import Ecto.Query
+
+    from(m in Module,
+      join: md in ModuleDependency,
+      on: md.dependent_id == m.id,
+      where: md.dependency_id == ^id and md.type == :compiler,
+      select: m
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists all runtime dependents for the given module.
+  (Modules that depend ON this module at runtime)
+  """
+  def list_runtime_dependents(%Module{id: id}) do
+    import Ecto.Query
+
+    from(m in Module,
+      join: md in ModuleDependency,
+      on: md.dependent_id == m.id,
+      where: md.dependency_id == ^id and md.type == :runtime,
+      select: m
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Lists all modules associated with a given file path.
   Returns a list of Module structs.
   """

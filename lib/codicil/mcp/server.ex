@@ -9,6 +9,7 @@ defmodule Codicil.MCP.Server do
   alias Codicil.MCP.Tools.ListFunctionCallees
   alias Codicil.MCP.Tools.ListFunctionCallers
   alias Codicil.MCP.Tools.ListModuleDependencies
+  alias Codicil.MCP.Tools.ListModuleDependents
 
   import Plug.Conn
 
@@ -112,6 +113,27 @@ defmodule Codicil.MCP.Server do
           required: ["moduleName"]
         },
         callback: &ListModuleDependencies.call/1
+      },
+      %{
+        name: "list_module_dependents",
+        description: Tool.get_description(ListModuleDependents),
+        inputSchema: %{
+          type: "object",
+          properties: %{
+            moduleName: %{
+              type: "string",
+              description: "Module name (e.g., 'MyApp.User' or ':gen_server')"
+            },
+            type: %{
+              type: "string",
+              description:
+                "Optional filter: 'compiler' for compile-time or 'runtime' for runtime dependents",
+              enum: ["compiler", "runtime"]
+            }
+          },
+          required: ["moduleName"]
+        },
+        callback: &ListModuleDependents.call/1
       },
       %{
         name: "get_function_source_code",

@@ -8,11 +8,12 @@ defmodule Codicil.RateLimiterTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
 
     # Start RateLimiter with mock clients
-    rate_limiter = start_supervised!(
-      {Codicil.RateLimiter,
-       llm_client: %CodicilTest.LLM.Mock{test_pid: self()},
-       embeddings_client: %CodicilTest.Embeddings.Mock{test_pid: self()}}
-    )
+    rate_limiter =
+      start_supervised!(
+        {Codicil.RateLimiter,
+         llm_client: %CodicilTest.LLM.Mock{test_pid: self()},
+         embeddings_client: %CodicilTest.Embeddings.Mock{test_pid: self()}}
+      )
 
     # Allow the RateLimiter to access our sandbox
     Ecto.Adapters.SQL.Sandbox.allow(Repo, self(), rate_limiter)

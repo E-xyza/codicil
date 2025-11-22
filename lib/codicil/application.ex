@@ -64,6 +64,7 @@ defmodule Codicil.Application do
 
     defp configure_providers do
       llm_provider = System.fetch_env!("CODICIL_LLM_PROVIDER")
+
       # Default to same provider as LLM for embeddings (or openai if LLM provider doesn't support embeddings)
       embedding_provider = System.get_env("CODICIL_EMBEDDING_PROVIDER", llm_provider)
 

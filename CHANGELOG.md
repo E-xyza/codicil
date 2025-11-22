@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `list_module_dependents` MCP tool - reverse dependency lookup to find all modules that depend on a given module
+  - Supports filtering by dependency type (`compiler` or `runtime`)
+  - Useful for assessing impact before refactoring or deprecating a module
+
 ## [0.6.0] - 2025-01-09
 
 ### Added

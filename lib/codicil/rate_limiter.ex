@@ -19,7 +19,9 @@ defmodule Codicil.RateLimiter do
   def init(opts) do
     delay_ms = Keyword.get(opts, :delay_ms, 1000)
     llm_client = Keyword.get(opts, :llm_client, Application.get_env(:codicil, :llm_client))
-    embeddings_client = Keyword.get(opts, :embeddings_client, Application.get_env(:codicil, :embeddings_client))
+
+    embeddings_client =
+      Keyword.get(opts, :embeddings_client, Application.get_env(:codicil, :embeddings_client))
 
     if llm_client && embeddings_client do
       {:ok,

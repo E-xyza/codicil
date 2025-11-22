@@ -511,7 +511,7 @@ Vector search is powered by the `sqlite-vec` extension.
 Always include Codicil as a `:dev` only dependency:
 
 ```elixir
-{:codicil, "~> 0.3", only: [:dev, :test]}
+{:codicil, "~> 0.6", only: [:dev, :test]}
 ```
 
 The tracer configuration shown above (`elixirc_options(:prod), do: []`) ensures Codicil is disabled in production builds.

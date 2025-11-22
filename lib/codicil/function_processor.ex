@@ -67,7 +67,10 @@ defmodule Codicil.FunctionProcessor do
     end
   end
 
-  defp generate_embedding_if_needed(%Function{embedding: embedding} = function, _embeddings_client)
+  defp generate_embedding_if_needed(
+         %Function{embedding: embedding} = function,
+         _embeddings_client
+       )
        when is_binary(embedding) do
     # Embedding already exists, skip
     function

@@ -97,15 +97,16 @@ defmodule Codicil.Tracer do
   # Cache the result in application env for fast subsequent checks
   defp ensure_started do
     with true <- !Application.get_env(:codicil, :started),
-        {:error, reason} <- Application.ensure_all_started(:codicil) do
-        startup_fail(reason)
+         {:error, reason} <- Application.ensure_all_started(:codicil) do
+      startup_fail(reason)
     end
+
     Application.put_env(:codicil, :started, true)
   end
 
   defp startup_fail(reason) do
     if System.get_env("CODICIL_LLM_PROVIDER", "") != "" do
-      raise "Failed to start Codicil (#{inspect reason})"
+      raise "Failed to start Codicil (#{inspect(reason)})"
     else
       raise """
       CODICIL_LLM_PROVIDER environment variable is not set.

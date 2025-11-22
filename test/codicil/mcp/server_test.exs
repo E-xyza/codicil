@@ -104,8 +104,8 @@ defmodule Codicil.MCP.ServerTest do
       assert response_body["jsonrpc"] == "2.0"
       assert response_body["id"] == "2"
       assert is_list(response_body["result"]["tools"])
-      # Should have 5 registered tools
-      assert length(response_body["result"]["tools"]) == 5
+      # Should have 6 registered tools
+      assert length(response_body["result"]["tools"]) == 6
 
       # Verify tool names
       tool_names = Enum.map(response_body["result"]["tools"], & &1["name"])
@@ -113,6 +113,7 @@ defmodule Codicil.MCP.ServerTest do
       assert "list_function_callers" in tool_names
       assert "list_function_callees" in tool_names
       assert "list_module_dependencies" in tool_names
+      assert "list_module_dependents" in tool_names
       assert "get_function_source_code" in tool_names
     end
 
