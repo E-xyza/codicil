@@ -98,9 +98,11 @@ defmodule Codicil.Application do
           }
 
         "openai" ->
+          base_url = get_openai_base_url()
+
           %Codicil.LLM.OpenAI{
             api_key: System.get_env("OPENAI_API_KEY"),
-            base_url: System.get_env("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            base_url: base_url,
             model: model
           }
 
@@ -122,6 +124,18 @@ defmodule Codicil.Application do
 
         _ ->
           raise "Unknown provider: #{provider}. Must be one of: anthropic, voyage, openai, cohere, google"
+      end
+    end
+
+    @default_openai_base_url "https://api.openai.com/v1"
+
+    defp get_openai_base_url do
+      if System.get_env("OPENAI_BASE_URL", "") == "" do
+        @default_openai_base_url
+      else
+        base_url = System.get_env("OPENAI_BASE_URL")
+        Logger.info("Using custom OpenAI base URL: #{base_url}")
+        base_url
       end
     end
 

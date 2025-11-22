@@ -166,10 +166,35 @@ defmodule Codicil.LLM.OpenAI do
 
       {:ok, %{status: status, body: body}} ->
         error_message = get_in(body, ["error", "message"]) || "HTTP #{status}"
-        {:error, error_message}
+        {:error, maybe_add_base_url_hint(error_message, base_url)}
 
       {:error, reason} ->
         {:error, reason}
     end
+  end
+
+  defp maybe_add_base_url_hint(error_message, base_url) do
+    # If we got an OpenAI-specific error but user might expect local server
+    if is_openai_quota_or_auth_error?(error_message) and is_openai_url?(base_url) do
+      error_message <>
+        "\n\nHint: You're using the default OpenAI API URL. " <>
+        "If you intended to use a local server (Ollama, LM Studio, etc.), " <>
+        "set OPENAI_BASE_URL environment variable."
+    else
+      error_message
+    end
+  end
+
+  defp is_openai_quota_or_auth_error?(message) when is_binary(message) do
+    String.contains?(message, "quota") or
+      String.contains?(message, "billing") or
+      String.contains?(message, "API key") or
+      String.contains?(message, "Incorrect API key")
+  end
+
+  defp is_openai_quota_or_auth_error?(_), do: false
+
+  defp is_openai_url?(url) do
+    String.contains?(url, "api.openai.com")
   end
 end
