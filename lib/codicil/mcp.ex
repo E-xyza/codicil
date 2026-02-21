@@ -75,7 +75,7 @@ defmodule Codicil.MCP do
       {:ok, _} ->
         :ok
 
-      {:error, :not_found} ->
+      {:error, {:not_found, _}} ->
         :logger.add_handler(
           MCP.Logger,
           MCP.Logger,
