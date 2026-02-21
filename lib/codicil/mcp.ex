@@ -71,12 +71,17 @@ defmodule Codicil.MCP do
   end
 
   defp add_logger_backend() do
-    :ok =
-      :logger.add_handler(
-        MCP.Logger,
-        MCP.Logger,
-        %{formatter: Logger.default_formatter(colors: [enabled: false])}
-      )
+    case :logger.get_handler(MCP.Logger) do
+      {:ok, _} ->
+        :ok
+
+      {:error, :not_found} ->
+        :logger.add_handler(
+          MCP.Logger,
+          MCP.Logger,
+          %{formatter: Logger.default_formatter(colors: [enabled: false])}
+        )
+    end
   end
 
   defp init_config do
