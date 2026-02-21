@@ -71,7 +71,7 @@ defmodule Codicil.MCP do
   end
 
   defp add_logger_backend() do
-    case :logger.get_handler(MCP.Logger) do
+    case :logger.get_handler_config(MCP.Logger) do
       {:ok, _} ->
         :ok
 
