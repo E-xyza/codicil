@@ -66,7 +66,7 @@ defmodule Codicil.LLM.OpenAI do
            json: body,
            headers: headers
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         # Extract text from first choice
         text =
           response
@@ -154,7 +154,7 @@ defmodule Codicil.LLM.OpenAI do
            json: body,
            headers: headers
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         # Log token usage for embeddings
         if usage = Map.get(response, "usage") do
           total_tokens = Map.get(usage, "total_tokens", 0)

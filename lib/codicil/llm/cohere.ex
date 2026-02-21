@@ -55,7 +55,7 @@ defmodule Codicil.LLM.Cohere do
              {"content-type", "application/json"}
            ]
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         # Log token usage
         if meta = Map.get(response, "meta") do
           if tokens = Map.get(meta, "tokens") do
@@ -136,7 +136,7 @@ defmodule Codicil.LLM.Cohere do
              {"content-type", "application/json"}
            ]
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         # Log token usage for embeddings
         if meta = Map.get(response, "meta") do
           if billed_units = Map.get(meta, "billed_units") do
