@@ -1,3 +1,5 @@
+NOTICE:  CODICIL is in archival mode.  I did not notice any significant difference in coding assistant performance when using this (and it was almost never called).  YMMV.  Please feel free to fork.
+
 # Codicil
 
 **Semantic code search and analysis for Elixir projects via MCP (Model Context Protocol)**
