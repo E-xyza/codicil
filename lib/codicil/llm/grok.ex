@@ -54,7 +54,7 @@ defmodule Codicil.LLM.Grok do
              {"content-type", "application/json"}
            ]
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         # Extract text from first choice
         text =
           response

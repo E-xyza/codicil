@@ -70,7 +70,7 @@ defmodule Codicil.LLM.Google do
              {"content-type", "application/json"}
            ]
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         # Log token usage
         if usage_metadata = Map.get(response, "usageMetadata") do
           prompt_tokens = Map.get(usage_metadata, "promptTokenCount", 0)
@@ -164,7 +164,7 @@ defmodule Codicil.LLM.Google do
              {"content-type", "application/json"}
            ]
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         {:ok, response}
 
       {:ok, %{status: status, body: body}} ->

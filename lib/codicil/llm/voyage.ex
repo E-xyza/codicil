@@ -75,7 +75,7 @@ defmodule Codicil.LLM.Voyage do
              {"content-type", "application/json"}
            ]
          ) do
-      {:ok, %{status: 200, body: response}} ->
+      {:ok, %{status: status, body: response}} when status >= 200 and status <= 299 ->
         {:ok, response}
 
       {:ok, %{status: status, body: body}} ->
